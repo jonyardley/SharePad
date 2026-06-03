@@ -249,9 +249,11 @@ Code review runs through the **Superpowers** plugin
   open a tracked issue for anything deferred and link it in the PR.
 - **Tier 1** trivia (typos, dep bumps, single-line config) and **docs-only** PRs
   may skip review, but still run `just fmt` / `just lint`.
-- **One-time install** (not yet installed):
-  `/plugin install superpowers@claude-plugins-official` — the official marketplace
-  tracks obra's repo, so this is the real plugin; no setup after install.
+- **Install once per machine:**
+  `/plugin install superpowers@claude-plugins-official` (the official marketplace
+  tracks obra's repo — the real plugin). Newly installed skills load on the **next
+  session**; no other setup. If `/plugin` isn't available in your environment,
+  install via your plugin manager and start a fresh session.
 
 **Scope it to review (and optionally TDD) — not the whole methodology.**
 Superpowers also ships auto-triggering skills for brainstorming, writing-plans,
