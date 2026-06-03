@@ -234,16 +234,36 @@ load-bearing, easy-to-silently-break parts.
 ### Decision rule
 If unsure between tiers, go one lighter; drift up if scope expands.
 
+### Code review (Superpowers)
+
+Code review runs through the **Superpowers** plugin — not by hand.
+
+- **Before merging any PR that contains code** (Tier 2+), run
+  `superpowers:requesting-code-review`; it drives the `superpowers:code-reviewer`
+  subagent over the diff. Include **"comment-policy violations are Blockers, not
+  Nits"** in the prompt (see Code Style → Comments).
+- Run `superpowers:receiving-code-review` on the findings before acting on them —
+  reach "I agree" before implementing. Apply Blockers and important findings
+  inline; open a tracked issue for anything deferred and link it in the PR.
+- **Tier 1** trivia (typos, dep bumps, single-line config) and **docs-only** PRs
+  may skip review, but still run `just fmt` / `just lint`.
+- **One-time install** (not yet installed):
+  `/plugin install superpowers@claude-plugins-official`. Until it's installed the
+  skill is unavailable — install it rather than silently falling back to an ad-hoc
+  review.
+
 ## Always
 
 1. **Read [`DESIGN.md`](DESIGN.md) first** — it's the source of truth for scope and
    the verified technical foundation. If a request contradicts it, flag the
    conflict before coding.
-2. Work on a feature branch, not the default branch. (Repo is not yet a git repo —
-   `git init` is part of Phase 0.)
+2. Work on a feature branch, never `main` — `main` is seeded; all work is
+   feature-branch → PR.
 3. Run `just fmt` before commit and `just lint` before push — locally, not via CI
    roundtrips.
-4. For any capture/permission/window change: **verify on the actual iPad in a real
+4. **Before merging a code PR, run the Superpowers code review** (see the Code
+   review section). Don't merge an unreviewed code change.
+5. For any capture/permission/window change: **verify on the actual iPad in a real
    meeting app** before calling it done (see Testing).
 
 ## After completing work
