@@ -3,8 +3,7 @@
 > Status: **Design (pre-implementation).** This document informs the plan; it is
 > not the plan. Last reviewed: 2026-06-03.
 >
-> Working title **"SharePad"**, bundle id `com.jonyardley.sharepad` — both
-> placeholders, confirm before Phase 0 (see [Open questions](#open-questions)).
+> Name **SharePad**, bundle id `com.jonyardley.sharepad` — confirmed at Phase 0.
 
 ---
 
@@ -307,7 +306,7 @@ Each phase is independently verifiable. Maps to PRs / plan steps.
 
 | Phase | Deliverable | Verify by |
 |---|---|---|
-| **0 — Skeleton** | xcodegen + justfile + swiftformat/swiftlint; `LSUIElement` menu-bar app; empty popover; status item | App launches headless; icon in menu bar; `just run` works |
+| **0 — Skeleton** ✅ | xcodegen + justfile + swiftformat/swiftlint; `LSUIElement` menu-bar app; empty popover; status item | App launches headless; icon in menu bar; `just run` works |
 | **1 — Capture core** | CMIO opt-in; `.muxed` discovery; session; render to a *plain* window via preview layer | Plug iPad → see the live feed in a window |
 | **2 — Clean window** | Borderless, aspect-locked, movable, frame persistence; video-only connection (no mic prompt) | Window is chrome-free; picks cleanly in a meeting app; no mic permission dialog |
 | **3 — Popover** | Live thumbnail, device picker, toggles (keep-on-top, launch-at-login, quit); resolve two-preview-layer risk | Popover shows live feed; toggles work |
@@ -356,8 +355,8 @@ hardware, so we **isolate the pure logic** and **manually verify the pipeline**.
 
 ## 12. Open questions
 
-1. **Name + bundle id** — "SharePad" / `com.jonyardley.sharepad` are
-   placeholders. Confirm before Phase 0.
+1. ~~**Name + bundle id**~~ — **Resolved (Phase 0):** `SharePad` /
+   `com.jonyardley.sharepad`.
 2. **Window chrome** — borderless-but-movable (proposed) vs a standard title bar?
 3. **Auto-show guard** — fully automatic (chosen) means the window also appears when
    you plug in *just to charge*. Add an opt-out toggle, or accept it?
