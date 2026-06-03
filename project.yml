@@ -27,7 +27,6 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.jonyardley.sharepad
-        PRODUCT_NAME: SharePad
         CODE_SIGN_STYLE: Manual
         CODE_SIGN_IDENTITY: "-"
         GENERATE_INFOPLIST_FILE: "YES"
