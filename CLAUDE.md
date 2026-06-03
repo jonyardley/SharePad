@@ -236,21 +236,31 @@ If unsure between tiers, go one lighter; drift up if scope expands.
 
 ### Code review (Superpowers)
 
-Code review runs through the **Superpowers** plugin — not by hand.
+Code review runs through the **Superpowers** plugin
+([obra/superpowers](https://github.com/obra/superpowers)) — not by hand.
 
 - **Before merging any PR that contains code** (Tier 2+), run
-  `superpowers:requesting-code-review`; it drives the `superpowers:code-reviewer`
-  subagent over the diff. Include **"comment-policy violations are Blockers, not
-  Nits"** in the prompt (see Code Style → Comments).
-- Run `superpowers:receiving-code-review` on the findings before acting on them —
-  reach "I agree" before implementing. Apply Blockers and important findings
-  inline; open a tracked issue for anything deferred and link it in the PR.
+  `superpowers:requesting-code-review`. It dispatches a fresh subagent to review
+  the diff against the plan and reports issues by severity. Tell it
+  **"comment-policy violations are Blockers, not Nits"** (see Code Style →
+  Comments).
+- Then run `superpowers:receiving-code-review` to work the findings — reach
+  "I agree" before implementing. Apply Blockers and important findings inline;
+  open a tracked issue for anything deferred and link it in the PR.
 - **Tier 1** trivia (typos, dep bumps, single-line config) and **docs-only** PRs
   may skip review, but still run `just fmt` / `just lint`.
 - **One-time install** (not yet installed):
-  `/plugin install superpowers@claude-plugins-official`. Until it's installed the
-  skill is unavailable — install it rather than silently falling back to an ad-hoc
-  review.
+  `/plugin install superpowers@claude-plugins-official` — the official marketplace
+  tracks obra's repo, so this is the real plugin; no setup after install.
+
+**Scope it to review (and optionally TDD) — not the whole methodology.**
+Superpowers also ships auto-triggering skills for brainstorming, writing-plans,
+subagent-driven-development, executing-plans, and finishing-a-development-branch.
+Those collapse the tier workflow above into one-size-fits-all ceremony — **don't
+let them drive.** Use `requesting-code-review` / `receiving-code-review`
+deliberately; `superpowers:test-driven-development` is welcome for the pure-logic
+state reducer (non-UI Tier 2+). When invoking one Superpowers skill, tell it to
+skip the others.
 
 ## Always
 
