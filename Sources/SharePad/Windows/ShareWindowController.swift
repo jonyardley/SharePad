@@ -6,10 +6,20 @@ import SwiftUI
 final class ShareWindowController {
     private var window: NSWindow?
     private let previewLayer: AVCaptureVideoPreviewLayer
+    private let preferences: Preferences
     private var keepOnTop = false
+    private var isObserving = false
 
-    init(previewLayer: AVCaptureVideoPreviewLayer) {
+    /// The frame as we last set it ourselves. The move/resize observers persist only
+    /// when the live frame differs from this, so a programmatic restore/resize never
+    /// saves its own (possibly clamped) value back over the user's chosen frame.
+    private var appliedFrame: CGRect?
+
+    private static let defaultLongSide: CGFloat = 900
+
+    init(previewLayer: AVCaptureVideoPreviewLayer, preferences: Preferences) {
         self.previewLayer = previewLayer
+        self.preferences = preferences
     }
 
     func setKeepOnTop(_ enabled: Bool) {
@@ -22,26 +32,78 @@ final class ShareWindowController {
     func show(size: CGSize) {
         let window = window ?? makeWindow()
         self.window = window
-        let firstShow = !window.isVisible
+        startObserving()
         apply(size: size, to: window)
-        if firstShow { window.center() }
+        restoreOrigin(of: window)
+        appliedFrame = window.frame
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
     }
 
     func updateSize(_ size: CGSize) {
         guard let window else { return }
+        let oldFrame = window.frame
         apply(size: size, to: window)
-    }
-
-    private func apply(size: CGSize, to window: NSWindow) {
-        window.level = keepOnTop ? .floating : .normal
-        window.contentAspectRatio = size
-        window.setContentSize(fittedContentSize(for: size))
+        window.setFrameOrigin(centeredResizeOrigin(
+            oldFrame: oldFrame,
+            newSize: window.frame.size,
+            onScreens: screenFrames()
+        ))
+        appliedFrame = window.frame
+        persistFrame()
     }
 
     func hide() {
         window?.orderOut(nil)
+    }
+
+    private func apply(size videoSize: CGSize, to window: NSWindow) {
+        window.level = keepOnTop ? .floating : .normal
+        window.contentAspectRatio = videoSize
+        let longSide = preferences.windowLongSide ?? Self.defaultLongSide
+        window.setContentSize(fittedContentSize(for: videoSize, maxLongSide: longSide))
+    }
+
+    private func restoreOrigin(of window: NSWindow) {
+        if let saved = preferences.windowOrigin,
+           let placed = placedOrigin(
+               savedOrigin: saved,
+               size: window.frame.size,
+               onScreens: screenFrames()
+           ) {
+            window.setFrameOrigin(placed)
+        } else {
+            window.center()
+        }
+    }
+
+    private func persistFrame() {
+        guard let window else { return }
+        preferences.windowOrigin = window.frame.origin
+        let content = window.contentRect(forFrameRect: window.frame).size
+        preferences.windowLongSide = max(content.width, content.height)
+    }
+
+    private func screenFrames() -> [CGRect] {
+        NSScreen.screens.map(\.visibleFrame)
+    }
+
+    private func startObserving() {
+        guard !isObserving else { return }
+        isObserving = true
+        for name in [NSWindow.didMoveNotification, NSWindow.didEndLiveResizeNotification] {
+            Task { [weak self] in
+                guard let window = self?.window else { return }
+                for await _ in NotificationCenter.default.notifications(
+                    named: name,
+                    object: window
+                ) {
+                    guard let self else { return }
+                    guard let applied = appliedFrame, applied != window.frame else { continue }
+                    persistFrame()
+                }
+            }
+        }
     }
 
     private func makeWindow() -> BorderlessWindow {
@@ -60,11 +122,4 @@ final class ShareWindowController {
         window.isReleasedWhenClosed = false
         return window
     }
-}
-
-func fittedContentSize(for videoSize: CGSize, maxLongSide: CGFloat = 900) -> CGSize {
-    let longSide = max(videoSize.width, videoSize.height)
-    guard longSide > 0 else { return CGSize(width: 600, height: 800) }
-    let scale = min(1, maxLongSide / longSide)
-    return CGSize(width: videoSize.width * scale, height: videoSize.height * scale)
 }
