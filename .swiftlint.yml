@@ -1,0 +1,12 @@
+included:
+  - Sources
+excluded:
+  - .build
+  - DerivedData
+
+opt_in_rules:
+  - force_unwrapping
+
+line_length:
+  warning: 100
+  error: 120

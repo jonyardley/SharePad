@@ -2,9 +2,9 @@
 
 > Last reviewed: 2026-06-03.
 >
-> **Status: pre-implementation.** The structure, commands, and modules below are
-> the *target* defined in [`DESIGN.md`](DESIGN.md) and established by Phase 0. The
-> design spec is the source of truth for *what* we're building and *why*; this
+> **Status: Phase 0 (skeleton) landed.** The tooling and menu-bar app exist; the
+> remaining modules below are still the *target* defined in [`DESIGN.md`](DESIGN.md).
+> The design spec is the source of truth for *what* we're building and *why*; this
 > file is *how* we build it. Read `DESIGN.md` first.
 
 ## Project Overview
