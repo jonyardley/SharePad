@@ -1,5 +1,6 @@
 included:
   - Sources
+  - Tests
 excluded:
   - .build
   - DerivedData

@@ -5,11 +5,23 @@ struct SharePadApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var delegate
 
     var body: some Scene {
-        MenuBarExtra("SharePad", systemImage: "ipad.landscape") {
+        MenuBarExtra {
             PopoverView()
                 .environment(delegate.model)
+        } label: {
+            StatusItemLabel(model: delegate.model)
         }
         .menuBarExtraStyle(.window)
+    }
+}
+
+private struct StatusItemLabel: View {
+    var model: AppModel
+
+    var body: some View {
+        // Menu-bar items render monochrome (template), so signal "armed" with a
+        // badged symbol rather than a colour the menu bar strips.
+        Image(systemName: model.isLive ? "ipad.landscape.badge.play" : "ipad.landscape")
     }
 }
 
@@ -18,6 +30,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel()
 
     func applicationDidFinishLaunching(_: Notification) {
+        // Skip capture startup under XCTest so the hosted unit tests stay
+        // side-effect-free (no CMIO opt-in / camera prompt during `just test`).
+        guard NSClassFromString("XCTestCase") == nil else { return }
         model.start()
     }
 }
