@@ -1,5 +1,7 @@
 # SharePad
 
+[![CI](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml/badge.svg)](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml)
+
 A macOS **menu-bar app** that turns a USB-connected iPad into a clean,
 aspect-locked, always-ready **window** you share in any video call's "Share
 window" picker. Plug in the iPad → the window appears automatically → pick it in
