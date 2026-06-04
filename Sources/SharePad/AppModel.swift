@@ -7,11 +7,14 @@ final class AppModel {
     private(set) var permission: AVAuthorizationStatus = .notDetermined
     private(set) var currentDeviceName: String?
     private(set) var isLive = false
+    private(set) var videoSize: CGSize?
 
     private let capture: CaptureControlling
     private let monitor: DeviceMonitor
     private let window: ShareWindowController
     private var currentDeviceID: String?
+
+    private static let defaultSize = CGSize(width: 820, height: 1180)
 
     init() {
         let controller = CaptureController()
@@ -24,6 +27,16 @@ final class AppModel {
         CMIO.allowScreenCaptureDevices()
         permission = CameraPermission.status
         Task { await beginMonitoring() }
+        Task { await observeVideoSize() }
+    }
+
+    private func observeVideoSize() async {
+        for await size in capture.videoSizes {
+            videoSize = size
+            if isLive {
+                window.present(size: size)
+            }
+        }
     }
 
     private func beginMonitoring() async {
@@ -43,6 +56,7 @@ final class AppModel {
             currentDeviceID = nil
             currentDeviceName = nil
             isLive = false
+            videoSize = nil
             window.hide()
             await capture.stop()
             return
@@ -53,7 +67,7 @@ final class AppModel {
         let running = await capture.start(deviceID: device.id)
         isLive = running
         if running {
-            window.show()
+            window.present(size: videoSize ?? Self.defaultSize)
         } else {
             window.hide()
         }
