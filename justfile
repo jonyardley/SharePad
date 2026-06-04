@@ -28,3 +28,7 @@ fmt:
 lint:
     swiftlint
     swiftformat --lint .
+
+# run unit tests
+test: gen
+    xcodebuild -project SharePad.xcodeproj -scheme SharePad -configuration Debug -destination 'platform=macOS' -derivedDataPath .build test

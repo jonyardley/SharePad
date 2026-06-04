@@ -33,3 +33,18 @@ targets:
         INFOPLIST_KEY_LSUIElement: "YES"
         INFOPLIST_KEY_CFBundleDisplayName: SharePad
         INFOPLIST_KEY_NSCameraUsageDescription: SharePad displays your connected iPad's screen.
+    scheme:
+      testTargets:
+        - SharePadTests
+
+  SharePadTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - Tests/SharePadTests
+    dependencies:
+      - target: SharePad
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+        PRODUCT_BUNDLE_IDENTIFIER: com.jonyardley.SharePadTests
