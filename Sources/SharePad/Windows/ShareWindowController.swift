@@ -15,7 +15,6 @@ final class ShareWindowController {
         let window = window ?? makeWindow()
         self.window = window
         window.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
     }
 
     func hide() {

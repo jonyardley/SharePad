@@ -5,8 +5,9 @@ protocol CaptureControlling: Sendable {
     func stop() async
 }
 
-/// @unchecked Sendable: all AVCaptureSession state is confined to `sessionQueue`;
-/// `previewLayer` is created and configured once at init on the main thread.
+/// @unchecked Sendable: every `session` mutation is confined to `sessionQueue`;
+/// `previewLayer` is an immutable reference, created on the main thread, whose
+/// capture connection is wired only on `sessionQueue`.
 final class CaptureController: CaptureControlling, @unchecked Sendable {
     let previewLayer: AVCaptureVideoPreviewLayer
     private let session = AVCaptureSession()

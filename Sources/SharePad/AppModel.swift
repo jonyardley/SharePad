@@ -50,7 +50,12 @@ final class AppModel {
         guard device.id != currentDeviceID else { return }
         currentDeviceID = device.id
         currentDeviceName = device.name
-        window.show()
-        isLive = await capture.start(deviceID: device.id)
+        let running = await capture.start(deviceID: device.id)
+        isLive = running
+        if running {
+            window.show()
+        } else {
+            window.hide()
+        }
     }
 }
