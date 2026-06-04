@@ -8,6 +8,9 @@ struct PopoverView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
             Text("SharePad")
                 .font(.headline)
+
+            thumbnail
+
             statusText
                 .foregroundStyle(.secondary)
 
@@ -44,6 +47,18 @@ struct PopoverView: View {
         }
         .padding()
         .frame(width: 260)
+        .onAppear { model.popoverDidAppear() }
+        .onDisappear { model.popoverDidDisappear() }
+    }
+
+    @ViewBuilder private var thumbnail: some View {
+        if model.isLive {
+            PreviewView(layer: model.thumbnailLayer)
+                .frame(maxWidth: .infinity)
+                .frame(height: 146)
+                .background(.black)
+                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.thumbnail))
+        }
     }
 
     @ViewBuilder private var devicePicker: some View {

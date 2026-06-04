@@ -6,14 +6,17 @@ protocol CaptureControlling: Sendable {
     func start(deviceID: String) async -> Bool
     func resume() async -> Bool
     func stop() async
+    func setThumbnailActive(_ active: Bool)
 }
 
-/// @unchecked Sendable: `session`, `frameListener`, and the output/connection wiring
-/// are mutated only on `sessionQueue`; `previewLayer` is an immutable reference
-/// (created on main, wired only on `sessionQueue`); the continuations are Sendable
-/// and `sessionObservers` is set up once in `init`.
+/// @unchecked Sendable: `session` and the output/connection wiring are mutated only
+/// on `sessionQueue`; `frameListener`'s state is touched only on `sampleQueue`;
+/// `previewLayer`, `thumbnailLayer`, and `frameListener` are immutable references
+/// (created on main, fed only off-main); the continuations are Sendable and
+/// `sessionObservers` is set up once in `init`.
 final class CaptureController: CaptureControlling, @unchecked Sendable {
     let previewLayer: AVCaptureVideoPreviewLayer
+    let thumbnailLayer: AVSampleBufferDisplayLayer
     let videoSizes: AsyncStream<CGSize>
     let restarts: AsyncStream<Void>
 
@@ -23,14 +26,21 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
     private let dataOutput = AVCaptureVideoDataOutput()
     private let sizeContinuation: AsyncStream<CGSize>.Continuation
     private let restartContinuation: AsyncStream<Void>.Continuation
-    private var frameListener: FrameSizeListener?
+    private let frameListener: FrameOutput
     private var sessionObservers: [NSObjectProtocol] = []
 
     init() {
         previewLayer = AVCaptureVideoPreviewLayer(sessionWithNoConnection: session)
         previewLayer.videoGravity = .resizeAspect
+        let thumbnailLayer = AVSampleBufferDisplayLayer()
+        thumbnailLayer.videoGravity = .resizeAspect
+        self.thumbnailLayer = thumbnailLayer
         (videoSizes, sizeContinuation) = AsyncStream.makeStream(of: CGSize.self)
         (restarts, restartContinuation) = AsyncStream.makeStream(of: Void.self)
+        let renderer = thumbnailLayer.sampleBufferRenderer
+        frameListener = FrameOutput(renderer: renderer) { [sizeContinuation] size in
+            sizeContinuation.yield(size)
+        }
 
         // Sleep/wake and session hiccups surface as runtime errors / interruption
         // ends; ask AppModel (which owns the current device) to re-establish.
@@ -81,6 +91,14 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         }
     }
 
+    /// Gate the popover thumbnail's frame fan-out — the window's preview connection is
+    /// unaffected. Hops to the sample queue so the flag is touched where frames arrive.
+    func setThumbnailActive(_ active: Bool) {
+        sampleQueue.async { [frameListener] in
+            frameListener.setActive(active)
+        }
+    }
+
     private func configureAndRun(deviceID: String) -> Bool {
         guard let device = AVCaptureDevice(uniqueID: deviceID),
               let input = try? AVCaptureDeviceInput(device: device)
@@ -122,15 +140,12 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
     /// The iPad's video dimensions flip on rotation. KVO on the port's
     /// `formatDescription` aborts the app (AVCaptureInputPort raises
     /// valueForUndefinedKey inside its KVO notification), so dimensions come from a
-    /// video-only data output instead — still no audio, so no mic prompt.
+    /// video-only data output instead — still no audio, so no mic prompt. The same
+    /// output's frames also feed the popover thumbnail (gated by `setThumbnailActive`).
     private func wireDimensionOutput(videoPort: AVCaptureInput.Port) {
         guard session.canAddOutput(dataOutput) else { return }
-        let listener = FrameSizeListener { [sizeContinuation] size in
-            sizeContinuation.yield(size)
-        }
-        frameListener = listener
         dataOutput.alwaysDiscardsLateVideoFrames = true
-        dataOutput.setSampleBufferDelegate(listener, queue: sampleQueue)
+        dataOutput.setSampleBufferDelegate(frameListener, queue: sampleQueue)
         session.addOutputWithNoConnections(dataOutput)
         let connection = AVCaptureConnection(inputPorts: [videoPort], output: dataOutput)
         guard session.canAddConnection(connection) else { return }
@@ -138,7 +153,6 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
     }
 
     private func teardown() {
-        frameListener = nil
         for connection in session.connections {
             session.removeConnection(connection)
         }
@@ -151,29 +165,56 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
     }
 }
 
-/// @unchecked Sendable: `lastSize` is read/written only on the data output's
-/// serial delegate queue.
-private final class FrameSizeListener: NSObject, @unchecked Sendable {
-    private var lastSize: CGSize = .zero
-    private let onChange: @Sendable (CGSize) -> Void
+/// @unchecked Sendable: every stored property is read/written only on the data
+/// output's serial delegate queue (`setActive` is dispatched onto it too).
+private final class FrameOutput: NSObject, @unchecked Sendable {
+    private static let minThumbnailInterval = 1.0 / 15.0
 
-    init(onChange: @escaping @Sendable (CGSize) -> Void) {
+    private let renderer: AVSampleBufferVideoRenderer
+    private let onChange: @Sendable (CGSize) -> Void
+    private var lastSize: CGSize = .zero
+    private var active = false
+    private var lastRenderedSeconds: Double?
+
+    init(renderer: AVSampleBufferVideoRenderer,
+         onChange: @escaping @Sendable (CGSize) -> Void) {
+        self.renderer = renderer
         self.onChange = onChange
+    }
+
+    func setActive(_ active: Bool) {
+        self.active = active
+        if !active {
+            lastRenderedSeconds = nil
+            renderer.flush()
+        }
     }
 }
 
-extension FrameSizeListener: AVCaptureVideoDataOutputSampleBufferDelegate {
+extension FrameOutput: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(
         _: AVCaptureOutput,
         didOutput sampleBuffer: CMSampleBuffer,
         from _: AVCaptureConnection
     ) {
-        guard let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer)
+        if let formatDescription = CMSampleBufferGetFormatDescription(sampleBuffer) {
+            let dimensions = CMVideoFormatDescriptionGetDimensions(formatDescription)
+            let size = CGSize(width: Int(dimensions.width), height: Int(dimensions.height))
+            if size.width > 0, size.height > 0, size != lastSize {
+                lastSize = size
+                onChange(size)
+            }
+        }
+
+        guard active else { return }
+        let seconds = sampleBuffer.presentationTimeStamp.seconds
+        guard seconds.isFinite,
+              shouldRenderFrame(currentSeconds: seconds,
+                                lastRenderedSeconds: lastRenderedSeconds,
+                                minInterval: Self.minThumbnailInterval),
+              renderer.isReadyForMoreMediaData
         else { return }
-        let dimensions = CMVideoFormatDescriptionGetDimensions(formatDescription)
-        let size = CGSize(width: Int(dimensions.width), height: Int(dimensions.height))
-        guard size.width > 0, size.height > 0, size != lastSize else { return }
-        lastSize = size
-        onChange(size)
+        renderer.enqueue(sampleBuffer)
+        lastRenderedSeconds = seconds
     }
 }
