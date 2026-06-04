@@ -114,7 +114,7 @@ final class ShareWindowController {
             defer: false
         )
         window.contentViewController = NSHostingController(
-            rootView: PreviewView(previewLayer: previewLayer)
+            rootView: PreviewView(layer: previewLayer)
         )
         window.isMovableByWindowBackground = true
         window.backgroundColor = .black

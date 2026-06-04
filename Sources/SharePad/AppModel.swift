@@ -33,6 +33,8 @@ final class AppModel {
         }
     }
 
+    let thumbnailLayer: AVSampleBufferDisplayLayer
+
     private let capture: CaptureControlling
     private let monitor: DeviceMonitor
     private let window: ShareWindowController
@@ -50,6 +52,7 @@ final class AppModel {
             previewLayer: controller.previewLayer,
             preferences: preferences
         )
+        thumbnailLayer = controller.thumbnailLayer
         self.preferences = preferences
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
@@ -105,6 +108,14 @@ final class AppModel {
 
     func retry() {
         Task { await restart() }
+    }
+
+    func popoverDidAppear() {
+        capture.setThumbnailActive(true)
+    }
+
+    func popoverDidDisappear() {
+        capture.setThumbnailActive(false)
     }
 
     private func presentWindow() {
