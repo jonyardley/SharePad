@@ -7,6 +7,11 @@ excluded:
 opt_in_rules:
   - force_unwrapping
 
+# swiftformat manages trailing commas in multiline collections; align swiftlint
+# with it rather than having the two tools fight.
+trailing_comma:
+  mandatory_comma: true
+
 line_length:
   warning: 100
   error: 120
