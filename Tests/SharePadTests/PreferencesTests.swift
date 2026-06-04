@@ -19,6 +19,19 @@ final class PreferencesTests: XCTestCase {
         XCTAssertTrue(reloaded.keepOnTop)
     }
 
+    func testLastDeviceIDDefaultsToNil() throws {
+        let prefs = try Preferences(defaults: makeEphemeralDefaults())
+        XCTAssertNil(prefs.lastDeviceID)
+    }
+
+    func testLastDeviceIDRoundTrips() throws {
+        let defaults = try makeEphemeralDefaults()
+        let prefs = Preferences(defaults: defaults)
+        prefs.lastDeviceID = "abc-123"
+
+        XCTAssertEqual(Preferences(defaults: defaults).lastDeviceID, "abc-123")
+    }
+
     private func makeEphemeralDefaults() throws -> UserDefaults {
         let name = "sharepad.tests.\(UUID().uuidString)"
         addTeardownBlock { UserDefaults.standard.removePersistentDomain(forName: name) }

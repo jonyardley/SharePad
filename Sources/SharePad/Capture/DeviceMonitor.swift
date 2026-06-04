@@ -1,6 +1,6 @@
 import AVFoundation
 
-struct CaptureDevice: Equatable {
+struct CaptureDevice: Equatable, Identifiable {
     let id: String
     let name: String
 }
