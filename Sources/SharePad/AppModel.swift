@@ -46,7 +46,10 @@ final class AppModel {
         let controller = CaptureController()
         capture = controller
         monitor = DeviceMonitor()
-        window = ShareWindowController(previewLayer: controller.previewLayer)
+        window = ShareWindowController(
+            previewLayer: controller.previewLayer,
+            preferences: preferences
+        )
         self.preferences = preferences
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
