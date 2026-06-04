@@ -16,6 +16,7 @@ final class AppModel {
     private(set) var autoShowOnConnect: Bool
     private(set) var keepOnTop: Bool
     private(set) var launchAtLogin: Bool
+    private(set) var launchAtLoginFailed = false
 
     var isConnected: Bool {
         currentDeviceName != nil
@@ -95,7 +96,12 @@ final class AppModel {
     }
 
     func setLaunchAtLogin(_ enabled: Bool) {
-        try? LaunchAtLogin.setEnabled(enabled)
+        do {
+            try LaunchAtLogin.setEnabled(enabled)
+            launchAtLoginFailed = false
+        } catch {
+            launchAtLoginFailed = true
+        }
         launchAtLogin = LaunchAtLogin.isEnabled
     }
 
