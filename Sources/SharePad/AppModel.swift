@@ -38,23 +38,38 @@ final class AppModel {
 
     private let capture: CaptureControlling
     private let monitor: DeviceMonitor
-    private let window: ShareWindowController
+    private let window: ShareWindowControlling
     private let preferences: Preferences
     private(set) var currentDeviceID: String?
     private var isReconfiguring = false
 
     private static let defaultSize = CGSize(width: 820, height: 1180)
 
-    init(preferences: Preferences = Preferences()) {
+    convenience init(preferences: Preferences = Preferences()) {
         let controller = CaptureController()
-        capture = controller
-        monitor = DeviceMonitor()
-        window = ShareWindowController(
+        let window = ShareWindowController(
             previewLayer: controller.previewLayer,
             preferences: preferences
         )
-        thumbnailLayer = controller.thumbnailLayer
+        self.init(
+            preferences: preferences,
+            capture: controller,
+            window: window,
+            thumbnailLayer: controller.thumbnailLayer
+        )
+    }
+
+    init(
+        preferences: Preferences,
+        capture: CaptureControlling,
+        window: ShareWindowControlling,
+        thumbnailLayer: AVSampleBufferDisplayLayer
+    ) {
         self.preferences = preferences
+        self.capture = capture
+        self.window = window
+        self.thumbnailLayer = thumbnailLayer
+        monitor = DeviceMonitor()
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
         launchAtLogin = LaunchAtLogin.isEnabled
@@ -155,7 +170,7 @@ final class AppModel {
     /// Re-establish the session after a runtime error or wake. `resume()` keeps the
     /// connections (preview included) intact; a full `start` is only the fallback.
     /// One attempt per trigger — no auto-loop.
-    private func restart() async {
+    func restart() async {
         guard let deviceID = currentDeviceID, !isReconfiguring else { return }
         isReconfiguring = true
         isLive = false
@@ -180,7 +195,7 @@ final class AppModel {
         }
     }
 
-    private func switchTo(deviceID: String) async {
+    func switchTo(deviceID: String) async {
         guard !isReconfiguring,
               let device = devices.first(where: { $0.id == deviceID }) else { return }
         isReconfiguring = true
@@ -198,7 +213,7 @@ final class AppModel {
         isReconfiguring = false
     }
 
-    private func reconcile(devices: [CaptureDevice]) async {
+    func reconcile(devices: [CaptureDevice]) async {
         self.devices = devices
         switch resolveDevice(
             devices: devices,
