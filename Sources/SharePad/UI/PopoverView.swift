@@ -37,6 +37,11 @@ struct PopoverView: View {
                 get: { model.launchAtLogin },
                 set: { model.setLaunchAtLogin($0) }
             ))
+            if model.launchAtLoginFailed {
+                Text("Couldn't change the login item — open System Settings › Login Items.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             Divider()
 
