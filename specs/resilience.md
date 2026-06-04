@@ -35,10 +35,11 @@ The happy path works (Phases 0–3), but the app isn't yet dependable:
 ## Approach
 
 - **`State/AppState.swift`** — `enum AppState` + a **pure** reducer
-  `AppState.reduce(permission:hasDevice:isRunning:failed:)`. No AVFoundation
+  `AppState.reduce(access:hasDevice:isRunning:failed:)`. No AVFoundation
   imports → unit-testable (DESIGN §5.3 / §11).
 - **`CaptureController`** — observe `runtimeErrorNotification` /
-  `wasInterrupted` / `interruptionEnded` on its session; emit restart events
+  `interruptionEnded` (restart when an interruption *ends*, not begins) on its
+  session; emit restart events
   (`AsyncStream<Void>`, Sendable). Don't self-restart silently — let `AppModel`
   coordinate (it owns the current device + state).
 - **`AppModel`** —
