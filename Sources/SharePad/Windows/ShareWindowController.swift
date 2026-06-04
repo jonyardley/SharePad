@@ -11,24 +11,43 @@ final class ShareWindowController {
         self.previewLayer = previewLayer
     }
 
-    func show() {
+    func present(size: CGSize) {
         let window = window ?? makeWindow()
         self.window = window
-        window.makeKeyAndOrderFront(nil)
+        window.contentAspectRatio = size
+        window.setContentSize(contentSize(for: size))
+        if !window.isVisible {
+            window.center()
+            window.makeKeyAndOrderFront(nil)
+        }
     }
 
     func hide() {
         window?.orderOut(nil)
     }
 
-    private func makeWindow() -> NSWindow {
-        let hosting = NSHostingController(rootView: PreviewView(previewLayer: previewLayer))
-        let window = NSWindow(contentViewController: hosting)
-        window.title = "SharePad"
-        window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
-        window.setContentSize(NSSize(width: 768, height: 1024))
+    private func makeWindow() -> BorderlessWindow {
+        let window = BorderlessWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 800),
+            styleMask: [.borderless, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.contentViewController = NSHostingController(
+            rootView: PreviewView(previewLayer: previewLayer)
+        )
+        window.isMovableByWindowBackground = true
+        window.backgroundColor = .black
+        window.hasShadow = true
         window.isReleasedWhenClosed = false
-        window.center()
         return window
+    }
+
+    private func contentSize(for videoSize: CGSize) -> NSSize {
+        let maxLongSide: CGFloat = 900
+        let longSide = max(videoSize.width, videoSize.height)
+        guard longSide > 0 else { return NSSize(width: 600, height: 800) }
+        let scale = min(1, maxLongSide / longSide)
+        return NSSize(width: videoSize.width * scale, height: videoSize.height * scale)
     }
 }
