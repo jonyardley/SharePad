@@ -307,8 +307,8 @@ Each phase is independently verifiable. Maps to PRs / plan steps.
 | Phase | Deliverable | Verify by |
 |---|---|---|
 | **0 — Skeleton** ✅ | xcodegen + justfile + swiftformat/swiftlint; `LSUIElement` menu-bar app; empty popover; status item | App launches headless; icon in menu bar; `just run` works |
-| **1 — Capture core** | CMIO opt-in; `.muxed` discovery; session; render to a *plain* window via preview layer | Plug iPad → see the live feed in a window |
-| **2 — Clean window** | Borderless, aspect-locked, movable, frame persistence; video-only connection (no mic prompt) | Window is chrome-free; picks cleanly in a meeting app; no mic permission dialog |
+| **1 — Capture core** ✅ | CMIO opt-in; `.muxed` discovery; session; render to a *plain* window via preview layer | Plug iPad → see the live feed in a window |
+| **2 — Clean window** ✅ | Borderless, aspect-locked (follows iPad rotation), movable; video-only connection (no mic prompt). Frame persistence deferred → [#7](https://github.com/jonyardley/SharePad/issues/7) | Window is chrome-free; picks cleanly in a meeting app; no mic permission dialog |
 | **3 — Popover** | Live thumbnail, device picker, toggles (keep-on-top, launch-at-login, quit); resolve two-preview-layer risk | Popover shows live feed; toggles work |
 | **4 — Automatic lifecycle** | KVO connect/disconnect → auto show/hide; permission flow UI; error surfaces; sleep/wake restart | Unplug/replug and sleep cycles behave; denied permission shows a fix path |
 | **5 — Polish** | App icon; status-item idle/live states; CPU check; optional auto-show guard | Looks finished; idle CPU acceptable |
