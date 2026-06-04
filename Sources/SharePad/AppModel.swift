@@ -7,6 +7,7 @@ import Observation
 final class AppModel {
     private(set) var permission: AVAuthorizationStatus = .notDetermined
     private(set) var currentDeviceName: String?
+    private(set) var devices: [CaptureDevice] = []
     private(set) var isLive = false
     private(set) var failed = false
     private(set) var videoSize: CGSize?
@@ -36,8 +37,8 @@ final class AppModel {
     private let monitor: DeviceMonitor
     private let window: ShareWindowController
     private let preferences: Preferences
-    private var currentDeviceID: String?
-    private var isRestarting = false
+    private(set) var currentDeviceID: String?
+    private var isReconfiguring = false
 
     private static let defaultSize = CGSize(width: 820, height: 1180)
 
@@ -69,6 +70,11 @@ final class AppModel {
         } else if isConnected {
             presentWindow()
         }
+    }
+
+    func selectDevice(id: String) {
+        guard id != currentDeviceID, devices.contains(where: { $0.id == id }) else { return }
+        Task { await switchTo(deviceID: id) }
     }
 
     func setAutoShow(_ enabled: Bool) {
@@ -130,8 +136,8 @@ final class AppModel {
     /// connections (preview included) intact; a full `start` is only the fallback.
     /// One attempt per trigger — no auto-loop.
     private func restart() async {
-        guard let deviceID = currentDeviceID, !isRestarting else { return }
-        isRestarting = true
+        guard let deviceID = currentDeviceID, !isReconfiguring else { return }
+        isReconfiguring = true
         isLive = false
         var running = await capture.resume()
         if !running {
@@ -139,7 +145,7 @@ final class AppModel {
         }
         isLive = running
         failed = !running
-        isRestarting = false
+        isReconfiguring = false
     }
 
     private func beginMonitoring() async {
@@ -154,8 +160,32 @@ final class AppModel {
         }
     }
 
+    private func switchTo(deviceID: String) async {
+        guard !isReconfiguring,
+              let device = devices.first(where: { $0.id == deviceID }) else { return }
+        isReconfiguring = true
+        currentDeviceID = device.id
+        currentDeviceName = device.name
+        let running = await capture.start(deviceID: deviceID)
+        isLive = running
+        failed = !running
+        if running {
+            preferences.lastDeviceID = device.id
+        } else {
+            window.hide()
+            isWindowVisible = false
+        }
+        isReconfiguring = false
+    }
+
     private func reconcile(devices: [CaptureDevice]) async {
-        guard let device = devices.first else {
+        self.devices = devices
+        switch resolveDevice(
+            devices: devices,
+            current: currentDeviceID,
+            lastUsed: preferences.lastDeviceID
+        ) {
+        case .teardown:
             currentDeviceID = nil
             currentDeviceName = nil
             isLive = false
@@ -164,19 +194,23 @@ final class AppModel {
             window.hide()
             isWindowVisible = false
             await capture.stop()
-            return
-        }
-        guard device.id != currentDeviceID else { return }
-        currentDeviceID = device.id
-        currentDeviceName = device.name
-        let running = await capture.start(deviceID: device.id)
-        isLive = running
-        failed = !running
-        if running, autoShowOnConnect {
-            presentWindow()
-        } else if !running {
-            window.hide()
-            isWindowVisible = false
+        case let .keep(device):
+            currentDeviceName = device.name
+        case let .switchTo(device):
+            currentDeviceID = device.id
+            currentDeviceName = device.name
+            let running = await capture.start(deviceID: device.id)
+            isLive = running
+            failed = !running
+            if running {
+                preferences.lastDeviceID = device.id
+                if autoShowOnConnect {
+                    presentWindow()
+                }
+            } else {
+                window.hide()
+                isWindowVisible = false
+            }
         }
     }
 }
