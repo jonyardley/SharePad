@@ -11,6 +11,8 @@ struct PopoverView: View {
             statusText
                 .foregroundStyle(.secondary)
 
+            stateAction
+
             Button(model.isWindowVisible ? "Hide window" : "Show window") {
                 model.toggleWindow()
             }
@@ -42,18 +44,25 @@ struct PopoverView: View {
         .frame(width: 260)
     }
 
-    private var statusText: Text {
-        switch model.permission {
-        case .denied, .restricted:
-            Text("Camera access denied — enable it in System Settings.")
-        case .notDetermined:
-            Text("Requesting camera access…")
+    @ViewBuilder private var stateAction: some View {
+        switch model.state {
+        case .permissionDenied:
+            Button("Open System Settings") { model.openCameraSettings() }
+        case .failed:
+            Button("Retry") { model.retry() }
         default:
-            if let name = model.currentDeviceName {
-                Text(name)
-            } else {
-                Text("No iPad connected")
-            }
+            EmptyView()
+        }
+    }
+
+    private var statusText: Text {
+        switch model.state {
+        case .checkingPermission: Text("Requesting camera access…")
+        case .permissionDenied: Text("Camera access denied.")
+        case .noDevice: Text("No iPad connected")
+        case .starting: Text("Connecting…")
+        case .live: Text(model.currentDeviceName ?? "iPad")
+        case .failed: Text("Couldn't start the iPad feed.")
         }
     }
 }

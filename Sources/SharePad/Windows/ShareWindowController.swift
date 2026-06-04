@@ -17,16 +17,27 @@ final class ShareWindowController {
         window?.level = enabled ? .floating : .normal
     }
 
-    func present(size: CGSize) {
+    /// Bring the window (and app) to the front. Without activation an accessory app's
+    /// window orders in *behind* the active app, so the user never sees it.
+    func show(size: CGSize) {
         let window = window ?? makeWindow()
         self.window = window
+        let firstShow = !window.isVisible
+        apply(size: size, to: window)
+        if firstShow { window.center() }
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+    }
+
+    func updateSize(_ size: CGSize) {
+        guard let window else { return }
+        apply(size: size, to: window)
+    }
+
+    private func apply(size: CGSize, to window: NSWindow) {
         window.level = keepOnTop ? .floating : .normal
         window.contentAspectRatio = size
         window.setContentSize(fittedContentSize(for: size))
-        if !window.isVisible {
-            window.center()
-            window.makeKeyAndOrderFront(nil)
-        }
     }
 
     func hide() {

@@ -2,29 +2,50 @@ import AVFoundation
 
 protocol CaptureControlling: Sendable {
     var videoSizes: AsyncStream<CGSize> { get }
+    var restarts: AsyncStream<Void> { get }
     func start(deviceID: String) async -> Bool
+    func resume() async -> Bool
     func stop() async
 }
 
-/// @unchecked Sendable: `session`, `frameListener`, and the output/connection
-/// wiring are mutated only on `sessionQueue`; `previewLayer` is an immutable
-/// reference (created on main, wired only on `sessionQueue`); `sizeContinuation`
-/// is itself Sendable.
+/// @unchecked Sendable: `session`, `frameListener`, and the output/connection wiring
+/// are mutated only on `sessionQueue`; `previewLayer` is an immutable reference
+/// (created on main, wired only on `sessionQueue`); the continuations are Sendable
+/// and `sessionObservers` is set up once in `init`.
 final class CaptureController: CaptureControlling, @unchecked Sendable {
     let previewLayer: AVCaptureVideoPreviewLayer
     let videoSizes: AsyncStream<CGSize>
+    let restarts: AsyncStream<Void>
 
     private let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "com.jonyardley.sharepad.session")
     private let sampleQueue = DispatchQueue(label: "com.jonyardley.sharepad.frames")
     private let dataOutput = AVCaptureVideoDataOutput()
     private let sizeContinuation: AsyncStream<CGSize>.Continuation
+    private let restartContinuation: AsyncStream<Void>.Continuation
     private var frameListener: FrameSizeListener?
+    private var sessionObservers: [NSObjectProtocol] = []
 
     init() {
         previewLayer = AVCaptureVideoPreviewLayer(sessionWithNoConnection: session)
         previewLayer.videoGravity = .resizeAspect
         (videoSizes, sizeContinuation) = AsyncStream.makeStream(of: CGSize.self)
+        (restarts, restartContinuation) = AsyncStream.makeStream(of: Void.self)
+
+        // Sleep/wake and session hiccups surface as runtime errors / interruption
+        // ends; ask AppModel (which owns the current device) to re-establish.
+        let onEvent: @Sendable (Notification) -> Void = { [restartContinuation] _ in
+            restartContinuation.yield()
+        }
+        let center = NotificationCenter.default
+        sessionObservers = [
+            AVCaptureSession.runtimeErrorNotification,
+            AVCaptureSession.interruptionEndedNotification,
+        ].map { center.addObserver(forName: $0, object: session, queue: nil, using: onEvent) }
+    }
+
+    deinit {
+        sessionObservers.forEach(NotificationCenter.default.removeObserver)
     }
 
     func start(deviceID: String) async -> Bool {
@@ -43,6 +64,19 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
                 teardown()
                 session.commitConfiguration()
                 continuation.resume()
+            }
+        }
+    }
+
+    /// Wake/runtime recovery: kick the run loop while keeping connections intact, so
+    /// the preview layer resumes. A full teardown re-adds the preview-layer connection,
+    /// which leaves the layer frozen on its last frame — so never do that here.
+    func resume() async -> Bool {
+        await withCheckedContinuation { continuation in
+            sessionQueue.async { [self] in
+                session.stopRunning()
+                session.startRunning()
+                continuation.resume(returning: session.isRunning)
             }
         }
     }
