@@ -1,7 +1,7 @@
 # SharePad — Design Spec
 
-> Status: **Design (pre-implementation).** This document informs the plan; it is
-> not the plan. Last reviewed: 2026-06-03.
+> Status: **Living spec — implementation in progress.** This document informs the
+> plan; it is not the plan. Last reviewed: 2026-06-04.
 >
 > Name **SharePad**, bundle id `com.jonyardley.sharepad` — confirmed at Phase 0.
 
@@ -79,8 +79,9 @@ From the design Q&A (2026-06-03):
 
 ### Surfaces
 
-1. **Status item** — menu-bar icon. Two states: **idle** (dim, no iPad) and
-   **live** (tinted, capturing).
+1. **Status item** — menu-bar icon. Two states: **idle** (`ipad.landscape`, no iPad)
+   and **live** (`ipad.landscape.badge.play`, capturing) — a badged-symbol swap, not
+   a tint, since the menu bar renders items monochrome.
 2. **Popover** (click the status item) — live thumbnail of the feed, device name,
    device picker (only shown if >1 source), and toggles: *Keep window on top*,
    *Launch at login*, *Quit*. Plus a *Show/Hide window* affordance and, on error,
@@ -159,11 +160,12 @@ One `AVCaptureSession`; both the window and the popover display it. The pipeline
 has **no frame processing** (no crop) — a preview layer renders directly on the
 GPU, so it's cheap.
 
-> **Technical risk to verify in Phase 3:** whether two
-> `AVCaptureVideoPreviewLayer`s can attach to one session simultaneously (window +
-> popover both visible). **Fallback** if not: a single `AVCaptureVideoDataOutput`
-> fanning `CMSampleBuffer`s to both views, or downgrade the popover to a periodic
-> snapshot. This does not change the component model above.
+> **Resolved (#10):** rather than test the two-preview-layer question, the popover
+> thumbnail renders off the existing `AVCaptureVideoDataOutput` — frames fan into an
+> `AVSampleBufferDisplayLayer` (via `AVSampleBufferVideoRenderer`), gated to
+> "popover open" and throttled to ~15 fps. The window keeps the sole
+> `AVCaptureVideoPreviewLayer` on the preview connection; no second preview layer
+> exists. The component model above is unchanged.
 
 ### 5.3 State machine (`AppModel`)
 
@@ -311,7 +313,7 @@ Each phase is independently verifiable. Maps to PRs / plan steps.
 | **2 — Clean window** ✅ | Borderless, aspect-locked (follows iPad rotation), movable; video-only connection (no mic prompt). Frame persistence deferred → [#7](https://github.com/jonyardley/SharePad/issues/7) | Window is chrome-free; picks cleanly in a meeting app; no mic permission dialog |
 | **3 — Popover** ✅ | Toggles (auto-show, keep-on-top, launch-at-login) + Show/Hide button + armed status-item badge; first unit tests. Live thumbnail + device picker deferred → [#10](https://github.com/jonyardley/SharePad/issues/10) | Toggles persist; window shows/hides; icon shows armed state |
 | **4 — Automatic lifecycle** ✅ | Auto show/hide (KVO); sleep/wake + runtime-error auto-restart (`resume` keeps the preview connection live); permission "Open System Settings" button; surfaced `failed`/Retry; pure tested `AppState` reducer | Sleep/wake recovers the feed; denied permission shows a fix path |
-| **5 — Polish** | App icon; status-item idle/live states; CPU check; optional auto-show guard | Looks finished; idle CPU acceptable |
+| **5 — Polish** | App icon (pending); idle-CPU check (pending). Status-item idle/live ships as a badged-symbol swap (not dim/tint — the menu bar strips colour); auto-show guard **shipped** (#6, "Auto-show on connect") | Looks finished; idle CPU acceptable |
 
 ---
 
@@ -358,9 +360,11 @@ hardware, so we **isolate the pure logic** and **manually verify the pipeline**.
 1. ~~**Name + bundle id**~~ — **Resolved (Phase 0):** `SharePad` /
    `com.jonyardley.sharepad`.
 2. **Window chrome** — borderless-but-movable (proposed) vs a standard title bar?
-3. **Auto-show guard** — fully automatic (chosen) means the window also appears when
-   you plug in *just to charge*. Add an opt-out toggle, or accept it?
-4. **Mid-call disconnect** — silent hide vs a notification?
+3. ~~**Auto-show guard**~~ — **Resolved (#6):** shipped an "Auto-show on connect"
+   toggle (persisted via `Preferences.autoShowOnConnect`); off → the window stays
+   hidden on connect and is opened manually.
+4. **Mid-call disconnect** — currently a **silent hide** (`reconcile` →
+   `window.hide()` + status dim). Revisit whether a brief notification is worth it.
 5. **Distribution later** — if this ever leaves your Mac, it needs signing +
    notarization + (likely) the sandbox question revisited. Out of scope now —
    confirm it stays out.
