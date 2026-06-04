@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 # Cancel superseded runs on the same ref — saves macOS minutes on rapid pushes.
 concurrency:
   group: ci-${{ github.ref }}
@@ -14,16 +17,17 @@ concurrency:
 jobs:
   lint-and-build:
     name: Lint & Build
-    runs-on: macos-26 # match local dev: arm64 + Xcode 26.x → Swift 6.3
+    runs-on: macos-26 # pinned to match local: arm64 + Xcode 26.x → Swift 6
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v6
 
-      # swiftlint & swiftformat ship on the image (versions match local); only these are missing.
+      # swiftlint isn't on the macos-26 arm64 image (actions/runner-images#10595); swiftformat is.
       - name: Install tools
-        run: brew install xcodegen just
+        run: brew install xcodegen just swiftlint
 
-      - name: Lint # swiftlint + swiftformat --lint; fail fast before the costly build
+      - name: Lint
         run: just lint
 
-      - name: Build # xcodegen generate + xcodebuild Debug
+      - name: Build
         run: just build
