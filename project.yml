@@ -1,0 +1,34 @@
+# xcodegen spec — the .xcodeproj is generated (git-ignored). Edit this, run `just gen`.
+name: SharePad
+
+options:
+  minimumXcodeGenVersion: "2.40.0"
+  bundleIdPrefix: com.jonyardley
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  SharePad:
+    type: application
+    platform: macOS
+    sources:
+      - Sources/SharePad
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jonyardley.sharepad
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        GENERATE_INFOPLIST_FILE: "YES"
+        INFOPLIST_KEY_LSUIElement: "YES"
+        INFOPLIST_KEY_CFBundleDisplayName: SharePad
