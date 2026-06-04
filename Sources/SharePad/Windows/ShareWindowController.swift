@@ -3,7 +3,7 @@ import AVFoundation
 import SwiftUI
 
 @MainActor
-final class ShareWindowController {
+final class ShareWindowController: ShareWindowControlling {
     private var window: NSWindow?
     private let previewLayer: AVCaptureVideoPreviewLayer
     private let preferences: Preferences
