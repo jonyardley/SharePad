@@ -1,14 +1,14 @@
-import AVFoundation
+import AppKit
 import SwiftUI
 
 struct PreviewView: NSViewRepresentable {
-    let previewLayer: AVCaptureVideoPreviewLayer
+    let layer: CALayer
 
     func makeNSView(context _: Context) -> PreviewNSView {
         let view = PreviewNSView()
         view.wantsLayer = true
-        view.hostedLayer = previewLayer
-        view.layer?.addSublayer(previewLayer)
+        view.hostedLayer = layer
+        view.layer?.addSublayer(layer)
         return view
     }
 
