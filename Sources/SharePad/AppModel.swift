@@ -1,3 +1,4 @@
+import AppKit
 import AVFoundation
 import Observation
 
@@ -7,6 +8,7 @@ final class AppModel {
     private(set) var permission: AVAuthorizationStatus = .notDetermined
     private(set) var currentDeviceName: String?
     private(set) var isLive = false
+    private(set) var failed = false
     private(set) var videoSize: CGSize?
     private(set) var isWindowVisible = false
 
@@ -18,11 +20,24 @@ final class AppModel {
         currentDeviceName != nil
     }
 
+    var state: AppState {
+        AppState.reduce(access: access, hasDevice: isConnected, isRunning: isLive, failed: failed)
+    }
+
+    private var access: CameraAccess {
+        switch permission {
+        case .authorized: .granted
+        case .denied, .restricted: .denied
+        default: .unknown
+        }
+    }
+
     private let capture: CaptureControlling
     private let monitor: DeviceMonitor
     private let window: ShareWindowController
     private let preferences: Preferences
     private var currentDeviceID: String?
+    private var isRestarting = false
 
     private static let defaultSize = CGSize(width: 820, height: 1180)
 
@@ -43,6 +58,8 @@ final class AppModel {
         window.setKeepOnTop(keepOnTop)
         Task { await beginMonitoring() }
         Task { await observeVideoSize() }
+        Task { await observeRestarts() }
+        Task { await observeWake() }
     }
 
     func toggleWindow() {
@@ -70,8 +87,19 @@ final class AppModel {
         launchAtLogin = LaunchAtLogin.isEnabled
     }
 
+    func openCameraSettings() {
+        guard let url = URL(
+            string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Camera"
+        ) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    func retry() {
+        Task { await restart() }
+    }
+
     private func presentWindow() {
-        window.present(size: videoSize ?? Self.defaultSize)
+        window.show(size: videoSize ?? Self.defaultSize)
         isWindowVisible = true
     }
 
@@ -79,9 +107,39 @@ final class AppModel {
         for await size in capture.videoSizes {
             videoSize = size
             if isWindowVisible {
-                window.present(size: size)
+                window.updateSize(size)
             }
         }
+    }
+
+    private func observeRestarts() async {
+        for await _ in capture.restarts {
+            await restart()
+        }
+    }
+
+    private func observeWake() async {
+        let notifications = NSWorkspace.shared.notificationCenter
+            .notifications(named: NSWorkspace.didWakeNotification)
+        for await _ in notifications {
+            await restart()
+        }
+    }
+
+    /// Re-establish the session after a runtime error or wake. `resume()` keeps the
+    /// connections (preview included) intact; a full `start` is only the fallback.
+    /// One attempt per trigger — no auto-loop.
+    private func restart() async {
+        guard let deviceID = currentDeviceID, !isRestarting else { return }
+        isRestarting = true
+        isLive = false
+        var running = await capture.resume()
+        if !running {
+            running = await capture.start(deviceID: deviceID)
+        }
+        isLive = running
+        failed = !running
+        isRestarting = false
     }
 
     private func beginMonitoring() async {
@@ -101,6 +159,7 @@ final class AppModel {
             currentDeviceID = nil
             currentDeviceName = nil
             isLive = false
+            failed = false
             videoSize = nil
             window.hide()
             isWindowVisible = false
@@ -112,6 +171,7 @@ final class AppModel {
         currentDeviceName = device.name
         let running = await capture.start(deviceID: device.id)
         isLive = running
+        failed = !running
         if running, autoShowOnConnect {
             presentWindow()
         } else if !running {
