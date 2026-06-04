@@ -32,3 +32,4 @@ targets:
         GENERATE_INFOPLIST_FILE: "YES"
         INFOPLIST_KEY_LSUIElement: "YES"
         INFOPLIST_KEY_CFBundleDisplayName: SharePad
+        INFOPLIST_KEY_NSCameraUsageDescription: SharePad displays your connected iPad's screen.
