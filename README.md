@@ -10,8 +10,10 @@ the call. No more per-call QuickTime ritual.
 Primary use case: live drawing / whiteboarding shown as full shared content, not
 a webcam tile.
 
-> **Status: in development.** Phase 0 (menu-bar skeleton + tooling) landed;
-> capture is next ([DESIGN.md §9](DESIGN.md)).
+> **Status: in development.** Phases 0–4 landed — capture, clean share window,
+> popover (live thumbnail + device picker), automatic lifecycle — plus window-frame
+> persistence. Phase 5 (polish: app icon, CPU check) is the only remaining
+> milestone ([DESIGN.md §9](DESIGN.md)).
 
 ## Docs
 

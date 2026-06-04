@@ -1,11 +1,14 @@
 # SharePad — Development Guidelines
 
-> Last reviewed: 2026-06-03.
+> Last reviewed: 2026-06-04.
 >
-> **Status: Phase 0 (skeleton) landed.** The tooling and menu-bar app exist; the
-> remaining modules below are still the *target* defined in [`DESIGN.md`](DESIGN.md).
-> The design spec is the source of truth for *what* we're building and *why*; this
-> file is *how* we build it. Read `DESIGN.md` first.
+> **Status: Phases 0–4 landed, plus #7 (window-frame persistence) and #10 (popover
+> live thumbnail + device picker).** The full pipeline exists — CMIO opt-in,
+> `.muxed` capture, borderless aspect-locked share window, popover, and automatic
+> connect/disconnect/wake lifecycle. Only **Phase 5 (polish)** remains. The module
+> map below is the *actual* layout. The design spec is the source of truth for
+> *what* we're building and *why*; this file is *how* we build it. Read
+> `DESIGN.md` first.
 
 ## Project Overview
 
@@ -124,8 +127,10 @@ with literals.
   stay literal — don't force those into the scale.
 - **Colours via semantic names**, not raw values. Prefer system materials
   (`.regularMaterial`, `NSVisualEffectView`) so the popover/window match macOS.
-- The status item has exactly two visual states — **idle** (dim) and **live**
-  (tinted). Keep that legible at menu-bar size.
+- The status item has exactly two visual states — **idle** (`ipad.landscape`) and
+  **live** (`ipad.landscape.badge.play`). It's a badged-symbol swap, not a tint:
+  the menu bar renders items monochrome and strips colour. Keep both legible at
+  menu-bar size.
 
 ## Code Style
 
@@ -201,9 +206,11 @@ before touching capture.
   transmit a *visible* window** — a buried window shares blank. The popover's
   *Keep window on top* toggle is the escape hatch. Remember this when "the share is
   black" gets reported.
-- **Two preview layers on one session** (window + popover both live) is unproven —
-  verify in Phase 3; fallback is a single `AVCaptureVideoDataOutput` fan-out
-  (`DESIGN.md` §5.2).
+- **The popover thumbnail renders off the data output, not a second preview layer**
+  (#10). The window owns the one `AVCaptureVideoPreviewLayer`; the popover gets a
+  fan-out of the existing `AVCaptureVideoDataOutput` into an
+  `AVSampleBufferDisplayLayer`, gated to popover-open and throttled to ~15 fps. The
+  "two preview layers on one session" question was sidestepped, not tested.
 - **Locked iPad shows black**; sleep/wake can interrupt the session — restart on
   `runtimeErrorNotification` / interruption end.
 
