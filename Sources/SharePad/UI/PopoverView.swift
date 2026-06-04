@@ -11,6 +11,8 @@ struct PopoverView: View {
             statusText
                 .foregroundStyle(.secondary)
 
+            devicePicker
+
             stateAction
 
             Button(model.isWindowVisible ? "Hide window" : "Show window") {
@@ -42,6 +44,21 @@ struct PopoverView: View {
         }
         .padding()
         .frame(width: 260)
+    }
+
+    @ViewBuilder private var devicePicker: some View {
+        if model.devices.count > 1 {
+            Picker("Source", selection: Binding(
+                get: { model.currentDeviceID ?? "" },
+                set: { model.selectDevice(id: $0) }
+            )) {
+                ForEach(model.devices) { device in
+                    Text(device.name).tag(device.id)
+                }
+            }
+            .labelsHidden()
+            .pickerStyle(.menu)
+        }
     }
 
     @ViewBuilder private var stateAction: some View {
