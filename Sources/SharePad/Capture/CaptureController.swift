@@ -7,6 +7,7 @@ protocol CaptureControlling: Sendable {
     func resume() async -> Bool
     func stop() async
     func setThumbnailActive(_ active: Bool)
+    func awaitFrame(timeout: TimeInterval) async -> Bool
 }
 
 /// @unchecked Sendable: `session` and the output/connection wiring are mutated only
@@ -99,6 +100,20 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         }
     }
 
+    /// Confirm frames are actually flowing: `resume()` reporting `isRunning` isn't enough
+    /// — a stalled device can be "running" with no frames (frozen preview). (#13)
+    func awaitFrame(timeout: TimeInterval) async -> Bool {
+        await withCheckedContinuation { continuation in
+            sampleQueue.async { [frameListener, sampleQueue] in
+                let wait = FrameWait(continuation)
+                frameListener.setFrameWaiter { _ = wait.resolve(true) }
+                sampleQueue.asyncAfter(deadline: .now() + timeout) {
+                    if wait.resolve(false) { frameListener.setFrameWaiter(nil) }
+                }
+            }
+        }
+    }
+
     private func configureAndRun(deviceID: String) -> Bool {
         guard let device = AVCaptureDevice(uniqueID: deviceID),
               let input = try? AVCaptureDeviceInput(device: device)
@@ -165,8 +180,24 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
     }
 }
 
-/// @unchecked Sendable: every stored property is read/written only on the data
-/// output's serial delegate queue (`setActive` is dispatched onto it too).
+/// Resolves an `awaitFrame` continuation exactly once; touched only on the sample queue.
+private final class FrameWait: @unchecked Sendable {
+    private var continuation: CheckedContinuation<Bool, Never>?
+
+    init(_ continuation: CheckedContinuation<Bool, Never>) {
+        self.continuation = continuation
+    }
+
+    func resolve(_ value: Bool) -> Bool {
+        guard let continuation else { return false }
+        self.continuation = nil
+        continuation.resume(returning: value)
+        return true
+    }
+}
+
+/// @unchecked Sendable: every stored property is read/written only on the data output's
+/// serial delegate queue (`setActive`/`setFrameWaiter` are dispatched onto it too).
 private final class FrameOutput: NSObject, @unchecked Sendable {
     private static let minThumbnailInterval = 1.0 / 15.0
 
@@ -175,6 +206,7 @@ private final class FrameOutput: NSObject, @unchecked Sendable {
     private var lastSize: CGSize = .zero
     private var active = false
     private var lastRenderedSeconds: Double?
+    private var onNextFrame: (@Sendable () -> Void)?
 
     init(renderer: AVSampleBufferVideoRenderer,
          onChange: @escaping @Sendable (CGSize) -> Void) {
@@ -188,6 +220,10 @@ private final class FrameOutput: NSObject, @unchecked Sendable {
             lastRenderedSeconds = nil
             renderer.flush()
         }
+    }
+
+    func setFrameWaiter(_ waiter: (@Sendable () -> Void)?) {
+        onNextFrame = waiter
     }
 }
 
@@ -204,6 +240,13 @@ extension FrameOutput: AVCaptureVideoDataOutputSampleBufferDelegate {
                 lastSize = size
                 onChange(size)
             }
+        }
+
+        // Before the active-gate: the resume() watchdog (#13) needs *any* frame, not
+        // only popover-open ones.
+        if let onNextFrame {
+            self.onNextFrame = nil
+            onNextFrame()
         }
 
         guard active else { return }

@@ -44,6 +44,7 @@ final class AppModel {
     private var isReconfiguring = false
 
     private static let defaultSize = CGSize(width: 820, height: 1180)
+    private static let frameTimeout: TimeInterval = 1.5
 
     convenience init(preferences: Preferences = Preferences()) {
         let controller = CaptureController()
@@ -175,6 +176,9 @@ final class AppModel {
         isReconfiguring = true
         isLive = false
         var running = await capture.resume()
+        if running {
+            running = await capture.awaitFrame(timeout: Self.frameTimeout)
+        }
         if !running {
             running = await capture.start(deviceID: deviceID)
         }
