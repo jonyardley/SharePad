@@ -3,6 +3,7 @@ import AppKit
 enum AboutPanel {
     private static let repo = "https://github.com/jonyardley/SharePad"
     private static let issues = "https://github.com/jonyardley/SharePad/issues"
+    private static let support = "https://yardley31.gumroad.com/l/sharepad"
     private static let tagline =
         "Turn a USB-connected iPad into an always-ready window for any video call."
 
@@ -24,6 +25,8 @@ enum AboutPanel {
         body.append(link("GitHub", url: repo))
         body.append(separator)
         body.append(link("Report an Issue", url: issues))
+        body.append(separator)
+        body.append(link("Support SharePad", url: support))
 
         let centered = NSMutableParagraphStyle()
         centered.alignment = .center
