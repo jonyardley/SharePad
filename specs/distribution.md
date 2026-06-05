@@ -4,7 +4,8 @@
 > CLAUDE.md says these go up a tier and must be verified on the iPad). Status:
 > **proposed**, not yet implemented. Plan mode follows approval.
 >
-> Sibling: **`specs/licensing.md`** (buy/trial/unlock) sits *on top* of this. This
+> Sibling: **`specs/licensing.md`** (GPLv3 + sell-the-build monetisation) sits *on
+> top* of this. This
 > spec is the foundation and the critical path — do it first.
 
 ## 1. Problem & goal
@@ -115,8 +116,9 @@ version always matches the tag — the single source of truth.
 
 These aren't "distribution" proper but belong to the same 1.0 push:
 - ✅ **PR CI now runs tests** — `ci.yml` switched from `just build` to `just test`.
-- ✅ **`LICENSE` is proprietary** (all-rights-reserved placeholder; real EULA still
-  TBD — §11). Replaced the MIT license that had landed on main.
+- ✅ **`LICENSE` is GPLv3** — open source. The notarized build is sold as a paid
+  convenience, not enforced (see `specs/licensing.md`). Replaced the MIT license
+  that had briefly landed on main.
 - ✅ **README/DESIGN** updated for paid direct distribution (DESIGN.md §12.5
   resolved to "direct sale, Developer ID notarized").
 - ✅ **Issue [#24](https://github.com/jonyardley/SharePad/issues/24)** (watchdog
@@ -144,7 +146,9 @@ These aren't "distribution" proper but belong to the same 1.0 push:
    (Proposed: DMG for download, zip archive for the Sparkle feed.)
 3. **dSYM handling** — keep dSYMs as release artifacts for future crash
    symbolication even though no crash reporter ships in v1?
-4. **EULA wording** — proprietary license text for the `LICENSE` file and the DMG.
+4. **Storefront terms** — GPLv3 is the software licence (no EULA needed); decide
+   whether the paid download needs a short terms-of-sale/refund note. See
+   `specs/licensing.md`.
 5. **Cert storage** — App Store Connect API key (`.p8`) vs app-specific password
    for `notarytool`. (Proposed: API key — cleaner for CI.)
 6. **Sparkle hardened-runtime entitlements** — confirm none beyond camera are
