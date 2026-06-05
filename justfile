@@ -105,5 +105,9 @@ sparkle-appcast:
     [ -n "$GEN" ] || { echo "generate_appcast not found — run a build first to resolve Sparkle" >&2; exit 1; }
     rm -rf .build/appcast && mkdir -p .build/appcast
     cp .build/SharePad.dmg .build/appcast/
-    "$GEN" --ed-key-file "$SPARKLE_ED_KEY_PATH" --download-url-prefix "$DOWNLOAD_URL_PREFIX" .build/appcast
+    # The newest CHANGELOG section becomes SharePad.md; generate_appcast matches it to
+    # SharePad.dmg by basename and --embed-release-notes bakes it into the appcast's
+    # <description>, which Sparkle shows in the update dialog. No section → no notes.
+    if [ -f CHANGELOG.md ]; then awk '/^## /{n++} n==1' CHANGELOG.md > .build/appcast/SharePad.md; fi
+    "$GEN" --ed-key-file "$SPARKLE_ED_KEY_PATH" --download-url-prefix "$DOWNLOAD_URL_PREFIX" --embed-release-notes .build/appcast
     echo "Appcast written to .build/appcast/appcast.xml"
