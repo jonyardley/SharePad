@@ -4,22 +4,20 @@ A single, dependency-free `index.html` served via **GitHub Pages**. Design is
 derived from the app icon (indigo→periwinkle gradient, sky-blue iPad glyph, the
 flat 45° long-shadow motif).
 
-## Enable GitHub Pages (one-time)
+## GitHub Pages
 
-1. Repo → **Settings → Pages**.
-2. **Source:** "Deploy from a branch".
-3. **Branch:** `main`, **folder:** `/docs`. Save.
-4. Site goes live at `https://jonyardley.github.io/SharePad/` within a minute or
-   two. (Add a custom domain on the same page later if you want one.)
+Live at **https://jonyardley.github.io/SharePad/**, served from `main` / `/docs`
+(Settings → Pages). No build step — edits publish on push to `main` within a
+minute or two. (Add a custom domain on that settings page if you ever want one.)
 
-No build step — edits to `docs/index.html` publish on push to `main`.
+## The demo
 
-## Add the demo (highest-impact next step)
-
-The strongest asset is a screen recording of the **plug-in → window → share**
-flow. Record it, export a GIF or MP4 to `docs/assets/demo.gif`, then replace the
-hero `.stage` mockup (or add a section) — see the `▸▸ ADD YOUR DEMO HERE` comment
-in `index.html`. The demo *is* the pitch.
+The `#demo` section shows a **still** (`docs/assets/demo.jpg`) of SharePad live in
+a Google Meet call. The still is the placeholder for a **motion demo** — record
+the plug-in → window → share flow, export a GIF or MP4 to `docs/assets/demo.gif`,
+and swap the `<img src="assets/demo.jpg">` in the `#demo` section (there's a marker
+comment beside it). Motion is the stronger pitch; the still holds the spot until
+then.
 
 ## The download button
 
