@@ -68,32 +68,47 @@ jobs:
           export RELEASE_VERSION="${TAG#v}"
           just release
 
-      # Generate + EdDSA-sign the Sparkle appcast. The enclosure URL is the tag's
-      # release-asset path (deterministic before the release exists), so we can build
-      # the appcast first and attach it to the release below — no push to protected main.
+      # Generate + EdDSA-sign the Sparkle appcast. DMG and appcast are published to
+      # the gh-pages branch (GitHub Pages), so the Releases page shows only source
+      # archives — not the compiled binary.
       - name: Generate Sparkle appcast
         if: startsWith(github.ref, 'refs/tags/')
         env:
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
-          TAG: ${{ github.ref_name }}
-          REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           export SPARKLE_ED_KEY_PATH="$RUNNER_TEMP/sparkle_ed_key"
           trap 'rm -f "$SPARKLE_ED_KEY_PATH"' EXIT
           printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$SPARKLE_ED_KEY_PATH"
-          export DOWNLOAD_URL_PREFIX="https://github.com/$REPO/releases/download/$TAG/"
+          export DOWNLOAD_URL_PREFIX="https://jonyardley.github.io/SharePad/"
           just sparkle-appcast
 
-      # Publish the DMG + appcast as release assets. SUFeedURL points at
-      # releases/latest/download/appcast.xml, so this is the live update feed — no
-      # GitHub Pages, no branch push. Only on a real tag (a workflow_dispatch on a
-      # branch would otherwise create a release named after the branch).
-      - name: Publish GitHub Release
+      # Push DMG + appcast to gh-pages so GitHub Pages serves them. The gh-pages
+      # branch is not protected, so the Actions bot can push directly.
+      - name: Publish DMG + appcast to gh-pages
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages
+          git worktree add /tmp/gh-pages gh-pages
+          cp .build/SharePad.dmg /tmp/gh-pages/SharePad.dmg
+          cp .build/appcast/appcast.xml /tmp/gh-pages/appcast.xml
+          cd /tmp/gh-pages
+          git add SharePad.dmg appcast.xml
+          git commit -m "Release $TAG: update DMG + appcast [skip ci]"
+          git push origin gh-pages
+
+      # Create a GitHub Release for changelog notes + source archives only.
+      # The DMG is intentionally NOT attached — it's served from GitHub Pages.
+      - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          gh release create "$TAG" .build/SharePad.dmg .build/appcast/appcast.xml --title "$TAG" --generate-notes
+          gh release create "$TAG" --title "$TAG" --generate-notes
