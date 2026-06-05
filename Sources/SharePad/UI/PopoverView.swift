@@ -6,8 +6,7 @@ struct PopoverView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
-            Text("SharePad")
-                .font(.headline)
+            header
 
             thumbnail
 
@@ -54,6 +53,22 @@ struct PopoverView: View {
         .frame(width: 260)
         .onAppear { model.popoverDidAppear() }
         .onDisappear { model.popoverDidDisappear() }
+    }
+
+    private var header: some View {
+        HStack {
+            Text("SharePad")
+                .font(.headline)
+            Spacer()
+            Button {
+                AboutPanel.present()
+            } label: {
+                Image(systemName: "info.circle")
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .help("About SharePad")
+        }
     }
 
     @ViewBuilder private var thumbnail: some View {
