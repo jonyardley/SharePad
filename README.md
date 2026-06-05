@@ -56,7 +56,9 @@ beats a small webcam tile. See
 
 ## License
 
-SharePad is free and open source under the [GNU GPLv3](LICENSE). You're welcome to
-build it yourself from source. If you'd rather not, you can **buy a ready-to-run,
-signed, notarized, auto-updating build** — the easiest way to get SharePad and the
-best way to support its development. (Buy link: TBD.)
+SharePad's source is free and open under the [GNU GPLv3](LICENSE) — you're welcome
+to build it yourself. If you'd rather not, the **official prebuilt build** is
+signed, notarized, and auto-updating; it runs a **14-day free trial**, then a
+license key (the easiest way to get SharePad and the best way to support its
+development). The trial is a soft nudge on the convenience build, not a lock on the
+source. (Buy link: TBD.) See [`specs/licensing.md`](specs/licensing.md).

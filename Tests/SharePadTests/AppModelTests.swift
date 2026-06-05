@@ -17,13 +17,15 @@ final class AppModelTests: XCTestCase {
     private func makeModel(
         capture: FakeCaptureController,
         window: FakeShareWindow,
-        preferences: Preferences
+        preferences: Preferences,
+        validator: KeyValidating = LicenseValidator(publicKeyBase64: "")
     ) -> AppModel {
         AppModel(
             preferences: preferences,
             capture: capture,
             window: window,
-            thumbnailLayer: AVSampleBufferDisplayLayer()
+            thumbnailLayer: AVSampleBufferDisplayLayer(),
+            validator: validator
         )
     }
 
@@ -223,5 +225,58 @@ final class AppModelTests: XCTestCase {
         XCTAssertEqual(capture.thumbnailActive, true)
         model.popoverDidDisappear()
         XCTAssertEqual(capture.thumbnailActive, false)
+    }
+
+    func testTrialExpiredWithholdsCapture() async throws {
+        let capture = FakeCaptureController()
+        let window = FakeShareWindow()
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date().addingTimeInterval(-20 * 86400) // past the 14-day trial
+        let model = makeModel(capture: capture, window: window, preferences: prefs)
+        model.refreshLicense()
+        XCTAssertFalse(model.isEntitled)
+        await model.reconcile(devices: [device("a")])
+        XCTAssertEqual(capture.startedDeviceIDs, []) // feed withheld
+        XCTAssertEqual(model.currentDeviceName, "Device a") // but the device is detected
+        XCTAssertFalse(model.isLive)
+        XCTAssertTrue(window.shownSizes.isEmpty) // window not shown
+    }
+
+    func testEnteringValidLicenseStartsCapture() async throws {
+        let capture = FakeCaptureController()
+        let window = FakeShareWindow()
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date().addingTimeInterval(-20 * 86400)
+        let model = makeModel(
+            capture: capture, window: window, preferences: prefs,
+            validator: OneKeyValidator(name: "Jon", key: "good")
+        )
+        model.refreshLicense()
+        await model.reconcile(devices: [device("a")])
+        XCTAssertEqual(capture.startedDeviceIDs, []) // gated while expired
+
+        let unlocked = await model.enterLicense(name: "Jon", key: "good")
+        XCTAssertTrue(unlocked)
+        XCTAssertTrue(model.isEntitled)
+        XCTAssertEqual(capture.startedDeviceIDs, ["a"]) // unlock starts the withheld device
+        XCTAssertTrue(model.isLive)
+    }
+
+    func testWrongLicenseKeyRejected() async throws {
+        let prefs = try ephemeralPreferences()
+        let model = makeModel(
+            capture: FakeCaptureController(), window: FakeShareWindow(), preferences: prefs,
+            validator: OneKeyValidator(name: "Jon", key: "good")
+        )
+        let unlocked = await model.enterLicense(name: "Jon", key: "wrong")
+        XCTAssertFalse(unlocked)
+    }
+}
+
+private struct OneKeyValidator: KeyValidating {
+    let name: String
+    let key: String
+    func isValid(name: String, key: String) -> Bool {
+        name == self.name && key == self.key
     }
 }

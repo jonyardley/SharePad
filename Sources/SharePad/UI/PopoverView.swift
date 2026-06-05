@@ -3,24 +3,31 @@ import SwiftUI
 
 struct PopoverView: View {
     @Environment(AppModel.self) private var model
+    @State private var showingLicense = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
             header
 
-            thumbnail
+            if model.isEntitled {
+                thumbnail
 
-            statusText
-                .foregroundStyle(.secondary)
+                statusText
+                    .foregroundStyle(.secondary)
 
-            devicePicker
+                devicePicker
 
-            stateAction
+                stateAction
 
-            Button(model.isWindowVisible ? "Hide window" : "Show window") {
-                model.toggleWindow()
+                Button(model.isWindowVisible ? "Hide window" : "Show window") {
+                    model.toggleWindow()
+                }
+                .disabled(!model.isConnected)
+
+                trialBanner
+            } else {
+                expiredSection
             }
-            .disabled(!model.isConnected)
 
             Divider()
 
@@ -53,6 +60,26 @@ struct PopoverView: View {
         .frame(width: 260)
         .onAppear { model.popoverDidAppear() }
         .onDisappear { model.popoverDidDisappear() }
+        .sheet(isPresented: $showingLicense) { LicenseEntryView() }
+    }
+
+    @ViewBuilder private var trialBanner: some View {
+        if case let .trial(days) = model.licenseState {
+            Text("Trial — \(days) day\(days == 1 ? "" : "s") left")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private var expiredSection: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.row) {
+            Text(model.currentDeviceName ?? "No iPad connected")
+                .foregroundStyle(.secondary)
+            Text("Your trial has ended.")
+                .font(.callout)
+            Button("Buy SharePad") { model.openPurchasePage() }
+            Button("Enter license key…") { showingLicense = true }
+        }
     }
 
     private var header: some View {

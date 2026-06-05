@@ -372,11 +372,24 @@ hardware, so we **isolate the pure logic** and **manually verify the pipeline**.
 5. ~~**Distribution later**~~ — **Resolved (2026-06-05):** 1.0 is a notarized
    **direct download** (Developer ID + Hardened Runtime + the
    `com.apple.security.device.camera` entitlement; **no** sandbox, since it breaks
-   the CMIO opt-in — so App Store is out), auto-updating via Sparkle. The app is
-   **open source under GPLv3**: anyone may build it; the prebuilt signed build is
-   **sold as a paid convenience** (no trial, no licence keys — open source makes
-   enforcement moot). Full plan in `specs/distribution.md` (release pipeline) and
-   `specs/licensing.md` (the sell-the-build model).
+   the CMIO opt-in — so App Store is out), auto-updating via Sparkle. The **source
+   is open (GPLv3)** — anyone may build it free — but the **official prebuilt build
+   is sold** with a **14-day full-feature trial** that then gates the capture feed
+   (the iPad is still detected, but the session won't start) until a license key is
+   entered. Enforcement is **soft by design**: a source build can omit the gate,
+   which is acceptable — the trial targets convenience-buyers, not adversaries.
+   Validation is **offline** — no server, no phone-home. Full plan in
+   `specs/distribution.md` (release pipeline) and `specs/licensing.md` (trial +
+   licensing model).
+6. ~~**License-key scheme**~~ — **Resolved (2026-06-05, licensing layer):** an
+   earlier draft of `specs/licensing.md` named CocoaFob, but that's a third-party
+   SPM dependency (against the no-deps ethos) and can't be cleanly vendored offline.
+   Implemented instead with **CryptoKit** (`Curve25519.Signing`, first-party,
+   zero-dep): a key is a base64 Ed25519 signature of the licensee name, verified
+   against an embedded **public** key. Isolated behind `protocol KeyValidating`, so
+   the scheme is swappable in one file (`LicenseValidator.swift`) if the storefront
+   generator can't emit this format — **to confirm before launch**. The rest of the
+   layer is scheme-agnostic.
 
 ---
 

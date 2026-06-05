@@ -17,9 +17,14 @@ final class AppModel {
     private(set) var keepOnTop: Bool
     private(set) var launchAtLogin: Bool
     private(set) var launchAtLoginFailed = false
+    private(set) var licenseState: LicenseState = .trial(daysRemaining: Licensing.trialDays)
 
     var isConnected: Bool {
         currentDeviceName != nil
+    }
+
+    var isEntitled: Bool {
+        licenseState.isEntitled
     }
 
     var state: AppState {
@@ -40,12 +45,16 @@ final class AppModel {
     private let monitor: DeviceMonitor
     private let window: ShareWindowControlling
     private let preferences: Preferences
+    private let store: LicenseStore
+    private let validator: KeyValidating
     private(set) var currentDeviceID: String?
     private var isReconfiguring = false
 
     private static let defaultSize = CGSize(width: 820, height: 1180)
     private static let frameTimeout: TimeInterval = 1.5
     private static let startFrameTimeout: TimeInterval = 3.0
+    /// Empty until the production keypair ships: trial works, no key validates (licensing.md §5).
+    private static let licensePublicKey = ""
 
     convenience init(preferences: Preferences = Preferences()) {
         let controller = CaptureController()
@@ -65,12 +74,15 @@ final class AppModel {
         preferences: Preferences,
         capture: CaptureControlling,
         window: ShareWindowControlling,
-        thumbnailLayer: AVSampleBufferDisplayLayer
+        thumbnailLayer: AVSampleBufferDisplayLayer,
+        validator: KeyValidating = LicenseValidator(publicKeyBase64: AppModel.licensePublicKey)
     ) {
         self.preferences = preferences
         self.capture = capture
         self.window = window
         self.thumbnailLayer = thumbnailLayer
+        self.validator = validator
+        store = LicenseStore(preferences: preferences)
         monitor = DeviceMonitor()
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
@@ -80,6 +92,7 @@ final class AppModel {
     func start() {
         CMIO.allowScreenCaptureDevices()
         permission = CameraPermission.status
+        refreshLicense()
         window.setKeepOnTop(keepOnTop)
         Task { await beginMonitoring() }
         Task { await observeVideoSize() }
@@ -215,6 +228,7 @@ final class AppModel {
         isReconfiguring = true
         currentDeviceID = device.id
         currentDeviceName = device.name
+        guard isEntitled else { isReconfiguring = false; return }
         let running = await startAndConfirm(deviceID: deviceID)
         isLive = running
         failed = !running
@@ -248,6 +262,8 @@ final class AppModel {
         case let .switchTo(device):
             currentDeviceID = device.id
             currentDeviceName = device.name
+            // Trial expired: the iPad is detected (name set above) but the feed stays withheld.
+            guard isEntitled else { return }
             let running = await startAndConfirm(deviceID: device.id)
             isLive = running
             failed = !running
@@ -261,5 +277,32 @@ final class AppModel {
                 isWindowVisible = false
             }
         }
+    }
+}
+
+// ── Licensing ──
+
+extension AppModel {
+    func refreshLicense(now: Date = Date()) {
+        let first = store.firstLaunch(now: now)
+        licenseState = Licensing.state(
+            firstLaunch: first, now: now,
+            name: store.name, key: store.key, validator: validator
+        )
+    }
+
+    func enterLicense(name: String, key: String) async -> Bool {
+        guard validator.isValid(name: name, key: key) else { return false }
+        store.save(name: name, key: key)
+        refreshLicense()
+        if isEntitled, !devices.isEmpty {
+            currentDeviceID = nil
+            await reconcile(devices: devices)
+        }
+        return true
+    }
+
+    func openPurchasePage() {
+        Purchase.openCheckout()
     }
 }

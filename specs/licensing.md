@@ -1,69 +1,123 @@
 # Licensing & Monetisation — Spec
 
-> Status: **proposed**. Supersedes the earlier trial/licence-key draft — see the
-> decision below. Sibling: `specs/distribution.md` (the release pipeline this
-> builds on).
+> Status: **locked (2026-06-05, revised).** Revises the immediately-prior
+> "no enforcement" draft — see the decision and its history below. Sibling:
+> `specs/distribution.md` (the release pipeline this builds on).
 
 ## 1. Problem & goal
 
-Sell SharePad to fund its development, while keeping it **open source**. Those two
-goals only reconcile one way: you can't *enforce* payment on open-source software
-(anyone can build it, or compile out any gate), so monetisation is **selling
-convenience and goodwill**, not licence enforcement.
+Sell SharePad to fund its development while keeping the **source open**. The model:
+the *code* is GPLv3 (anyone may build it free), but the **official prebuilt build
+that Jon sells** carries a **14-day free trial → license-key unlock**. The trial
+nudges the people who download the ready-to-run app — the overwhelming majority —
+to pay. It is deliberately a **soft nudge, not DRM**: because the source is public,
+a technical user can build an un-gated SharePad, and that's fine. We optimise for
+the convenience-buyer, not the source-compiler.
 
-## 2. Decision (locked, 2026-06-05)
+## 2. Decision (locked)
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| **Source licence** | **GPLv3** | Truly open source; copyleft means anyone redistributing a modified build must also open *their* source, which removes the incentive to repackage-and-undercut. As sole copyright holder, Jon can still sell builds freely. |
-| **Monetisation** | **Sell the prebuilt build** — signed, notarized, auto-updating DMG | The thing of value is the *ready-to-run* app, not the bits. Most users will happily pay rather than build from source. (Maccy / OBS / NetNewsWire model.) |
-| **Enforcement** | **None** | No trial, no licence keys, no in-app gate. Open source makes enforcement pointless *and* against the spirit. The bought build and the self-built build are byte-for-byte the same. |
+| **Source licence** | **GPLv3** | Truly open source; copyleft removes the incentive to repackage-and-undercut. As sole copyright holder, Jon may also license his own code commercially and sell builds. |
+| **Monetisation** | **Sell the prebuilt build** — signed, notarized, auto-updating DMG — **with a 14-day trial then a license key** | The value is the *ready-to-run* app. The trial lets people try before buying; the key unlocks the build they downloaded. (Open-core / "sell the official build" model.) |
+| **Enforcement** | **Soft** | A 14-day trial gate in the prebuilt build, then a capture gate until a key is entered. Not unbreakable — a source build can omit it — and that's acceptable; the gate targets convenience-buyers, not adversaries. |
+| **Validation** | **Offline** | No server, no phone-home. A key is a signature of the licensee name, verified against an embedded public key (see §3). |
 | **Price model** | **TBD** (open question) — fixed price vs pay-what-you-want | Not load-bearing for the build. |
 
-**This deletes the previous plan's trial/CocoaFob/FastSpring-licence machinery.**
-There is **no `Licensing/` module, no `AppModel` gate, no licence-key validation.**
-The app ships identical whether built or bought — a large simplification.
+### History
 
-## 3. What we actually build
+The first draft locked CocoaFob + FastSpring trial machinery. A subsequent draft
+swung the other way — GPLv3 with **no** enforcement at all — on the reasoning that
+open source makes enforcement pointless. This revision keeps GPLv3 but restores a
+**soft trial**: "can't fully enforce" became "don't bother," which over-corrected.
+Most buyers never touch the source; a trial nudge on the official build is worth
+the small, honest amount of code it costs.
 
-Almost nothing in the app itself. The work is storefront + obligations:
+## 3. What we build
 
-- **Storefront** — a checkout that takes payment and delivers the notarized DMG.
-  Since there are no licence keys to issue, the simplest fit is **Gumroad** (dead
-  simple, Merchant-of-Record handles tax, can do fixed price or pay-what-you-want)
-  or **Paddle/FastSpring** if more control is wanted later. Just a buy button →
-  DMG download. (Open question: which, and the price.)
-- **Updates** — **Sparkle** for the sold build (covered in `specs/distribution.md`
-  §7). Source builders update via `git pull` + rebuild; that's fine.
-- **GPL compliance** — the source is public on GitHub, which satisfies GPLv3's
-  "offer the source" obligation for the binaries we distribute. Nothing extra to
-  host.
+### 3.1 In-app licensing layer (`Sources/SharePad/Licensing/`)
 
-## 4. In-app changes (minimal)
+A small, **pure, unit-tested** layer — one orthogonal state axis plus one gate. It
+does **not** touch the one-session/one-owner capture model: the gate only
+*withholds* `start`, it never mutates or stops the session.
 
-- **About panel** (already exists, #29): add the GPLv3 notice — a one-line "free
-  software, no warranty" statement, a **View source** link to the GitHub repo, and
-  a **View licence** link. This also satisfies GPLv3 §0's "Appropriate Legal
-  Notices" for an interactive UI, so it's worth doing properly.
-- A discreet **"Buy / support"** affordance (popover or About) linking to the
-  storefront — optional, low-key; the app is fully functional without it.
-- **No** trial banner, **no** licence-entry sheet, **no** entitlement state.
+- **`LicenseState`** — `enum { trial(daysRemaining:), trialExpired, licensed }` with
+  `isEntitled` (trial or licensed). A **pure** reducer
+  `Licensing.state(firstLaunch:now:name:key:validator:)` mirrors `State/AppState.swift`:
+  licensed-overrides-trial; trial-day arithmetic; an absent/invalid key falls back
+  to the (possibly expired) trial window. No I/O, no AVFoundation.
+- **`KeyValidating`** + **`LicenseValidator`** — offline check via **CryptoKit**
+  `Curve25519.Signing` (first-party, zero-dependency). A key is a base64 Ed25519
+  signature of the licensee name, verified against an **embedded public key** (only
+  the public key ships). Behind the `KeyValidating` protocol, so the scheme is
+  swappable in one file if the storefront can't emit this format.
+- **`LicenseStore`** — write-once trial start + key persistence on `Preferences`.
+  The trial-start key name is deliberately non-obvious — a small bump against a
+  casual `defaults delete` reset, nothing more.
+- **`Purchase`** — opens the storefront checkout URL.
 
-## 5. Testing
+### 3.2 AppModel wiring
 
-There is essentially no new pure logic to unit-test (the whole point). The About
-panel's links are static. The only verification is manual: the About panel shows
-the correct licence/source links, and the storefront delivers a DMG that opens
-cleanly (covered by `specs/distribution.md` §10).
+`licenseState` + `isEntitled` (published); `refreshLicense()` on `start()`;
+`enterLicense(name:key:)` (validate → persist → recompute → start the device the
+gate had withheld); `openPurchasePage()`. The gate is a `guard isEntitled` at the
+two capture-start sites: when not entitled the iPad is still **detected**
+(`currentDeviceName` set, so the popover says so) but the session is **not started**
+and the window is **not shown** — surface, don't swallow.
+
+### 3.3 UI (`PopoverView` + `LicenseEntryView`)
+
+- `.trial` → a discreet "Trial — N days left" caption.
+- `.trialExpired` → the device row is replaced with **Buy SharePad** + **Enter
+  license key…** (a small sheet with inline validation error).
+- `.licensed` → no banner.
+- **About panel** (#29): add the GPLv3 notice — a one-line "free software, no
+  warranty" statement, a **View source** link to the GitHub repo, and a **View
+  licence** link. Satisfies GPLv3 §0's "Appropriate Legal Notices" for an
+  interactive UI.
+
+### 3.4 Storefront & updates
+
+- **Storefront** — a checkout that takes payment and emails a license key.
+  Candidates: **FastSpring/Paddle** (Merchant-of-Record, custom key generators) or
+  **Gumroad**. The key generator must emit the §3.1 format (Ed25519 signature of
+  the name) — **confirm before launch**, else swap `LicenseValidator`.
+- **Updates** — **Sparkle** for the sold build (`specs/distribution.md` §7). Source
+  builders update via `git pull` + rebuild.
+- **GPL compliance** — the source is public on GitHub, satisfying GPLv3's "offer the
+  source" obligation for the binaries distributed.
+
+## 4. Testing
+
+The layer is almost entirely pure logic, fully unit-testable **without hardware or
+a real key**:
+
+- **`LicenseStateTests`** — day 0 / 13 / 14 boundaries, negative clock-skew,
+  licensed-overrides-trial, invalid-key fallback, entitlement.
+- **`LicenseValidatorTests`** — a throwaway keypair generated in the test bundle:
+  valid passes; tampered name / foreign key / garbage base64 / empty embedded key
+  fail. (The production private key never enters the repo.)
+- **`LicenseStoreTests`** — write-once first-launch, license round-trip via an
+  ephemeral `UserDefaults` suite.
+- **`AppModelTests`** (via `FakeCaptureController`) — not-entitled withholds
+  `start` and the window; entering a valid key flips entitlement and starts the
+  withheld device; the entitled path is unchanged.
+
+The only **manual** check (deferred to a notarized build): one storefront test
+order → emailed key → paste → unlock.
+
+## 5. Launch blockers (config, not code)
+
+- **Embed the production license public key** — `AppModel.licensePublicKey` is an
+  empty placeholder; until set, no key validates (trial still works).
+- **Set the production storefront checkout URL** — `Purchase` opens a placeholder.
+- **Confirm the storefront's key generator** can emit the §3.1 format.
 
 ## 6. Open questions
 
-1. **Storefront + price** — Gumroad vs Paddle/FastSpring; fixed price vs
-   pay-what-you-want vs "free, donations welcome". (Proposed: Gumroad,
-   pay-what-you-want with a suggested price — lowest friction for an open-source
-   tool.)
-2. **Buy affordance placement** — About panel only, or also a quiet popover link?
-3. **Donations** — also offer GitHub Sponsors, or keep a single buy path?
-4. **Per-file licence headers** — add GPLv3 headers to source files, or rely on the
-   top-level `LICENSE` + About notice? (Proposed: top-level + About is enough for a
-   single-author app; revisit if contributors arrive.)
+1. **Storefront + price** — FastSpring/Paddle vs Gumroad; fixed price vs
+   pay-what-you-want. (Must support emailing a custom-format key.)
+2. **Buy affordance placement** — expired popover only, or also a quiet About link?
+3. **Activation cap** — none in v1, or a storefront-side device cap?
+4. **Per-file GPLv3 headers** — add to source files, or rely on top-level `LICENSE`
+   + About notice? (Proposed: top-level + About is enough for a single-author app.)
