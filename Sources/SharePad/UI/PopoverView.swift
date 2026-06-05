@@ -3,6 +3,7 @@ import SwiftUI
 
 struct PopoverView: View {
     @Environment(AppModel.self) private var model
+    let updater: SoftwareUpdating
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
@@ -43,6 +44,8 @@ struct PopoverView: View {
             }
 
             Divider()
+
+            Button("Check for Updates…") { updater.checkForUpdates() }
 
             Button("Quit SharePad") {
                 NSApplication.shared.terminate(nil)

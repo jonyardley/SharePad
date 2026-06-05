@@ -6,7 +6,7 @@ struct SharePadApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            PopoverView()
+            PopoverView(updater: delegate.updater)
                 .environment(delegate.model)
         } label: {
             StatusItemLabel(model: delegate.model)
@@ -28,11 +28,13 @@ private struct StatusItemLabel: View {
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     let model = AppModel()
+    let updater = SparkleUpdater()
 
     func applicationDidFinishLaunching(_: Notification) {
-        // Skip capture startup under XCTest so the hosted unit tests stay
+        // Skip capture/update startup under XCTest so the hosted unit tests stay
         // side-effect-free (no CMIO opt-in / camera prompt during `just test`).
         guard NSClassFromString("XCTestCase") == nil else { return }
         model.start()
+        updater.start()
     }
 }
