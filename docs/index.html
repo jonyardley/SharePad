@@ -191,6 +191,33 @@
     .float-chip{animation:none}.device .live .pulse{animation:none}
   }
 
+  /* ── Proof / demo ── */
+  .proof { padding-top: 8px; }
+  .proof .section-head { max-width: 660px; margin: 0 auto 38px; text-align: center; }
+  .proof .section-head h2 + p { margin-left: auto; margin-right: auto; }
+  .demo-frame {
+    position: relative; border-radius: var(--radius-xl);
+    padding: clamp(10px, 1.6vw, 18px);
+    background: linear-gradient(150deg, rgba(102,120,233,0.18), rgba(62,76,179,0.10));
+    border: 1px solid var(--line);
+    box-shadow: 28px 28px 0 -6px rgba(65,79,182,0.14), 0 40px 90px rgba(40,48,120,0.22);
+  }
+  .demo-frame::before {
+    content: ""; position: absolute; inset: -10% 4% 30%; z-index: -1;
+    background: radial-gradient(closest-side, rgba(91,107,232,0.30), transparent 72%); filter: blur(10px);
+  }
+  .demo-frame img { display: block; width: 100%; height: auto; border-radius: var(--radius-lg); box-shadow: 0 10px 30px rgba(40,48,120,0.18); }
+  .demo-caption { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 16px; margin-top: 24px; }
+  .demo-caption .cap-text { color: var(--ink-soft); font-size: 0.97rem; max-width: 56ch; text-align: center; }
+  .demo-caption .cap-text b { color: var(--ink); font-weight: 600; }
+  .soon-chip {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 0.82rem; font-weight: 600; color: var(--indigo);
+    background: rgba(91,107,232,0.10); border: 1px solid var(--line);
+    padding: 7px 13px; border-radius: 999px;
+  }
+  .soon-chip svg { width: 14px; height: 14px; }
+
   /* ── Section scaffolding ── */
   section { padding: 86px 0; }
   .section-head { max-width: 640px; margin-bottom: 54px; }
@@ -302,6 +329,7 @@
       SharePad
     </a>
     <div class="nav-links">
+      <a class="muted" href="#demo">See it live</a>
       <a class="muted" href="#how">How it works</a>
       <a class="muted" href="#why">Why it’s different</a>
       <a class="muted" href="#privacy">Privacy</a>
@@ -361,12 +389,26 @@
   </div>
 </header>
 
-<!--
-  ▸▸ ADD YOUR DEMO HERE
-  The strongest asset is a screen-recording of the plug-in → window → share flow.
-  Drop a GIF/MP4 at docs/assets/demo.gif and swap the .stage mockup (or add a
-  <section> with <img src="assets/demo.gif" />) here. The demo IS the pitch.
--->
+<section class="proof" id="demo">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">Proof, not a promise</div>
+      <h2>Here it is, live in a real call.</h2>
+      <p>The SharePad window on the left; Google Meet transmitting that exact window on the right. Full-size content — not a webcam tile.</p>
+    </div>
+    <div class="demo-frame">
+      <!-- Motion demo (GIF) to replace this still later — see docs/README.md -->
+      <img src="assets/demo.jpg" width="2080" height="1238" loading="lazy" alt="SharePad sharing a connected iPad's screen into a Google Meet call, shown full-size as a shared window rather than a small webcam tile." />
+    </div>
+    <div class="demo-caption">
+      <span class="soon-chip">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Motion demo coming soon
+      </span>
+      <span class="cap-text">Shared straight from the borderless window — <b>no virtual camera, no per-call QuickTime ritual.</b></span>
+    </div>
+  </div>
+</section>
 
 <section id="how">
   <div class="wrap">
