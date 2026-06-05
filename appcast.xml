@@ -1,0 +1,18 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>SharePad</title>
+        <item>
+            <title>1.0.2</title>
+            <pubDate>Fri, 05 Jun 2026 16:06:15 +0000</pubDate>
+            <sparkle:version>3</sparkle:version>
+            <sparkle:shortVersionString>1.0.2</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <description sparkle:format="markdown"><![CDATA[## 1.0.1
+- Auto-update: SharePad now updates itself, and tells you what's new.
+
+]]></description>
+            <enclosure url="https://jonyardley.github.io/SharePad/SharePad.dmg" length="1585831" type="application/octet-stream" sparkle:edSignature="s3ktNyYfRRpfvtLuxKhYH/rzYohESXv4TQN/QxlXPrSV3kbvahpJgaCwEW7S4cG1MHXf+EZ52jwTATb4Ac1+AQ=="/>
+        </item>
+    </channel>
+</rss>
