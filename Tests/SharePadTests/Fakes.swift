@@ -9,9 +9,11 @@ final class FakeCaptureController: CaptureControlling, @unchecked Sendable {
 
     var startResult = true
     var resumeResult = true
+    var awaitFrameResult = true
     private(set) var startedDeviceIDs: [String] = []
     private(set) var resumeCount = 0
     private(set) var stopCount = 0
+    private(set) var awaitFrameCount = 0
     private(set) var thumbnailActive: Bool?
 
     func start(deviceID: String) async -> Bool {
@@ -22,6 +24,11 @@ final class FakeCaptureController: CaptureControlling, @unchecked Sendable {
     func resume() async -> Bool {
         resumeCount += 1
         return resumeResult
+    }
+
+    func awaitFrame(timeout _: TimeInterval) async -> Bool {
+        awaitFrameCount += 1
+        return awaitFrameResult
     }
 
     func stop() async {
