@@ -27,6 +27,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin gh-pages
           git worktree add /tmp/gh-pages gh-pages
+          git config --global --add safe.directory /tmp/gh-pages
           rsync -a --delete --exclude='SharePad.dmg' --exclude='appcast.xml' docs/ /tmp/gh-pages/
           cd /tmp/gh-pages
           git add -A
