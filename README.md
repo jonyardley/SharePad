@@ -10,10 +10,11 @@ the call. No more per-call QuickTime ritual.
 Primary use case: live drawing / whiteboarding shown as full shared content, not
 a webcam tile.
 
-> **Status: in development.** Phases 0–4 landed — capture, clean share window,
-> popover (live thumbnail + device picker), automatic lifecycle — plus window-frame
-> persistence. Phase 5 (polish: app icon, CPU check) is the only remaining
-> milestone ([DESIGN.md §9](DESIGN.md)).
+> **Status: feature-complete (v1).** Phases 0–5 landed — capture, clean share
+> window, popover (live thumbnail + device picker), automatic
+> connect/disconnect/wake lifecycle, window-frame persistence, app icon, and the
+> idle-CPU check (idle ~0%). Personal local build (un-sandboxed); distribution and
+> notarization are a deliberate non-goal for v1 ([DESIGN.md §9](DESIGN.md)).
 
 ## Docs
 
@@ -39,3 +40,7 @@ never the `.xcodeproj`.
 Window-share, **not** a virtual camera — for live drawing, full shared content
 beats a small webcam tile. See
 [DESIGN.md §2](DESIGN.md#2-approach--rejected-alternatives) for the trade-off.
+
+## License
+
+[MIT](LICENSE) © Jon Yardley
