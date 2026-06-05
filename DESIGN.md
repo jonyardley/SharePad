@@ -313,7 +313,7 @@ Each phase is independently verifiable. Maps to PRs / plan steps.
 | **2 — Clean window** ✅ | Borderless, aspect-locked (follows iPad rotation), movable; video-only connection (no mic prompt). Frame persistence deferred → [#7](https://github.com/jonyardley/SharePad/issues/7) | Window is chrome-free; picks cleanly in a meeting app; no mic permission dialog |
 | **3 — Popover** ✅ | Toggles (auto-show, keep-on-top, launch-at-login) + Show/Hide button + armed status-item badge; first unit tests. Live thumbnail + device picker deferred → [#10](https://github.com/jonyardley/SharePad/issues/10) | Toggles persist; window shows/hides; icon shows armed state |
 | **4 — Automatic lifecycle** ✅ | Auto show/hide (KVO); sleep/wake + runtime-error auto-restart (`resume` keeps the preview connection live); permission "Open System Settings" button; surfaced `failed`/Retry; pure tested `AppState` reducer | Sleep/wake recovers the feed; denied permission shows a fix path |
-| **5 — Polish** | App icon (pending); idle-CPU check (pending). Status-item idle/live ships as a badged-symbol swap (not dim/tint — the menu bar strips colour); auto-show guard **shipped** (#6, "Auto-show on connect") | Looks finished; idle CPU acceptable |
+| **5 — Polish** ✅ | App icon ✅ (gradient squircle + iPad glyph); idle-CPU check ✅ — **idle ~0%** (the criterion); live is content-driven (~0.5% static → ~12–15% active), of which the rotation/thumbnail data output is ~4–6% (optimization tracked in [#23](https://github.com/jonyardley/SharePad/issues/23)). Status-item idle/live is a badged-symbol swap (not dim/tint); auto-show guard shipped (#6) | Idle ~0% — acceptable |
 
 ---
 
