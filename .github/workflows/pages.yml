@@ -1,0 +1,35 @@
+name: Deploy Pages
+
+# Sync docs/ to the gh-pages branch whenever main changes. The release workflow
+# publishes SharePad.dmg + appcast.xml to the same branch separately.
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    name: Sync docs/ to gh-pages
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Push docs/ to gh-pages
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages
+          git worktree add /tmp/gh-pages gh-pages
+          rsync -a --delete --exclude='SharePad.dmg' --exclude='appcast.xml' docs/ /tmp/gh-pages/
+          cd /tmp/gh-pages
+          git add -A
+          git diff --cached --quiet && echo "No changes to deploy" && exit 0
+          git commit -m "Deploy docs from ${GITHUB_SHA::8} [skip ci]"
+          git push origin gh-pages

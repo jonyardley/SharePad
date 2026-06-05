@@ -11,16 +11,10 @@ the call. No more per-call QuickTime ritual.
 Primary use case: live drawing / whiteboarding shown as full shared content, not
 a webcam tile.
 
-> **Status: heading to 1.0.** Phases 0–5 are complete — capture, clean share
-> window, popover (live thumbnail + device picker), automatic
-> connect/disconnect/wake lifecycle, window-frame persistence, app icon, and the
-> idle-CPU check (idle ~0%). The remaining work is **productionising for
-> distribution**: Developer ID signing + notarization and a DMG release pipeline.
-> App Store is ruled out (its sandbox breaks the CMIO opt-in the capture depends
-> on), so SharePad ships as a notarized **direct download**. It's open source
-> (GPLv3); you can build it free or buy the prebuilt signed build to support it.
-> See [`specs/distribution.md`](specs/distribution.md) and
-> [`specs/licensing.md`](specs/licensing.md).
+> **Status: v1.0 shipped.** Signed, notarized, and auto-updating.
+> Get the ready-to-run build at [yardley31.gumroad.com/l/sharepad](https://yardley31.gumroad.com/l/sharepad),
+> or build it yourself (GPLv3, instructions below). App Store is ruled out — its
+> sandbox breaks the CMIO opt-in the capture depends on.
 
 ## Docs
 
