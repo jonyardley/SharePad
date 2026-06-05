@@ -6,9 +6,14 @@ flat 45° long-shadow motif).
 
 ## GitHub Pages
 
-Live at **https://jonyardley.github.io/SharePad/**, served from `main` / `/docs`
-(Settings → Pages). No build step — edits publish on push to `main` within a
-minute or two. (Add a custom domain on that settings page if you ever want one.)
+Live at **https://jonyardley.github.io/SharePad/**, served from the **`gh-pages`
+branch** (root) — Settings → Pages. No build step. The `.github/workflows/pages.yml`
+workflow rsyncs `docs/` → `gh-pages` on every push to `main` that touches `docs/**`,
+so edits publish within a minute or two. To redeploy without a content change, run
+the **Deploy Pages** workflow manually (Actions → Run workflow). The release
+workflow publishes `SharePad.dmg` + `appcast.xml` to the same branch separately, so
+the deploy leaves those two files untouched. (Add a custom domain on the settings
+page if you ever want one.)
 
 ## The demo
 
