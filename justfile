@@ -47,13 +47,28 @@ release-build: gen
 
 # re-sign the Release build with Developer ID (Hardened Runtime + secure timestamp).
 # Needs SIGN_IDENTITY, e.g. "Developer ID Application: Your Name (TEAMID)".
-# No --deep: the bundle has no nested code yet; revisit when Sparkle is added.
+# Sparkle's nested XPC services + helpers are only ad-hoc signed by the build; since
+# we sign manually (not via Xcode export), we must re-sign them inside-out with
+# -o runtime and NEVER --deep, or hardened runtime/notarization rejects them.
+# (https://sparkle-project.org/documentation/sandboxing — "Manually Re-sign…")
 sign:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    APP=.build/Build/Products/Release/SharePad.app
+    FW="$APP/Contents/Frameworks/Sparkle.framework"
+    if [ -d "$FW" ]; then
+        V="$FW/Versions/B"
+        codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$V/XPCServices/Installer.xpc"
+        codesign --force --options runtime --timestamp --preserve-metadata=entitlements --sign "$SIGN_IDENTITY" "$V/XPCServices/Downloader.xpc"
+        codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$V/Autoupdate"
+        codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$V/Updater.app"
+        codesign --force --options runtime --timestamp --sign "$SIGN_IDENTITY" "$FW"
+    fi
     codesign --force --options runtime --timestamp \
         --entitlements Sources/SharePad/SharePad.entitlements \
         --sign "$SIGN_IDENTITY" \
-        .build/Build/Products/Release/SharePad.app
-    codesign --verify --strict --verbose=2 .build/Build/Products/Release/SharePad.app
+        "$APP"
+    codesign --verify --strict --verbose=2 "$APP"
 
 # notarize + staple the signed app. Needs AC_API_KEY_PATH (.p8), AC_API_KEY_ID,
 # AC_API_ISSUER_ID (App Store Connect API key).
@@ -77,3 +92,19 @@ dmg:
 # full release pipeline: build → sign → notarize app → package + notarize DMG
 release: release-build sign notarize dmg
     @echo "Release DMG: .build/SharePad.dmg"
+
+# generate + EdDSA-sign the Sparkle appcast from the notarized DMG, then stage it as
+# the GitHub Pages feed (docs/appcast.xml). Run in CI *after* the GitHub Release exists
+# so the enclosure URL resolves. Needs SPARKLE_ED_KEY_PATH (the private key file) and
+# DOWNLOAD_URL_PREFIX (the release-asset base URL, trailing slash). generate_appcast
+# reads the version from the app inside the DMG and writes appcast.xml beside it.
+sparkle-appcast:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    GEN=$(find .build/SourcePackages/artifacts -path '*Sparkle*' -name generate_appcast | head -1)
+    [ -n "$GEN" ] || { echo "generate_appcast not found — run a build first to resolve Sparkle" >&2; exit 1; }
+    rm -rf .build/appcast && mkdir -p .build/appcast
+    cp .build/SharePad.dmg .build/appcast/
+    "$GEN" --ed-key-file "$SPARKLE_ED_KEY_PATH" --download-url-prefix "$DOWNLOAD_URL_PREFIX" .build/appcast
+    cp .build/appcast/appcast.xml docs/appcast.xml
+    echo "Appcast written to docs/appcast.xml"

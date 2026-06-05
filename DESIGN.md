@@ -266,10 +266,21 @@ This is the part the earlier research under-specified.
 | Project gen | **xcodegen** (`project.yml`, generated — not hand-committed) |
 | Task runner | **just** (`justfile`) |
 | Format / lint | **swiftformat** + **swiftlint** |
-| Third-party deps | **None** — first-party frameworks only |
+| Auto-update | **Sparkle 2** (EdDSA-signed appcast) — the one third-party dependency |
+| Third-party deps | **Sparkle only** (see flagged decision below); otherwise first-party |
 
 App is an **agent** (`LSUIElement = true`): no Dock icon, lives in the menu bar.
 Accessory apps can still own windows (the share window works fine).
+
+**Flagged dependency — Sparkle 2 (first and only third-party dep).** Adopted for
+auto-update, which a notarized direct-download app needs and Apple's frameworks don't
+provide (no App Store update channel — App Store is out, DESIGN.md §6). Added via SPM
+in `project.yml`; isolated behind `protocol SoftwareUpdating` (`Updater/`) so the view
+layer and tests never import it. Under Hardened Runtime, Sparkle's nested XPC services
++ helpers are re-signed inside-out by the `sign` recipe (no `--deep`); a non-sandboxed
+app needs **no** extra `com.apple.security.cs.*` entitlements, so `SharePad.entitlements`
+stays camera-only. The EdDSA **public** key is embedded in the build (`SUPublicEDKey`);
+the private key is a CI secret. See `specs/distribution.md` §7.
 
 ---
 
