@@ -95,6 +95,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin gh-pages
           git worktree add /tmp/gh-pages gh-pages
+          git config --global --add safe.directory /tmp/gh-pages
           cp .build/SharePad.dmg /tmp/gh-pages/SharePad.dmg
           cp .build/appcast/appcast.xml /tmp/gh-pages/appcast.xml
           cd /tmp/gh-pages
@@ -102,8 +103,9 @@ jobs:
           git commit -m "Release $TAG: update DMG + appcast [skip ci]"
           git push origin gh-pages
 
-      # Create a GitHub Release for changelog notes + source archives only.
-      # The DMG is intentionally NOT attached — it's served from GitHub Pages.
+      # Create the GitHub Release. The DMG is NOT attached (served from gh-pages).
+      # appcast.xml IS attached so that v1.0.x installs (whose SUFeedURL points at
+      # releases/latest/download/appcast.xml) can still auto-update to newer builds.
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         env:
@@ -111,4 +113,4 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          gh release create "$TAG" --title "$TAG" --generate-notes
+          gh release create "$TAG" .build/appcast/appcast.xml --title "$TAG" --generate-notes
