@@ -98,6 +98,9 @@ offline cleanly).
   entry; CI generates/updates `appcast.xml` and publishes it to the feed URL.
 - A **Check for updates…** menu item in the popover (the UI hook noted in
   `specs/licensing.md` §7) calls `SPUStandardUpdaterController`.
+- **Release notes:** the top `## <version>` section of `CHANGELOG.md` is extracted to
+  `SharePad.md` and baked into the appcast via `generate_appcast --embed-release-notes`;
+  Sparkle shows it in the update dialog. Edit `CHANGELOG.md` before tagging.
 
 ## 8. Release CI workflow (`.github/workflows/release.yml`)
 
