@@ -137,6 +137,8 @@ final class AppModelTests: XCTestCase {
         await model.restart()
         XCTAssertTrue(model.isLive)
         XCTAssertEqual(capture.resumeCount, 1)
+        XCTAssertEqual(capture.awaitFrameCount, 1)
+        XCTAssertEqual(capture.startedDeviceIDs, ["a"]) // confirmed by a frame, no reconfigure
     }
 
     func testRestartFallsBackToStart() async throws {
@@ -154,6 +156,41 @@ final class AppModelTests: XCTestCase {
         XCTAssertTrue(model.isLive)
         XCTAssertEqual(capture.resumeCount, 1)
         XCTAssertEqual(capture.startedDeviceIDs, ["a", "a"])
+    }
+
+    func testRestartFallsBackWhenResumeDeliversNoFrame() async throws {
+        let capture = FakeCaptureController()
+        let window = FakeShareWindow()
+        let model = try makeModel(
+            capture: capture,
+            window: window,
+            preferences: ephemeralPreferences()
+        )
+        await model.reconcile(devices: [device("a")])
+        capture.resumeResult = true
+        capture.awaitFrameResult = false
+        capture.startResult = true
+        await model.restart()
+        XCTAssertTrue(model.isLive)
+        XCTAssertEqual(capture.resumeCount, 1)
+        XCTAssertEqual(capture.startedDeviceIDs, ["a", "a"]) // fell back to a full start
+    }
+
+    func testRestartFailsWhenResumeStallsAndStartFails() async throws {
+        let capture = FakeCaptureController()
+        let window = FakeShareWindow()
+        let model = try makeModel(
+            capture: capture,
+            window: window,
+            preferences: ephemeralPreferences()
+        )
+        await model.reconcile(devices: [device("a")])
+        capture.resumeResult = true
+        capture.awaitFrameResult = false
+        capture.startResult = false
+        await model.restart()
+        XCTAssertFalse(model.isLive)
+        XCTAssertTrue(model.failed)
     }
 
     func testPopoverLifecycleTogglesThumbnail() throws {
