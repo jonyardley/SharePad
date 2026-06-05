@@ -52,13 +52,18 @@ Tests/SharePadTests/      # pure-logic tests (reducer, preferences)
 ## Commands
 
 ```bash
-just gen      # xcodegen generate — run after editing project.yml
-just build    # xcodebuild, debug
-just run      # build + launch the app
-just open     # open the generated project in Xcode
-just fmt      # swiftformat .   (must pass before commit)
-just lint     # swiftlint + swiftformat --lint (must pass before push)
+just gen           # xcodegen generate — run after editing project.yml
+just build         # xcodebuild, debug
+just run           # build + launch the app
+just open          # open the generated project in Xcode
+just test          # run the unit tests
+just fmt           # swiftformat .   (must pass before commit)
+just lint          # swiftlint + swiftformat --lint (must pass before push)
+just release-build # Release build, Hardened Runtime, ad-hoc (for local on-iPad checks)
+just release       # full pipeline: build → Developer ID sign → notarize → DMG (needs creds)
 ```
+
+Release signing/notarization is env-driven; see `specs/distribution.md`.
 
 First-time setup:
 
