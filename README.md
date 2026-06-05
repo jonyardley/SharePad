@@ -13,11 +13,12 @@ a webcam tile.
 > **Status: heading to 1.0.** Phases 0–5 are complete — capture, clean share
 > window, popover (live thumbnail + device picker), automatic
 > connect/disconnect/wake lifecycle, window-frame persistence, app icon, and the
-> idle-CPU check (idle ~0%). The remaining work is **productionising for paid
-> distribution**: Developer ID signing + notarization, a DMG release pipeline, and
-> a trial/licensing layer. App Store is ruled out (its sandbox breaks the CMIO
-> opt-in the capture depends on), so SharePad ships as a notarized **direct
-> download**. See [`specs/distribution.md`](specs/distribution.md) and
+> idle-CPU check (idle ~0%). The remaining work is **productionising for
+> distribution**: Developer ID signing + notarization and a DMG release pipeline.
+> App Store is ruled out (its sandbox breaks the CMIO opt-in the capture depends
+> on), so SharePad ships as a notarized **direct download**. It's open source
+> (GPLv3); you can build it free or buy the prebuilt signed build to support it.
+> See [`specs/distribution.md`](specs/distribution.md) and
 > [`specs/licensing.md`](specs/licensing.md).
 
 ## Docs
@@ -55,4 +56,7 @@ beats a small webcam tile. See
 
 ## License
 
-Proprietary — © 2026 Jon Yardley. All rights reserved. See [LICENSE](LICENSE).
+SharePad is free and open source under the [GNU GPLv3](LICENSE). You're welcome to
+build it yourself from source. If you'd rather not, you can **buy a ready-to-run,
+signed, notarized, auto-updating build** — the easiest way to get SharePad and the
+best way to support its development. (Buy link: TBD.)
