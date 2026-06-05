@@ -60,10 +60,9 @@ New file **`Sources/SharePad/SharePad.entitlements`**:
 ```xml
 <key>com.apple.security.device.camera</key><true/>
 ```
-Deliberately minimal. **No** `com.apple.security.device.audio-input`. Verify
-whether Sparkle 2 needs any `com.apple.security.cs.*` exception under hardened
-runtime (modern Sparkle generally does **not** require disabling library
-validation — confirm in plan mode).
+Deliberately minimal. **No** `com.apple.security.device.audio-input`. **Resolved:**
+Sparkle 2 needs **no** `com.apple.security.cs.*` exception for a non-sandboxed app —
+the entitlements file stays camera-only. (Confirm against the on-iPad notarized build.)
 
 ## 5. Notarization flow
 
@@ -81,9 +80,18 @@ building the DMG; notarize + staple the **app**, then build the DMG, then notari
 + staple the **DMG** too (so the downloaded artifact itself is stapled and opens
 offline cleanly).
 
-## 7. Sparkle (auto-update)
+## 7. Sparkle (auto-update) — **implemented** (`feature/sparkle-autoupdate`)
 
-- Added via SPM in `project.yml` (flagged dependency; record in DESIGN.md).
+> Status: integrated. Sparkle 2.9.x via SPM; `protocol SoftwareUpdating` +
+> `SparkleUpdater` in `Sources/SharePad/Updater/`; a "Check for Updates…" button in
+> the popover; `SUFeedURL`/`SUPublicEDKey`/`SUEnableAutomaticChecks` in the Info.plist
+> (now an explicit xcodegen `info` block — custom `SU*` keys can't go through
+> `INFOPLIST_KEY_*`); nested-code re-signing in the `sign` recipe; appcast generation
+> in `just sparkle-appcast` + `release.yml`. **Launch blocker:** the embedded
+> `SUPublicEDKey` is a format-valid placeholder — generate the real EdDSA keypair and
+> set the public key + `SPARKLE_ED_PRIVATE_KEY` secret before the first release.
+
+- Added via SPM in `project.yml` (flagged dependency; recorded in DESIGN.md §7).
 - Generate an **EdDSA keypair** (`generate_keys`); **private key is a CI secret**,
   public key goes in Info.plist as `SUPublicEDKey`.
 - Each release: `sign_update <archive>` produces the signature for the appcast
@@ -140,10 +148,12 @@ These aren't "distribution" proper but belong to the same 1.0 push:
 
 ## 11. Open questions
 
-1. **Appcast hosting** — GitHub Pages (clean URL, separate publish) vs a Releases
-   asset (simplest, uglier URL)?
-2. **DMG vs zip** — DMG is the better UX; zip is simpler for Sparkle deltas.
-   (Proposed: DMG for download, zip archive for the Sparkle feed.)
+1. ~~**Appcast hosting**~~ — **Resolved:** GitHub Pages, `docs/appcast.xml`
+   (`…github.io/SharePad/appcast.xml`) — the `docs/` folder already serves the landing
+   page. The release job regenerates it and commits to `main` with `[skip ci]`. (Caveat:
+   needs `main` to accept a CI push — confirm no blocking branch protection on first run.)
+2. ~~**DMG vs zip**~~ — **Resolved (v1):** the notarized **DMG** is both the download
+   and the Sparkle feed enclosure (Sparkle 2 installs from a DMG). Delta/zip deferred.
 3. **dSYM handling** — keep dSYMs as release artifacts for future crash
    symbolication even though no crash reporter ships in v1?
 4. **Storefront terms** — GPLv3 is the software licence (no EULA needed); decide
@@ -151,8 +161,8 @@ These aren't "distribution" proper but belong to the same 1.0 push:
    `specs/licensing.md`.
 5. **Cert storage** — App Store Connect API key (`.p8`) vs app-specific password
    for `notarytool`. (Proposed: API key — cleaner for CI.)
-6. **Sparkle hardened-runtime entitlements** — confirm none beyond camera are
-   needed once Sparkle is linked.
+6. ~~**Sparkle hardened-runtime entitlements**~~ — **Resolved:** none beyond camera
+   (non-sandboxed app); nested Sparkle code is re-signed inside-out in `sign` (§4, §7).
 7. **`create-dmg` in headless CI** — the Homebrew `create-dmg` (andreyvit) drives
    Finder/AppleScript for window styling and is known to exit non-zero on headless
    runners even when the DMG is produced. Verify on the first real release; if it
