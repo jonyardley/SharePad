@@ -1,6 +1,7 @@
 # SharePad
 
 [![CI](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml/badge.svg)](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml)
+[![Buy / Support](https://img.shields.io/badge/Buy%20%2F%20Support-Gumroad-ff90e8)](https://yardley31.gumroad.com/l/sharepad)
 
 A macOS **menu-bar app** that turns a USB-connected iPad into a clean,
 aspect-locked, always-ready **window** you share in any video call's "Share
@@ -57,6 +58,6 @@ beats a small webcam tile. See
 ## License
 
 SharePad is free and open source under the [GNU GPLv3](LICENSE). You're welcome to
-build it yourself from source. If you'd rather not, you can **buy a ready-to-run,
-signed, notarized, auto-updating build** — the easiest way to get SharePad and the
-best way to support its development. (Buy link: TBD.)
+build it yourself from source. If you'd rather not, you can
+**[buy a ready-to-run, signed, notarized, auto-updating build](https://yardley31.gumroad.com/l/sharepad)**
+— the easiest way to get SharePad and the best way to support its development.
