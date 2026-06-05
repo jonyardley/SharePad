@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SharePad — Your iPad, share-ready in any call</title>
+<meta name="description" content="SharePad turns a USB-connected iPad into a clean, aspect-locked window you share in any video call. Plug in → the window appears → pick it. No per-call QuickTime ritual." />
+
+<meta property="og:title" content="SharePad — Your iPad, share-ready in any call" />
+<meta property="og:description" content="A macOS menu-bar app that turns a USB-connected iPad into a clean, always-ready window for any video call's “Share window” picker." />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="assets/icon-512.png" />
+
+<link rel="icon" type="image/png" href="assets/icon-256.png" />
+<link rel="apple-touch-icon" href="assets/icon-256.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    /* Pulled from the app icon */
+    --indigo-deep:  #2C3690;
+    --indigo:       #3E4CB3;
+    --periwinkle:   #5B6BE8;
+    --periwinkle-2: #6678E9;
+    --sky:          #89B0E8;
+    --sky-pale:     #BBD3F4;
+    --shadow-indigo:#414FB6;
+
+    --ink:        #181C44;
+    --ink-soft:   #4A4F78;
+    --paper:      #F3F4FB;
+    --paper-2:    #EAECF8;
+    --card:       #FFFFFF;
+    --line:       rgba(46, 56, 144, 0.12);
+
+    --radius-xl: 32px;
+    --radius-lg: 22px;
+    --radius-md: 16px;
+
+    --maxw: 1080px;
+    --font-display: "Bricolage Grotesque", ui-serif, Georgia, serif;
+    --font-body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 700px at 85% -10%, rgba(91,107,232,0.18), transparent 60%),
+      radial-gradient(900px 600px at -10% 10%, rgba(137,176,232,0.20), transparent 55%),
+      var(--paper);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: hidden;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  /* Signature: flat 45° long-shadow from the icon, ramped in indigo */
+  .longshadow {
+    color: var(--indigo-deep);
+    text-shadow:
+       1px 1px 0 #4856bd,  2px 2px 0 #4654bb,  3px 3px 0 #4452b9,
+       4px 4px 0 #4250b7,  5px 5px 0 #404eb5,  6px 6px 0 #3e4cb3,
+       7px 7px 0 #3c4ab1,  8px 8px 0 #3a48af,  9px 9px 0 #3846ad,
+      10px 10px 0 #3644ab, 11px 11px 0 #3442a9, 12px 12px 0 #3240a7,
+      14px 14px 26px rgba(40,48,120,0.30);
+  }
+
+  /* ── Nav ── */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    background: rgba(243,244,251,0.72);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 70px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 700; font-size: 1.22rem; letter-spacing: -0.02em; }
+  .brand img { width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 4px 12px rgba(46,56,144,0.28); }
+  .nav-links { display: flex; align-items: center; gap: 26px; font-weight: 500; }
+  .nav-links a.muted { color: var(--ink-soft); transition: color .2s; }
+  .nav-links a.muted:hover { color: var(--indigo); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--font-body); font-weight: 600; font-size: 0.98rem;
+    padding: 12px 20px; border-radius: 999px; border: 0; cursor: pointer;
+    transition: transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s, filter .18s;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    color: #fff;
+    background: linear-gradient(135deg, var(--periwinkle-2), var(--indigo) 70%, var(--indigo-deep));
+    box-shadow: 0 10px 24px rgba(62,76,179,0.40), inset 0 1px 0 rgba(255,255,255,0.22);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 32px rgba(62,76,179,0.48), inset 0 1px 0 rgba(255,255,255,0.25); }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-ghost { color: var(--indigo); background: rgba(91,107,232,0.10); }
+  .btn-ghost:hover { background: rgba(91,107,232,0.18); transform: translateY(-2px); }
+  .btn svg { width: 17px; height: 17px; }
+
+  /* ── Hero ── */
+  header.hero { padding: 96px 0 40px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-size: 0.82rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--indigo); background: rgba(91,107,232,0.10);
+    padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line);
+    margin-bottom: 30px;
+  }
+  .eyebrow .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--periwinkle); box-shadow: 0 0 0 4px rgba(91,107,232,0.20); }
+
+  h1.title {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-size: clamp(2.7rem, 7.5vw, 5.4rem);
+    line-height: 0.98;
+    letter-spacing: -0.035em;
+    margin-bottom: 28px;
+  }
+  h1.title .accent { display: inline-block; }
+
+  .lede { font-size: clamp(1.08rem, 2.2vw, 1.4rem); color: var(--ink-soft); max-width: 46ch; margin-bottom: 38px; }
+  .lede b { color: var(--ink); font-weight: 600; }
+
+  .hero-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+  .req-line { font-size: 0.9rem; color: var(--ink-soft); display: flex; align-items: center; gap: 8px; }
+  .req-line svg { width: 15px; height: 15px; opacity: .7; }
+
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; }
+
+  /* iPad-window mockup, echoing the icon glyph */
+  .stage { position: relative; display: flex; justify-content: center; align-items: center; min-height: 360px; }
+  .stage::before {
+    content: ""; position: absolute; inset: -8% -4%;
+    background: radial-gradient(closest-side, rgba(91,107,232,0.28), transparent 72%);
+    filter: blur(8px); z-index: 0;
+  }
+  .device {
+    position: relative; z-index: 1;
+    width: 100%; max-width: 440px; aspect-ratio: 4 / 3;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(150deg, var(--sky-pale), var(--sky) 55%, #6f9fe0);
+    border: 10px solid #fff;
+    box-shadow:
+      24px 24px 0 -2px rgba(65,79,182,0.18),   /* flat long-shadow nod */
+      0 30px 70px rgba(40,48,120,0.34);
+    overflow: hidden;
+  }
+  .device .glare { position: absolute; inset: 0; background: linear-gradient(120deg, rgba(255,255,255,0.42), transparent 42%); }
+  .device .scribble { position: absolute; inset: 0; }
+  .device .live {
+    position: absolute; top: 14px; left: 14px; z-index: 2;
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+    color: #fff; background: rgba(28,34,90,0.55); backdrop-filter: blur(6px);
+    padding: 6px 11px; border-radius: 999px;
+  }
+  .device .live .pulse { width: 8px; height: 8px; border-radius: 50%; background: #ff5b6b; box-shadow: 0 0 0 0 rgba(255,91,107,0.7); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(255,91,107,0.7)} 70%{box-shadow:0 0 0 10px rgba(255,91,107,0)} 100%{box-shadow:0 0 0 0 rgba(255,91,107,0)} }
+
+  .float-chip {
+    position: absolute; z-index: 3; background: var(--card);
+    border: 1px solid var(--line); border-radius: 14px;
+    padding: 11px 14px; font-size: 0.86rem; font-weight: 600;
+    box-shadow: 0 14px 30px rgba(40,48,120,0.18);
+    display: flex; align-items: center; gap: 9px;
+  }
+  .float-chip .ic { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--periwinkle-2), var(--indigo)); }
+  .float-chip.tl { top: 6%; left: -6%; animation: floaty 6s ease-in-out infinite; }
+  .float-chip.br { bottom: 4%; right: -7%; animation: floaty 6s ease-in-out infinite 1.6s; }
+  @keyframes floaty { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+  /* Reveal on load */
+  .reveal { opacity: 0; transform: translateY(18px); animation: rise .9s cubic-bezier(.2,.8,.2,1) forwards; }
+  .d1{animation-delay:.05s}.d2{animation-delay:.15s}.d3{animation-delay:.25s}.d4{animation-delay:.35s}.d5{animation-delay:.5s}
+  @keyframes rise { to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal{animation:none;opacity:1;transform:none}
+    .float-chip{animation:none}.device .live .pulse{animation:none}
+  }
+
+  /* ── Section scaffolding ── */
+  section { padding: 86px 0; }
+  .section-head { max-width: 640px; margin-bottom: 54px; }
+  .kicker { font-size: 0.82rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--periwinkle); margin-bottom: 14px; }
+  h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.9rem, 4vw, 2.9rem); letter-spacing: -0.03em; line-height: 1.05; }
+  h2 + p { color: var(--ink-soft); font-size: 1.08rem; margin-top: 16px; max-width: 54ch; }
+
+  /* Steps */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+  .step {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg);
+    padding: 30px 28px 32px; position: relative; overflow: hidden;
+    transition: transform .25s, box-shadow .25s;
+  }
+  .step:hover { transform: translateY(-4px); box-shadow: 0 24px 48px rgba(40,48,120,0.14); }
+  .step .num {
+    font-family: var(--font-display); font-weight: 800; font-size: 2.6rem; line-height: 1;
+    margin-bottom: 22px; color: var(--indigo);
+  }
+  .step h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.22rem; letter-spacing: -0.01em; margin-bottom: 9px; }
+  .step p { color: var(--ink-soft); font-size: 0.97rem; }
+  .step .glyph { position: absolute; top: 22px; right: 22px; width: 30px; height: 30px; color: var(--sky); opacity: .85; }
+
+  /* Features */
+  .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+  .feature {
+    display: flex; gap: 18px; background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius-lg); padding: 26px;
+  }
+  .feature .ficon { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--periwinkle-2), var(--indigo) 75%, var(--indigo-deep)); box-shadow: 0 8px 18px rgba(62,76,179,0.34); }
+  .feature .ficon svg { width: 22px; height: 22px; }
+  .feature h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.12rem; margin-bottom: 6px; }
+  .feature p { color: var(--ink-soft); font-size: 0.95rem; }
+
+  /* Privacy band */
+  .band {
+    background: linear-gradient(150deg, var(--indigo) 0%, var(--indigo-deep) 70%, #232c75);
+    border-radius: var(--radius-xl); padding: 60px clamp(28px, 5vw, 64px); color: #fff;
+    position: relative; overflow: hidden;
+  }
+  .band::after {
+    content: ""; position: absolute; right: -120px; bottom: -160px; width: 460px; height: 460px;
+    background: radial-gradient(closest-side, rgba(137,176,232,0.35), transparent 70%); pointer-events: none;
+  }
+  .band .kicker { color: var(--sky-pale); }
+  .band h2 { color: #fff; }
+  .band > .wrap-inner { position: relative; z-index: 1; }
+  .privacy-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; margin-top: 40px; }
+  .priv { }
+  .priv .pi { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; background: rgba(255,255,255,0.12); margin-bottom: 16px; }
+  .priv .pi svg { width: 21px; height: 21px; color: #fff; }
+  .priv h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.1rem; margin-bottom: 7px; }
+  .priv p { color: rgba(255,255,255,0.78); font-size: 0.95rem; }
+
+  /* Honest / requirements */
+  .honest { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 30px; }
+  .panel h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.18rem; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+  .panel ul { list-style: none; display: grid; gap: 12px; }
+  .panel li { display: flex; gap: 12px; color: var(--ink-soft); font-size: 0.97rem; }
+  .panel li svg { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 2px; color: var(--periwinkle); }
+  .panel li b { color: var(--ink); font-weight: 600; }
+  .panel.note { background: linear-gradient(165deg, #fff, #f4f6ff); }
+
+  /* Final CTA */
+  .final { text-align: center; }
+  .final-card {
+    background: linear-gradient(150deg, var(--periwinkle-2), var(--indigo) 65%, var(--indigo-deep));
+    border-radius: var(--radius-xl); padding: 72px 32px; color: #fff; position: relative; overflow: hidden;
+  }
+  .final-card::before {
+    content: ""; position: absolute; inset: 0;
+    background: radial-gradient(600px 300px at 50% -20%, rgba(255,255,255,0.20), transparent 60%);
+  }
+  .final-card > * { position: relative; z-index: 1; }
+  .final-card img { width: 92px; height: 92px; border-radius: 22px; box-shadow: 0 20px 40px rgba(20,26,80,0.5); margin-bottom: 26px; }
+  .final-card h2 { color: #fff; margin-bottom: 14px; }
+  .final-card p { color: rgba(255,255,255,0.82); max-width: 44ch; margin: 0 auto 30px; }
+  .final-card .btn-primary { background: #fff; color: var(--indigo); box-shadow: 0 14px 30px rgba(20,26,80,0.4); }
+  .final-card .btn-primary:hover { filter: brightness(0.98); }
+  .final-card .sub { font-size: 0.86rem; color: rgba(255,255,255,0.66); margin-top: 18px; }
+
+  /* Footer */
+  footer { padding: 50px 0 70px; border-top: 1px solid var(--line); }
+  footer .wrap { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; justify-content: space-between; }
+  footer .brand { font-size: 1.05rem; }
+  footer .fcol { color: var(--ink-soft); font-size: 0.9rem; }
+  footer a.muted { color: var(--ink-soft); }
+  footer a.muted:hover { color: var(--indigo); }
+
+  @media (max-width: 880px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 56px; }
+    .stage { order: 2; }
+    .steps, .privacy-grid, .features, .honest { grid-template-columns: 1fr; }
+    .nav-links .muted { display: none; }
+    header.hero { padding: 60px 0 20px; }
+    .float-chip.tl { left: 2%; } .float-chip.br { right: 2%; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <img src="assets/icon-256.png" alt="SharePad icon" />
+      SharePad
+    </a>
+    <div class="nav-links">
+      <a class="muted" href="#how">How it works</a>
+      <a class="muted" href="#why">Why it’s different</a>
+      <a class="muted" href="#privacy">Privacy</a>
+      <a class="btn btn-primary" href="https://github.com/jonyardley/SharePad/releases/latest">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download
+      </a>
+    </div>
+  </div>
+</nav>
+
+<a id="top"></a>
+<header class="hero">
+  <div class="wrap hero-grid">
+    <div class="hero-copy">
+      <span class="eyebrow reveal d1"><span class="dot"></span> macOS menu-bar app · Apple silicon &amp; Intel</span>
+      <h1 class="title reveal d2">
+        Your iPad,<br />
+        <span class="accent longshadow">share-ready</span><br />
+        in any call.
+      </h1>
+      <p class="lede reveal d3">
+        Plug in your iPad over USB and a clean, aspect-locked window appears — instantly.
+        Pick it in any call’s <b>“Share window”</b> menu. <b>No more per-call QuickTime ritual.</b>
+      </p>
+      <div class="hero-cta reveal d4">
+        <a class="btn btn-primary" href="https://github.com/jonyardley/SharePad/releases/latest">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download for macOS
+        </a>
+        <span class="req-line">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          macOS 14+ · signed &amp; notarized · free
+        </span>
+      </div>
+    </div>
+
+    <div class="stage reveal d5">
+      <div class="float-chip tl">
+        <span class="ic"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
+        iPad connected
+      </div>
+      <div class="device">
+        <div class="live"><span class="pulse"></span> Sharing</div>
+        <div class="glare"></div>
+        <svg class="scribble" viewBox="0 0 440 330" preserveAspectRatio="none" fill="none">
+          <path d="M40 230 C 90 120, 150 120, 190 210 S 300 300, 360 150" stroke="#27357f" stroke-width="7" stroke-linecap="round" opacity="0.85"/>
+          <path d="M70 100 q 60 -40 120 0" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
+          <circle cx="330" cy="235" r="22" stroke="#27357f" stroke-width="7" opacity="0.6"/>
+        </svg>
+      </div>
+      <div class="float-chip br">
+        <span class="ic"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></span>
+        Pick “SharePad” in your call
+      </div>
+    </div>
+  </div>
+</header>
+
+<!--
+  ▸▸ ADD YOUR DEMO HERE
+  The strongest asset is a screen-recording of the plug-in → window → share flow.
+  Drop a GIF/MP4 at docs/assets/demo.gif and swap the .stage mockup (or add a
+  <section> with <img src="assets/demo.gif" />) here. The demo IS the pitch.
+-->
+
+<section id="how">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">Three steps, zero fuss</div>
+      <h2>It’s already running before you need it.</h2>
+      <p>SharePad lives in your menu bar and reacts to the cable. There’s nothing to launch mid-meeting.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
+        <div class="num longshadow" style="text-shadow:1px 1px 0 #4654bb,2px 2px 0 #4250b7,3px 3px 0 #3e4cb3,4px 4px 0 #3a48af,5px 5px 0 #3644ab,6px 6px 12px rgba(40,48,120,.3)">1</div>
+        <h3>Plug in the iPad</h3>
+        <p>Connect over USB. SharePad detects it automatically — no app to open on either device.</p>
+      </div>
+      <div class="step">
+        <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 20h8"/></svg>
+        <div class="num longshadow" style="text-shadow:1px 1px 0 #4654bb,2px 2px 0 #4250b7,3px 3px 0 #3e4cb3,4px 4px 0 #3a48af,5px 5px 0 #3644ab,6px 6px 12px rgba(40,48,120,.3)">2</div>
+        <h3>The window appears</h3>
+        <p>A borderless, aspect-locked window opens on your Mac, mirroring the iPad in real time.</p>
+      </div>
+      <div class="step">
+        <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H4z"/><path d="M8 21h8M2 9h20"/></svg>
+        <div class="num longshadow" style="text-shadow:1px 1px 0 #4654bb,2px 2px 0 #4250b7,3px 3px 0 #3e4cb3,4px 4px 0 #3a48af,5px 5px 0 #3644ab,6px 6px 12px rgba(40,48,120,.3)">3</div>
+        <h3>Share it in the call</h3>
+        <p>In Zoom, Meet or Teams, choose “Share window” → SharePad. Your drawing fills the frame.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">Built for drawing, not webcam tiles</div>
+      <h2>A full shared window — not a tiny camera box.</h2>
+      <p>Virtual-camera apps render your iPad as a postage-stamp webcam tile. SharePad shares it as a proper window, so whiteboarding fills the screen.</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/></svg></div>
+        <div><h3>Full-size, aspect-locked</h3><p>The window keeps the iPad’s exact ratio, so nothing is letterboxed, stretched, or cropped.</p></div>
+      </div>
+      <div class="feature">
+        <div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></div>
+        <div><h3>Always ready</h3><p>It auto-connects on plug-in and auto-hides on unplug. Wake from sleep just works.</p></div>
+      </div>
+      <div class="feature">
+        <div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M5 12l4-4M5 12l4 4"/><rect x="19" y="3" width="2" height="18" rx="1"/></svg></div>
+        <div><h3>Keep-on-top escape hatch</h3><p>Browser-based Meet/Teams only transmit a visible window — one toggle pins it so the share never goes black.</p></div>
+      </div>
+      <div class="feature">
+        <div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M3 12a9 9 0 0 1 9-9M21 12a9 9 0 0 1-9 9"/></svg></div>
+        <div><h3>Live menu-bar preview</h3><p>A thumbnail in the popover confirms exactly what your call sees — before you hit share.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="privacy">
+  <div class="wrap">
+    <div class="band">
+      <div class="wrap-inner">
+        <div class="kicker">Privacy by construction</div>
+        <h2>Nothing leaves your Mac.</h2>
+        <p style="color:rgba(255,255,255,0.82); max-width:54ch; margin-top:14px;">
+          SharePad pipes the iPad’s feed straight into a local window. There’s no account, no cloud, and no network in the loop at all.
+        </p>
+        <div class="privacy-grid">
+          <div class="priv">
+            <div class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></div>
+            <h3>Camera only</h3>
+            <p>It uses the Camera permission to read the connected iPad — and nothing else.</p>
+          </div>
+          <div class="priv">
+            <div class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 1l22 22"/><path d="M9 9v3a3 3 0 0 0 5.1 2.1M15 9.3V4a3 3 0 0 0-5.9-.7"/><path d="M19 10v2a7 7 0 0 1-.6 2.8M12 19v4"/></svg></div>
+            <h3>Never the microphone</h3>
+            <p>The video connection is wired by hand so macOS never even prompts for the mic.</p>
+          </div>
+          <div class="priv">
+            <div class="pi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <h3>No cloud, no account</h3>
+            <p>100% local. Frames live on the GPU and are gone the moment you unplug.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="install">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="kicker">Before you install</div>
+      <h2>Honest about how it ships.</h2>
+      <p>SharePad is distributed directly, not through the Mac App Store. Here’s exactly what that means.</p>
+    </div>
+    <div class="honest">
+      <div class="panel">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:var(--periwinkle)"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Requirements
+        </h3>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>macOS 14 (Sonoma) or later</b> — Apple silicon or Intel.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>An <b>iPad connected by USB</b> cable.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Camera permission, granted on first launch.</span></li>
+        </ul>
+      </div>
+      <div class="panel note">
+        <h3>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;color:var(--periwinkle)"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+          The trade-off, stated plainly
+        </h3>
+        <ul>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Builds are <b>signed with a Developer ID and notarised by Apple</b>, so Gatekeeper opens them cleanly.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>It runs <b>un-sandboxed</b> — that’s the only way macOS exposes a USB iPad as a capture device. It’s the reason this isn’t on the App Store.</span></li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>The source is open — <a href="https://github.com/jonyardley/SharePad" style="color:var(--indigo);font-weight:600">read exactly what it does</a>.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="final">
+  <div class="wrap">
+    <div class="final-card">
+      <img src="assets/icon-256.png" alt="SharePad icon" />
+      <h2>Delete the QuickTime ritual.</h2>
+      <p>Plug in. Pick the window. Draw. SharePad handles the rest, every call.</p>
+      <a class="btn btn-primary" href="https://github.com/jonyardley/SharePad/releases/latest">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        Download SharePad
+      </a>
+      <div class="sub">macOS 14+ · signed &amp; notarized · free &amp; open source</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <a class="brand" href="#top"><img src="assets/icon-128.png" alt="" style="width:28px;height:28px;border-radius:7px" /> SharePad</a>
+    <div class="fcol">A focused little utility for sharing your iPad in any call.</div>
+    <div class="fcol"><a class="muted" href="https://github.com/jonyardley/SharePad">GitHub ↗</a></div>
+  </div>
+</footer>
+
+</body>
+</html>
