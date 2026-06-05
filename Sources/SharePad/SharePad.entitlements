@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Hardened Runtime needs this to reach the camera; the usage string alone
+	     isn't enough once the runtime is hardened. Without it the iPad feed dies
+	     silently. (specs/distribution.md §2) -->
+	<key>com.apple.security.device.camera</key>
+	<true/>
+	<!-- Deliberately NOT com.apple.security.device.audio-input: the muxed input is
+	     wired video-only, so we never want a Microphone prompt (DESIGN.md §6.5).
+	     Deliberately NOT com.apple.security.app-sandbox: the sandbox blocks the CMIO
+	     screen-capture opt-in the app depends on (DESIGN.md §6). -->
+</dict>
+</plist>

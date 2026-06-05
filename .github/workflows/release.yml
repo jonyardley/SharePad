@@ -1,0 +1,80 @@
+name: Release
+
+# Tag-driven release: build → Developer ID sign → notarize → DMG → GitHub Release.
+# See specs/distribution.md §8. Requires the repo secrets listed on the steps below.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write # create the GitHub Release and upload the DMG
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build, sign, notarize & release
+    runs-on: macos-26 # pinned to match local: arm64 + Xcode 26.x → Swift 6
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install tools
+        run: brew install xcodegen just create-dmg
+
+      # Import the Developer ID Application cert into a throwaway keychain.
+      - name: Import signing certificate
+        env:
+          CERT_P12_BASE64: ${{ secrets.DEVELOPER_ID_CERT_P12_BASE64 }}
+          CERT_PASSWORD: ${{ secrets.CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          echo "$CERT_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          rm -f "$RUNNER_TEMP/cert.p12"
+
+      - name: Write notarization API key
+        env:
+          AC_API_KEY_P8_BASE64: ${{ secrets.AC_API_KEY_P8_BASE64 }}
+        run: |
+          set -euo pipefail
+          echo "$AC_API_KEY_P8_BASE64" | base64 --decode > "$RUNNER_TEMP/ac_api_key.p8"
+
+      # TAG drives the user-visible version; RELEASE_VERSION strips the leading "v"
+      # so the DMG's MARKETING_VERSION matches the tag. Both via env, never inlined
+      # into the script body (workflow-injection guidance). On a manual
+      # workflow_dispatch (no tag) the build still runs as a dry-run; the publish
+      # step below is skipped, so a branch name landing in the version is harmless.
+      - name: Build, sign, notarize & package
+        env:
+          SIGN_IDENTITY: ${{ secrets.SIGN_IDENTITY }}
+          AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
+          AC_API_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
+          AC_API_KEY_PATH: ${{ runner.temp }}/ac_api_key.p8
+          BUILD_NUMBER: ${{ github.run_number }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          export RELEASE_VERSION="${TAG#v}"
+          just release
+
+      # Only publish on a real tag — guards against a workflow_dispatch on a branch
+      # creating a release named after the branch.
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" .build/SharePad.dmg --title "$TAG" --generate-notes
