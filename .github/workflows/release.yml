@@ -68,21 +68,10 @@ jobs:
           export RELEASE_VERSION="${TAG#v}"
           just release
 
-      # Only publish on a real tag — guards against a workflow_dispatch on a branch
-      # creating a release named after the branch.
-      - name: Publish GitHub Release
-        if: startsWith(github.ref, 'refs/tags/')
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
-        run: |
-          set -euo pipefail
-          gh release create "$TAG" .build/SharePad.dmg --title "$TAG" --generate-notes
-
-      # Generate + EdDSA-sign the Sparkle appcast (enclosure points at the release
-      # asset just published) and commit it to the GitHub Pages feed on main.
-      # [skip ci] avoids retriggering the PR workflow on the docs-only commit.
-      - name: Publish Sparkle appcast
+      # Generate + EdDSA-sign the Sparkle appcast. The enclosure URL is the tag's
+      # release-asset path (deterministic before the release exists), so we can build
+      # the appcast first and attach it to the release below — no push to protected main.
+      - name: Generate Sparkle appcast
         if: startsWith(github.ref, 'refs/tags/')
         env:
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
@@ -95,15 +84,16 @@ jobs:
           printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$SPARKLE_ED_KEY_PATH"
           export DOWNLOAD_URL_PREFIX="https://github.com/$REPO/releases/download/$TAG/"
           just sparkle-appcast
-          git fetch origin main
-          git checkout main
-          cp .build/appcast/appcast.xml docs/appcast.xml
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add docs/appcast.xml
-          git commit -m "Update Sparkle appcast for $TAG [skip ci]"
-          git pull --rebase origin main
-          git push origin main || {
-            echo "::error::Appcast push to main failed (branch protection or a race). The $TAG release + DMG are published, but docs/appcast.xml was not updated — update it manually so existing users get the update."
-            exit 1
-          }
+
+      # Publish the DMG + appcast as release assets. SUFeedURL points at
+      # releases/latest/download/appcast.xml, so this is the live update feed — no
+      # GitHub Pages, no branch push. Only on a real tag (a workflow_dispatch on a
+      # branch would otherwise create a release named after the branch).
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          gh release create "$TAG" .build/SharePad.dmg .build/appcast/appcast.xml --title "$TAG" --generate-notes

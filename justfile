@@ -93,11 +93,11 @@ dmg:
 release: release-build sign notarize dmg
     @echo "Release DMG: .build/SharePad.dmg"
 
-# generate + EdDSA-sign the Sparkle appcast from the notarized DMG, then stage it as
-# the GitHub Pages feed (docs/appcast.xml). Run in CI *after* the GitHub Release exists
-# so the enclosure URL resolves. Needs SPARKLE_ED_KEY_PATH (the private key file) and
-# DOWNLOAD_URL_PREFIX (the release-asset base URL, trailing slash). generate_appcast
-# reads the version from the app inside the DMG and writes appcast.xml beside it.
+# generate + EdDSA-sign the Sparkle appcast from the notarized DMG into .build/appcast/.
+# CI attaches it to the GitHub Release (served at releases/latest/download/appcast.xml),
+# so there's no push to the protected main branch. Needs SPARKLE_ED_KEY_PATH (the
+# private key file) and DOWNLOAD_URL_PREFIX (the release-asset base URL, trailing slash);
+# generate_appcast reads the version from the app inside the DMG and writes appcast.xml.
 sparkle-appcast:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -106,5 +106,4 @@ sparkle-appcast:
     rm -rf .build/appcast && mkdir -p .build/appcast
     cp .build/SharePad.dmg .build/appcast/
     "$GEN" --ed-key-file "$SPARKLE_ED_KEY_PATH" --download-url-prefix "$DOWNLOAD_URL_PREFIX" .build/appcast
-    cp .build/appcast/appcast.xml docs/appcast.xml
-    echo "Appcast written to docs/appcast.xml"
+    echo "Appcast written to .build/appcast/appcast.xml"

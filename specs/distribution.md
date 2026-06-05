@@ -42,7 +42,7 @@ cannot help.
 | Notarization | `notarytool submit --wait` + `stapler staple`, via App Store Connect API key |
 | Package | **DMG** (create-dmg), notarized + stapled |
 | Auto-update | **Sparkle 2** (EdDSA-signed appcast) — first third-party dep, flagged |
-| Appcast hosting | **TBD** — GitHub Pages vs Releases asset (open question) |
+| Appcast hosting | **GitHub Release asset** (`releases/latest/download/appcast.xml`) |
 | Versioning | `MARKETING_VERSION` → **1.0.0**; `CURRENT_PROJECT_VERSION` auto from CI |
 | Release trigger | git tag `v*` → release CI workflow |
 
@@ -148,10 +148,11 @@ These aren't "distribution" proper but belong to the same 1.0 push:
 
 ## 11. Open questions
 
-1. ~~**Appcast hosting**~~ — **Resolved:** GitHub Pages, `docs/appcast.xml`
-   (`…github.io/SharePad/appcast.xml`) — the `docs/` folder already serves the landing
-   page. The release job regenerates it and commits to `main` with `[skip ci]`. (Caveat:
-   needs `main` to accept a CI push — confirm no blocking branch protection on first run.)
+1. ~~**Appcast hosting**~~ — **Resolved:** a **GitHub Release asset** at the stable
+   `…/releases/latest/download/appcast.xml`. The release job generates the appcast and
+   attaches it alongside the DMG. (Switched from GitHub Pages because `main` is branch-
+   protected — the Actions bot can't push to it — and the appcast is a build artifact,
+   not source. No Pages dependency, no branch push.)
 2. ~~**DMG vs zip**~~ — **Resolved (v1):** the notarized **DMG** is both the download
    and the Sparkle feed enclosure (Sparkle 2 installs from a DMG). Delta/zip deferred.
 3. **dSYM handling** — keep dSYMs as release artifacts for future crash
