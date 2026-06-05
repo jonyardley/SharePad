@@ -63,8 +63,9 @@ rm DeveloperID.p12 AuthKey_*.p8 sparkle_private_key
 ```
 
 ## Step 5 — Cut the release
-Tags trigger the pipeline. **Push tags over SSH** — the HTTPS token can't push to
-Actions/workflow paths.
+First, **add a `## <version>` section at the top of `CHANGELOG.md`** (in a normal
+PR to `main`) — its contents are shown to users in the in-app update dialog. Then
+tag. **Push tags over SSH** — the HTTPS token can't push to Actions/workflow paths.
 ```bash
 git checkout main && git pull
 git tag v1.0.0
