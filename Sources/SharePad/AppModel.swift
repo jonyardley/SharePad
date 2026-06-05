@@ -45,6 +45,7 @@ final class AppModel {
 
     private static let defaultSize = CGSize(width: 820, height: 1180)
     private static let frameTimeout: TimeInterval = 1.5
+    private static let startFrameTimeout: TimeInterval = 3.0
 
     convenience init(preferences: Preferences = Preferences()) {
         let controller = CaptureController()
@@ -168,6 +169,15 @@ final class AppModel {
         }
     }
 
+    /// A full `start()` reporting `isRunning` isn't proof of frames — a present-but-
+    /// stalled device runs with none (frozen preview). Confirm a frame before treating
+    /// the device as live; a stall routes into `failed` + Retry, same as a start that
+    /// never ran. (#24)
+    private func startAndConfirm(deviceID: String) async -> Bool {
+        guard await capture.start(deviceID: deviceID) else { return false }
+        return await capture.awaitFrame(timeout: Self.startFrameTimeout)
+    }
+
     /// Re-establish the session after a runtime error or wake. `resume()` keeps the
     /// connections (preview included) intact; a full `start` is only the fallback.
     /// One attempt per trigger — no auto-loop.
@@ -180,7 +190,7 @@ final class AppModel {
             running = await capture.awaitFrame(timeout: Self.frameTimeout)
         }
         if !running {
-            running = await capture.start(deviceID: deviceID)
+            running = await startAndConfirm(deviceID: deviceID)
         }
         isLive = running
         failed = !running
@@ -205,7 +215,7 @@ final class AppModel {
         isReconfiguring = true
         currentDeviceID = device.id
         currentDeviceName = device.name
-        let running = await capture.start(deviceID: deviceID)
+        let running = await startAndConfirm(deviceID: deviceID)
         isLive = running
         failed = !running
         if running {
@@ -238,7 +248,7 @@ final class AppModel {
         case let .switchTo(device):
             currentDeviceID = device.id
             currentDeviceName = device.name
-            let running = await capture.start(deviceID: device.id)
+            let running = await startAndConfirm(deviceID: device.id)
             isLive = running
             failed = !running
             if running {

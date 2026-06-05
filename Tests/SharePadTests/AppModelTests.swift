@@ -137,7 +137,8 @@ final class AppModelTests: XCTestCase {
         await model.restart()
         XCTAssertTrue(model.isLive)
         XCTAssertEqual(capture.resumeCount, 1)
-        XCTAssertEqual(capture.awaitFrameCount, 1)
+        // One confirm on the initial connect (#24), one on the resume path.
+        XCTAssertEqual(capture.awaitFrameCount, 2)
         XCTAssertEqual(capture.startedDeviceIDs, ["a"]) // confirmed by a frame, no reconfigure
     }
 
@@ -168,12 +169,29 @@ final class AppModelTests: XCTestCase {
         )
         await model.reconcile(devices: [device("a")])
         capture.resumeResult = true
-        capture.awaitFrameResult = false
+        // Resume stalls (no frame), then the fallback start confirms one.
+        capture.awaitFrameResults = [false, true]
         capture.startResult = true
         await model.restart()
         XCTAssertTrue(model.isLive)
         XCTAssertEqual(capture.resumeCount, 1)
         XCTAssertEqual(capture.startedDeviceIDs, ["a", "a"]) // fell back to a full start
+    }
+
+    func testStartConfirmStallSurfacesFailed() async throws {
+        let capture = FakeCaptureController()
+        let window = FakeShareWindow()
+        let model = try makeModel(
+            capture: capture,
+            window: window,
+            preferences: ephemeralPreferences()
+        )
+        capture.startResult = true
+        capture.awaitFrameResult = false // session runs but no frame ever arrives
+        await model.reconcile(devices: [device("a")])
+        XCTAssertFalse(model.isLive)
+        XCTAssertTrue(model.failed)
+        XCTAssertEqual(capture.startedDeviceIDs, ["a"])
     }
 
     func testRestartFailsWhenResumeStallsAndStartFails() async throws {

@@ -10,6 +10,9 @@ final class FakeCaptureController: CaptureControlling, @unchecked Sendable {
     var startResult = true
     var resumeResult = true
     var awaitFrameResult = true
+    /// Consumed FIFO; falls back to `awaitFrameResult` when empty. Lets a test stage
+    /// "resume stalls, then the fallback start confirms" (#24).
+    var awaitFrameResults: [Bool] = []
     private(set) var startedDeviceIDs: [String] = []
     private(set) var resumeCount = 0
     private(set) var stopCount = 0
@@ -28,7 +31,7 @@ final class FakeCaptureController: CaptureControlling, @unchecked Sendable {
 
     func awaitFrame(timeout _: TimeInterval) async -> Bool {
         awaitFrameCount += 1
-        return awaitFrameResult
+        return awaitFrameResults.isEmpty ? awaitFrameResult : awaitFrameResults.removeFirst()
     }
 
     func stop() async {
