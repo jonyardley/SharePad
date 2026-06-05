@@ -24,10 +24,11 @@ in `index.html`. The demo *is* the pitch.
 ## The download button
 
 Both "Download" buttons point at
-`https://github.com/jonyardley/SharePad/releases/latest`. They resolve to a real
-download only once you publish a **signed + notarized** release with a `.dmg`
-asset attached (Developer ID signing → Hardened Runtime → `notarytool` → staple).
-Until then the link simply lands on the releases page.
+`https://github.com/jonyardley/SharePad/releases`, which always renders (even with
+zero releases — unlike `/releases/latest`, which 404s until the first release
+exists). They become real downloads only once you publish a **signed + notarized**
+release with a `.dmg` asset attached (Developer ID signing → Hardened Runtime →
+`notarytool` → staple). Once releases exist, the newest is the top item there.
 
 ## Local preview
 
