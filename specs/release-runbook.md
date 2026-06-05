@@ -71,8 +71,9 @@ git tag v1.0.0
 git push git@github.com:jonyardley/SharePad.git v1.0.0
 gh run watch    # follow the build
 ```
-Success → a **GitHub Release** with `SharePad.dmg`, and `docs/appcast.xml` updated
-automatically (the update feed at https://jonyardley.github.io/SharePad/appcast.xml).
+Success → a **GitHub Release** with both `SharePad.dmg` and `appcast.xml` attached.
+The app's update feed is `…/releases/latest/download/appcast.xml`, which always points
+at the newest release — so cutting a new tag is all it takes to ship an update.
 
 ## Step 6 — Verify on the iPad (the step that proves it works)
 1. **Download the DMG in a browser** (so it carries the quarantine flag a real user
@@ -86,10 +87,9 @@ automatically (the update feed at https://jonyardley.github.io/SharePad/appcast.
 ## Known first-run caveats
 - **create-dmg** can exit non-zero on headless CI even on success (`distribution.md`
   §11.7) — check the DMG was actually produced before trusting a red step.
-- The appcast step **commits `docs/appcast.xml` to `main`**; if `main` has branch
-  protection blocking CI pushes, that step fails *after* the release is published —
-  update the file manually and loosen protection for the bot, or run the appcast
-  step locally.
+- The appcast is attached to the GitHub Release (no push to the protected `main`), so
+  branch protection is a non-issue. If you ever need to regenerate it by hand, run
+  `just sparkle-appcast` locally and upload `appcast.xml` to the release.
 
 ## After a verified build: selling it
 Separate from shipping. Add a **storefront** (a "Buy → download the DMG" page; Gumroad
