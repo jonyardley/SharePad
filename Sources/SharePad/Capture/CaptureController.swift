@@ -10,10 +10,11 @@ protocol CaptureControlling: Sendable {
     func awaitFrame(timeout: TimeInterval) async -> Bool
 }
 
-/// @unchecked Sendable: `session` and the output/connection wiring are mutated only
-/// on `sessionQueue`; `frameListener`'s state is touched only on `sampleQueue`;
-/// `previewLayer`, `thumbnailLayer`, and `frameListener` are immutable references
-/// (created on main, fed only off-main); the continuations are Sendable and
+/// @unchecked Sendable: `session` and the output/connection wiring — plus
+/// `dataConnection`, `thumbnailActive`, `confirmingFrame`, and `formatObserver` — are
+/// mutated only on `sessionQueue`; `frameListener`'s state is touched only on
+/// `sampleQueue`; `previewLayer`, `thumbnailLayer`, and `frameListener` are immutable
+/// references (created on main, fed only off-main); the continuations are Sendable and
 /// `sessionObservers` is set up once in `init`.
 final class CaptureController: CaptureControlling, @unchecked Sendable {
     let previewLayer: AVCaptureVideoPreviewLayer
@@ -29,6 +30,14 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
     private let restartContinuation: AsyncStream<Void>.Continuation
     private let frameListener: FrameOutput
     private var sessionObservers: [NSObjectProtocol] = []
+
+    // The data output is costly at full frame rate, so its connection is gated:
+    // enabled only while the popover thumbnail is showing or a frame is being
+    // confirmed (#23). Rotation still works while it's off via `formatObserver`.
+    private var dataConnection: AVCaptureConnection?
+    private var thumbnailActive = false
+    private var confirmingFrame = false
+    private var formatObserver: NSObjectProtocol?
 
     init() {
         previewLayer = AVCaptureVideoPreviewLayer(sessionWithNoConnection: session)
@@ -57,6 +66,7 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
 
     deinit {
         sessionObservers.forEach(NotificationCenter.default.removeObserver)
+        if let formatObserver { NotificationCenter.default.removeObserver(formatObserver) }
     }
 
     func start(deviceID: String) async -> Bool {
@@ -93,17 +103,26 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
     }
 
     /// Gate the popover thumbnail's frame fan-out — the window's preview connection is
-    /// unaffected. Hops to the sample queue so the flag is touched where frames arrive.
+    /// unaffected. Flips the render gate on the sample queue, and enables/disables the
+    /// data-output connection on the session queue so the output isn't paying its
+    /// frame-rate cost while the popover is closed (#23).
     func setThumbnailActive(_ active: Bool) {
         sampleQueue.async { [frameListener] in
             frameListener.setActive(active)
         }
+        sessionQueue.async { [self] in
+            thumbnailActive = active
+            applyDataConnectionEnabled()
+        }
     }
 
-    /// Confirm frames are actually flowing: `resume()` reporting `isRunning` isn't enough
-    /// — a stalled device can be "running" with no frames (frozen preview). (#13)
+    /// Confirm frames are actually flowing: `resume()`/`start()` reporting `isRunning`
+    /// isn't enough — a stalled device can be "running" with no frames (frozen preview)
+    /// (#13, #24). The data output may be gated off (popover closed, #23), so enable it
+    /// for the confirmation window, then restore.
     func awaitFrame(timeout: TimeInterval) async -> Bool {
-        await withCheckedContinuation { continuation in
+        await setConfirmingFrame(true)
+        let got = await withCheckedContinuation { continuation in
             sampleQueue.async { [frameListener, sampleQueue] in
                 let wait = FrameWait(continuation)
                 frameListener.setFrameWaiter { _ = wait.resolve(true) }
@@ -112,6 +131,22 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
                 }
             }
         }
+        await setConfirmingFrame(false)
+        return got
+    }
+
+    private func setConfirmingFrame(_ confirming: Bool) async {
+        await withCheckedContinuation { continuation in
+            sessionQueue.async { [self] in
+                confirmingFrame = confirming
+                applyDataConnectionEnabled()
+                continuation.resume()
+            }
+        }
+    }
+
+    private func applyDataConnectionEnabled() {
+        dataConnection?.isEnabled = thumbnailActive || confirmingFrame
     }
 
     private func configureAndRun(deviceID: String) -> Bool {
@@ -145,6 +180,7 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         }
         session.addConnection(previewConnection)
 
+        observePortFormat(videoPort: videoPort)
         wireDimensionOutput(videoPort: videoPort)
 
         session.commitConfiguration()
@@ -154,9 +190,28 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
 
     /// The iPad's video dimensions flip on rotation. KVO on the port's
     /// `formatDescription` aborts the app (AVCaptureInputPort raises
-    /// valueForUndefinedKey inside its KVO notification), so dimensions come from a
-    /// video-only data output instead — still no audio, so no mic prompt. The same
-    /// output's frames also feed the popover thumbnail (gated by `setThumbnailActive`).
+    /// valueForUndefinedKey inside its KVO notification), but the matching *notification*
+    /// is safe: observe it and read `formatDescription` directly. This keeps rotation
+    /// working even while the data output is gated off (popover closed, #23).
+    private func observePortFormat(videoPort: AVCaptureInput.Port) {
+        formatObserver = NotificationCenter.default.addObserver(
+            forName: AVCaptureInput.Port.formatDescriptionDidChangeNotification,
+            object: videoPort,
+            queue: nil
+        ) { [sizeContinuation] notification in
+            guard let port = notification.object as? AVCaptureInput.Port,
+                  let format = port.formatDescription else { return }
+            let dimensions = CMVideoFormatDescriptionGetDimensions(format)
+            let size = CGSize(width: Int(dimensions.width), height: Int(dimensions.height))
+            if size.width > 0, size.height > 0 {
+                sizeContinuation.yield(size)
+            }
+        }
+    }
+
+    /// Video-only data output (no audio, so no mic prompt) feeding the popover
+    /// thumbnail. Its connection is created gated to `setThumbnailActive` /
+    /// `confirmingFrame` (#23) so it costs nothing while the popover is closed.
     private func wireDimensionOutput(videoPort: AVCaptureInput.Port) {
         guard session.canAddOutput(dataOutput) else { return }
         dataOutput.alwaysDiscardsLateVideoFrames = true
@@ -164,10 +219,17 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         session.addOutputWithNoConnections(dataOutput)
         let connection = AVCaptureConnection(inputPorts: [videoPort], output: dataOutput)
         guard session.canAddConnection(connection) else { return }
+        connection.isEnabled = thumbnailActive || confirmingFrame
         session.addConnection(connection)
+        dataConnection = connection
     }
 
     private func teardown() {
+        if let formatObserver {
+            NotificationCenter.default.removeObserver(formatObserver)
+            self.formatObserver = nil
+        }
+        dataConnection = nil
         for connection in session.connections {
             session.removeConnection(connection)
         }
