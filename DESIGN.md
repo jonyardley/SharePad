@@ -28,7 +28,10 @@ displayed as full shared content (not a webcam tile).
 - **Not** a virtual camera (see [§2](#2-approach--rejected-alternatives)).
 - **No** iPad audio routing into the call.
 - **No** annotation, recording, cropping, or multi-device mosaic.
-- **No** distribution / App Store / notarization — personal local build.
+- ~~**No** distribution / App Store / notarization — personal local build.~~
+  **Superseded (2026-06-05):** 1.0 ships as a paid, notarized **direct download**
+  (Developer ID, not App Store — the sandbox breaks the CMIO opt-in). See
+  `specs/distribution.md` and `specs/licensing.md`.
 
 ---
 
@@ -365,9 +368,13 @@ hardware, so we **isolate the pure logic** and **manually verify the pipeline**.
    hidden on connect and is opened manually.
 4. **Mid-call disconnect** — currently a **silent hide** (`reconcile` →
    `window.hide()` + status dim). Revisit whether a brief notification is worth it.
-5. **Distribution later** — if this ever leaves your Mac, it needs signing +
-   notarization + (likely) the sandbox question revisited. Out of scope now —
-   confirm it stays out.
+5. ~~**Distribution later**~~ — **Resolved (2026-06-05):** 1.0 is sold as a
+   notarized **direct download** (Developer ID + Hardened Runtime + the
+   `com.apple.security.device.camera` entitlement; **no** sandbox, since it breaks
+   the CMIO opt-in — so App Store is out). Auto-update via Sparkle; one-time
+   purchase with a 14-day trial via FastSpring + offline CocoaFob validation. Full
+   plan in `specs/distribution.md` (release pipeline) and `specs/licensing.md`
+   (trial/unlock).
 
 ---
 
