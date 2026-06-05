@@ -87,9 +87,9 @@ offline cleanly).
 > the popover; `SUFeedURL`/`SUPublicEDKey`/`SUEnableAutomaticChecks` in the Info.plist
 > (now an explicit xcodegen `info` block — custom `SU*` keys can't go through
 > `INFOPLIST_KEY_*`); nested-code re-signing in the `sign` recipe; appcast generation
-> in `just sparkle-appcast` + `release.yml`. **Launch blocker:** the embedded
-> `SUPublicEDKey` is a format-valid placeholder — generate the real EdDSA keypair and
-> set the public key + `SPARKLE_ED_PRIVATE_KEY` secret before the first release.
+> in `just sparkle-appcast` + `release.yml`. The production `SUPublicEDKey` is
+> embedded; **remaining launch step:** set the matching `SPARKLE_ED_PRIVATE_KEY` repo
+> secret so CI can sign the appcast.
 
 - Added via SPM in `project.yml` (flagged dependency; recorded in DESIGN.md §7).
 - Generate an **EdDSA keypair** (`generate_keys`); **private key is a CI secret**,

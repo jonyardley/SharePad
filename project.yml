@@ -59,12 +59,11 @@ targets:
         CFBundleDisplayName: SharePad
         NSHumanReadableCopyright: © 2026 Jon Yardley
         NSCameraUsageDescription: SharePad displays your connected iPad's screen.
-        # Sparkle auto-update (specs/distribution.md §7). SUPublicEDKey below is a
-        # FORMAT-VALID PLACEHOLDER; before the first release, generate the real
-        # EdDSA keypair (`generate_keys`), embed its public key here, and set the
-        # private key as the SPARKLE_ED_PRIVATE_KEY CI secret (distribution.md §5).
+        # Sparkle auto-update (specs/distribution.md §7). SUPublicEDKey is the
+        # production EdDSA public key (safe to commit); its matching private key is
+        # the SPARKLE_ED_PRIVATE_KEY CI secret used to sign the appcast.
         SUFeedURL: https://jonyardley.github.io/SharePad/appcast.xml
-        SUPublicEDKey: hk2qCzi3K8CNjBDNrUI5yVT5XnEw9/4dhn2iGH1nsZI=
+        SUPublicEDKey: WaIGB4dHTyoJtyjtwoDUKxWDvPwCWGuLFZzk3XXhj1g=
         SUEnableAutomaticChecks: true
     scheme:
       testTargets:
