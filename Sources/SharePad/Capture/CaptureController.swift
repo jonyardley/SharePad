@@ -11,11 +11,11 @@ protocol CaptureControlling: Sendable {
 }
 
 /// @unchecked Sendable: `session` and the output/connection wiring — plus
-/// `dataConnection`, `thumbnailActive`, `confirmingFrame`, and `formatObserver` — are
-/// mutated only on `sessionQueue`; `frameListener`'s state is touched only on
-/// `sampleQueue`; `previewLayer`, `thumbnailLayer`, and `frameListener` are immutable
-/// references (created on main, fed only off-main); the continuations are Sendable and
-/// `sessionObservers` is set up once in `init`.
+/// `dataConnection`, `videoPort`, `thumbnailActive`, `confirmingFrame`, and
+/// `formatObserver` — are mutated only on `sessionQueue`; `frameListener`'s state is
+/// touched only on `sampleQueue`; `previewLayer`, `thumbnailLayer`, and `frameListener`
+/// are immutable references (created on main, fed only off-main); the continuations are
+/// Sendable and `sessionObservers` is set up once in `init`.
 final class CaptureController: CaptureControlling, @unchecked Sendable {
     let previewLayer: AVCaptureVideoPreviewLayer
     let thumbnailLayer: AVSampleBufferDisplayLayer
@@ -31,10 +31,11 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
     private let frameListener: FrameOutput
     private var sessionObservers: [NSObjectProtocol] = []
 
-    // The data output is costly at full frame rate, so its connection is gated:
-    // enabled only while the popover thumbnail is showing or a frame is being
-    // confirmed (#23). Rotation still works while it's off via `formatObserver`.
+    // The data output is costly at full rate, so it's *attached* only while the popover
+    // thumbnail shows or a frame is being confirmed (#23) — merely disabling the
+    // connection doesn't stop the cost. Rotation still works detached via `formatObserver`.
     private var dataConnection: AVCaptureConnection?
+    private var videoPort: AVCaptureInput.Port?
     private var thumbnailActive = false
     private var confirmingFrame = false
     private var formatObserver: NSObjectProtocol?
@@ -103,22 +104,22 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
     }
 
     /// Gate the popover thumbnail's frame fan-out — the window's preview connection is
-    /// unaffected. Flips the render gate on the sample queue, and enables/disables the
-    /// data-output connection on the session queue so the output isn't paying its
-    /// frame-rate cost while the popover is closed (#23).
+    /// unaffected. Flips the render gate on the sample queue, and attaches/detaches the
+    /// data output on the session queue so it isn't producing frames at all while the
+    /// popover is closed (#23).
     func setThumbnailActive(_ active: Bool) {
         sampleQueue.async { [frameListener] in
             frameListener.setActive(active)
         }
         sessionQueue.async { [self] in
             thumbnailActive = active
-            applyDataConnectionEnabled()
+            applyDataOutputAttached()
         }
     }
 
     /// Confirm frames are actually flowing: `resume()`/`start()` reporting `isRunning`
     /// isn't enough — a stalled device can be "running" with no frames (frozen preview)
-    /// (#13, #24). The data output may be gated off (popover closed, #23), so enable it
+    /// (#13, #24). The data output may be detached (popover closed, #23), so attach it
     /// for the confirmation window, then restore.
     func awaitFrame(timeout: TimeInterval) async -> Bool {
         await setConfirmingFrame(true)
@@ -139,14 +140,35 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         await withCheckedContinuation { continuation in
             sessionQueue.async { [self] in
                 confirmingFrame = confirming
-                applyDataConnectionEnabled()
+                applyDataOutputAttached()
                 continuation.resume()
             }
         }
     }
 
-    private func applyDataConnectionEnabled() {
-        dataConnection?.isEnabled = thumbnailActive || confirmingFrame
+    /// Add or remove the data output + its connection to match the desired gate. Removing
+    /// (not just disabling) is what actually stops the frame-rate cost (#23). Runs only on
+    /// `sessionQueue`; wraps its own configuration transaction.
+    private func applyDataOutputAttached() {
+        let want = thumbnailActive || confirmingFrame
+        if want, dataConnection == nil, let videoPort, session.canAddOutput(dataOutput) {
+            session.beginConfiguration()
+            dataOutput.alwaysDiscardsLateVideoFrames = true
+            dataOutput.setSampleBufferDelegate(frameListener, queue: sampleQueue)
+            session.addOutputWithNoConnections(dataOutput)
+            let connection = AVCaptureConnection(inputPorts: [videoPort], output: dataOutput)
+            if session.canAddConnection(connection) {
+                session.addConnection(connection)
+                dataConnection = connection
+            }
+            session.commitConfiguration()
+        } else if !want, let connection = dataConnection {
+            session.beginConfiguration()
+            session.removeConnection(connection)
+            session.removeOutput(dataOutput)
+            dataConnection = nil
+            session.commitConfiguration()
+        }
     }
 
     private func configureAndRun(deviceID: String) -> Bool {
@@ -181,9 +203,10 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         session.addConnection(previewConnection)
 
         observePortFormat(videoPort: videoPort)
-        wireDimensionOutput(videoPort: videoPort)
+        self.videoPort = videoPort
 
         session.commitConfiguration()
+        applyDataOutputAttached()
         session.startRunning()
         return session.isRunning
     }
@@ -209,27 +232,13 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         }
     }
 
-    /// Video-only data output (no audio, so no mic prompt) feeding the popover
-    /// thumbnail. Its connection is created gated to `setThumbnailActive` /
-    /// `confirmingFrame` (#23) so it costs nothing while the popover is closed.
-    private func wireDimensionOutput(videoPort: AVCaptureInput.Port) {
-        guard session.canAddOutput(dataOutput) else { return }
-        dataOutput.alwaysDiscardsLateVideoFrames = true
-        dataOutput.setSampleBufferDelegate(frameListener, queue: sampleQueue)
-        session.addOutputWithNoConnections(dataOutput)
-        let connection = AVCaptureConnection(inputPorts: [videoPort], output: dataOutput)
-        guard session.canAddConnection(connection) else { return }
-        connection.isEnabled = thumbnailActive || confirmingFrame
-        session.addConnection(connection)
-        dataConnection = connection
-    }
-
     private func teardown() {
         if let formatObserver {
             NotificationCenter.default.removeObserver(formatObserver)
             self.formatObserver = nil
         }
         dataConnection = nil
+        videoPort = nil
         for connection in session.connections {
             session.removeConnection(connection)
         }

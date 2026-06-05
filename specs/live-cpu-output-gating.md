@@ -29,15 +29,17 @@ and the #13/#24 frame-confirmation watchdog working in that state.
 
 Three coupled changes in `Sources/SharePad/Capture/CaptureController.swift`:
 
-1. **Gate via `connection.isEnabled`, not detachment.** The approved plan said
-   "remove the output connection"; this refines to toggling the data-output
-   **connection's `isEnabled`** instead. Rationale: `isEnabled` takes effect
-   immediately with **no `beginConfiguration`/`commitConfiguration`**, never touches
-   the preview connection (so it can't trip the `resume()` "frozen preview" hazard),
-   and re-enabling is instant. The connection stays attached; only its data flow is
-   gated. Desired state: `enabled = thumbnailActive || confirmingFrame`, default
-   **disabled**. All of `thumbnailActive`, `confirmingFrame`, and the `isEnabled`
-   write live on `sessionQueue`.
+1. **Attach/detach the data output.** *(Revised after the hardware spike.)* The first
+   attempt gated `connection.isEnabled` — but the spike measured **~15.7%** on an
+   active screen with the output disabled (popover never opened), i.e. **no saving**:
+   merely disabling the connection does **not** stop the buffer pipeline. So the gate
+   now **removes the output + its connection** (`removeOutput`/`removeConnection`) when
+   `!(thumbnailActive || confirmingFrame)`, and re-adds them on demand — each inside its
+   own `beginConfiguration`/`commitConfiguration` on `sessionQueue`. Default
+   **detached**. The preview connection is never touched, so the `resume()`
+   "frozen preview" hazard is still avoided. `videoPort` is stored so the connection can
+   be rebuilt on re-attach. All of `videoPort`, `dataConnection`, `thumbnailActive`,
+   `confirmingFrame`, and the wiring live on `sessionQueue`.
 
 2. **Decouple rotation from the data output.** With the connection disabled, no frames
    flow → the existing frame-based size detection can't see a rotation while the
@@ -55,28 +57,30 @@ Three coupled changes in `Sources/SharePad/Capture/CaptureController.swift`:
    popover-closed) needs frames. Wrap it: set `confirmingFrame = true` (→ enable the
    connection) on `sessionQueue`, await a frame on `sampleQueue` (existing logic),
    then clear `confirmingFrame` (→ restore: disabled unless the popover is open). No
-   reconfiguration — just an `isEnabled` flip. Without this, **every** popover-closed
-   auto-connect would fail under #24 — so this is load-bearing, not optional.
+   reconfiguration churn matched to the brief confirm — re-attaches the output, then
+   detaches it. Without this, **every** popover-closed auto-connect would fail under
+   #24 — so this is load-bearing, not optional.
 
 `FrameOutput` keeps the thumbnail render gate and the `awaitFrame` waiter; it no
 longer needs to be the only size source.
 
 ## Hardware spike (USER — the real "done" gate; I cannot run it)
 
-1. Does `isEnabled = false` on the data-output connection actually **drop the ~4–6%**
-   on an active screen (popover closed, idle stays ~0%)? If the buffer pipeline keeps
-   running while disabled → no win; fall back to `removeConnection`
-   (begin/commitConfiguration) per the original plan.
+1. ~~Does `isEnabled = false` drop the cost?~~ **Answered: no** — measured ~15.7%
+   active with the connection disabled (no saving). Switched to **detaching** the
+   output; re-test that `removeOutput` on an active screen (popover closed) drops to
+   ~8–9% (idle stays ~0%).
 2. Does `formatDescriptionDidChangeNotification` fire on iPad rotation and yield the
    correct **flipped** dimensions while the popover is **closed** (window follows)?
-3. Does enabling the connection only during `awaitFrame` reliably confirm a frame on a
+3. Does re-attaching the output only during `awaitFrame` reliably confirm a frame on a
    popover-closed connect/restart (no spurious `failed`)?
 4. Initial connect: does the window open at the correct **aspect** (size arrives) with
    the popover closed?
-5. Preview untouched: toggling the popover open/close shows no glitch in the share
-   window.
+5. Preview untouched: toggling the popover open/close — and the attach/detach
+   reconfiguration — shows no glitch in the share window.
 
-If (1)/(3) fail, the documented fallbacks apply (detach mechanism, or close #23).
+If (1) still shows no saving or (3) fails, fall back to removing the whole output path
+or close #23 as not worth the risk.
 
 ## Testing
 
