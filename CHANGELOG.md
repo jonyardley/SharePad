@@ -5,6 +5,10 @@ update dialog** (Sparkle shows it to people when they update), so write each ent
 for users, not developers. Add a new `## <version>` section at the top before you
 tag a release.
 
+## 1.0.3
+- Maintenance release: security and code-signing updates behind the scenes. No
+  changes to how SharePad works.
+
 ## 1.0.1
 - Auto-update: SharePad now updates itself, and tells you what's new.
 
