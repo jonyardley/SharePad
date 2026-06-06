@@ -335,6 +335,11 @@ Each phase is independently verifiable. Maps to PRs / plan steps.
 ## 10. Edge cases & failure modes
 
 - **iPad already connected at launch** — must handle, not only connect-while-running.
+  On *first* launch the camera-permission grant + iPad "Trust" handshake settle
+  *after* the device appears to discovery, so the first start can stall. `AppModel`
+  runs a **bounded auto-retry** (a few attempts over a few seconds) instead of
+  latching `failed`, so it self-heals without an unplug/replug
+  (`specs/first-connect-retry.md`).
 - **Permission denied** — popover surfaces it with an *Open System Settings* button;
   never a silent dead state.
 - **Multiple muxed sources** (two iPads, or iPhone + iPad) — device picker; remember

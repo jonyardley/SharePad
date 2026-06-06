@@ -23,7 +23,8 @@ final class AppModelTests: XCTestCase {
             preferences: preferences,
             capture: capture,
             window: window,
-            thumbnailLayer: AVSampleBufferDisplayLayer()
+            thumbnailLayer: AVSampleBufferDisplayLayer(),
+            sleep: { _ in } // retries run without real delay
         )
     }
 
@@ -107,8 +108,10 @@ final class AppModelTests: XCTestCase {
             preferences: ephemeralPreferences()
         )
         await model.reconcile(devices: [device("a")])
+        await model.retryTask?.value // exhaust the bounded retry window
         XCTAssertFalse(model.isLive)
         XCTAssertTrue(model.failed)
+        XCTAssertEqual(capture.startedDeviceIDs.count, 4) // firstConnectAttempts, no infinite loop
     }
 
     func testSwitchToPersistsOnlyOnSuccess() async throws {
@@ -189,9 +192,62 @@ final class AppModelTests: XCTestCase {
         capture.startResult = true
         capture.awaitFrameResult = false // session runs but no frame ever arrives
         await model.reconcile(devices: [device("a")])
+        await model.retryTask?.value // exhaust the bounded retry window
         XCTAssertFalse(model.isLive)
         XCTAssertTrue(model.failed)
-        XCTAssertEqual(capture.startedDeviceIDs, ["a"])
+        XCTAssertEqual(capture.startedDeviceIDs, ["a", "a", "a", "a"]) // firstConnectAttempts
+    }
+
+    func testFirstConnectRecoversAfterStall() async throws {
+        let capture = FakeCaptureController()
+        let window = FakeShareWindow()
+        let prefs = try ephemeralPreferences()
+        let model = makeModel(capture: capture, window: window, preferences: prefs)
+        // Attempt 1 stalls (no frame), attempt 2 confirms — the settling-window repro.
+        capture.awaitFrameResults = [false, true]
+        await model.reconcile(devices: [device("a")])
+        await model.retryTask?.value
+        XCTAssertTrue(model.isLive)
+        XCTAssertFalse(model.failed)
+        XCTAssertEqual(capture.startedDeviceIDs, ["a", "a"])
+        XCTAssertEqual(window.shownSizes.count, 1) // auto-shown once, not per attempt
+        XCTAssertEqual(prefs.lastDeviceID, "a")
+    }
+
+    func testFirstConnectExhaustsIntoFailed() async throws {
+        let capture = FakeCaptureController()
+        capture.awaitFrameResult = false // every confirm stalls
+        let window = FakeShareWindow()
+        let model = try makeModel(
+            capture: capture,
+            window: window,
+            preferences: ephemeralPreferences()
+        )
+        await model.reconcile(devices: [device("a")])
+        await model.retryTask?.value
+        XCTAssertFalse(model.isLive)
+        XCTAssertTrue(model.failed)
+        XCTAssertEqual(capture.startedDeviceIDs.count, 4) // firstConnectAttempts
+        XCTAssertGreaterThanOrEqual(window.hideCount, 1)
+    }
+
+    func testTeardownDuringRetryStops() async throws {
+        let capture = FakeCaptureController()
+        capture.awaitFrameResult = false // first connect stalls → spawns the retry task
+        let window = FakeShareWindow()
+        let model = try makeModel(
+            capture: capture,
+            window: window,
+            preferences: ephemeralPreferences()
+        )
+        await model.reconcile(devices: [device("a")])
+        let retry = model.retryTask // teardown nils the handle; keep it to await completion
+        XCTAssertNotNil(retry) // a stalled first attempt must have spawned the retry
+        await model.reconcile(devices: []) // device vanishes mid-window
+        await retry?.value // superseded → bails without re-failing
+        XCTAssertNil(model.currentDeviceID)
+        XCTAssertFalse(model.failed)
+        XCTAssertEqual(capture.stopCount, 1)
     }
 
     func testRestartFailsWhenResumeStallsAndStartFails() async throws {

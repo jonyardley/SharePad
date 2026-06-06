@@ -201,6 +201,12 @@ before touching capture.
 - **Devices appear asynchronously** after the opt-in. **KVO the DiscoverySession's
   `devices`** — reading it once at launch races and finds nothing. This same KVO
   drives the automatic connect/disconnect.
+- **First launch settles late.** Camera permission + the iPad "Trust" handshake
+  finish *after* the iPad shows up to discovery, so the very first start can stall —
+  and the device readying up afterward is a *property* change, not a `devices`-array
+  change, so KVO won't re-fire. `AppModel` runs a **bounded auto-retry** over a few
+  seconds so it self-heals (no unplug/replug). Don't "fix" this by latching `failed`
+  on the first stalled start. (`specs/first-connect-retry.md`)
 - **Muxed input → surprise mic prompt.** Adding the muxed input naively triggers a
   Microphone TCC dialog. Use `addInputWithNoConnections` + wire only the video
   connection (Non-Negotiable 5).
