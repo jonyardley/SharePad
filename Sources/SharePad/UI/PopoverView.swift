@@ -120,6 +120,7 @@ struct PopoverView: View {
         switch model.state {
         case .checkingPermission: Text("Requesting camera access…")
         case .permissionDenied: Text("Camera access denied.")
+        case .permissionRestricted: Text("Camera access is blocked by a device policy.")
         case .noDevice: Text("No iPad connected")
         case .starting: Text("Connecting…")
         case .live: Text(model.currentDeviceName ?? "iPad")

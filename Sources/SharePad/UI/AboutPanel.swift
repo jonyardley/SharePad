@@ -10,7 +10,7 @@ enum AboutPanel {
     static func present() {
         // As an LSUIElement agent app the panel can open behind the frontmost
         // window; activate so it comes forward.
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
     }
 

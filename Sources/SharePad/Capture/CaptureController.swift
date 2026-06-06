@@ -145,7 +145,14 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         }
         session.addConnection(previewConnection)
 
-        wireDimensionOutput(videoPort: videoPort)
+        // The data output is mandatory, not best-effort: video dimensions, the popover
+        // thumbnail, and the `awaitFrame` watchdog all feed off it. If it can't be wired,
+        // fail here — otherwise the preview runs frameless and the watchdog reports a
+        // false "stalled device" on timeout instead of this real setup failure. (#24)
+        guard wireDimensionOutput(videoPort: videoPort) else {
+            session.commitConfiguration()
+            return false
+        }
 
         session.commitConfiguration()
         session.startRunning()
@@ -157,14 +164,15 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
     /// valueForUndefinedKey inside its KVO notification), so dimensions come from a
     /// video-only data output instead — still no audio, so no mic prompt. The same
     /// output's frames also feed the popover thumbnail (gated by `setThumbnailActive`).
-    private func wireDimensionOutput(videoPort: AVCaptureInput.Port) {
-        guard session.canAddOutput(dataOutput) else { return }
+    private func wireDimensionOutput(videoPort: AVCaptureInput.Port) -> Bool {
+        guard session.canAddOutput(dataOutput) else { return false }
         dataOutput.alwaysDiscardsLateVideoFrames = true
         dataOutput.setSampleBufferDelegate(frameListener, queue: sampleQueue)
         session.addOutputWithNoConnections(dataOutput)
         let connection = AVCaptureConnection(inputPorts: [videoPort], output: dataOutput)
-        guard session.canAddConnection(connection) else { return }
+        guard session.canAddConnection(connection) else { return false }
         session.addConnection(connection)
+        return true
     }
 
     private func teardown() {
