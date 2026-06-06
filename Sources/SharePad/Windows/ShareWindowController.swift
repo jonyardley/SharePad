@@ -40,6 +40,10 @@ final class ShareWindowController: ShareWindowControlling {
         NSApp.activate()
     }
 
+    /// Driven by iPad rotation, not the user — so adapt the live window (keeping its
+    /// centre) but don't persist. Overwriting the saved origin here would discard the
+    /// user's chosen placement on every rotation; only their own move/resize persists.
+    /// `appliedFrame` is refreshed so the move observer doesn't treat this as a user move.
     func updateSize(_ size: CGSize) {
         guard let window else { return }
         let oldFrame = window.frame
@@ -50,7 +54,6 @@ final class ShareWindowController: ShareWindowControlling {
             onScreens: screenFrames()
         ))
         appliedFrame = window.frame
-        persistFrame()
     }
 
     func hide() {
@@ -108,7 +111,7 @@ final class ShareWindowController: ShareWindowControlling {
 
     private func makeWindow() -> BorderlessWindow {
         let window = BorderlessWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 800),
+            contentRect: NSRect(origin: .zero, size: fallbackContentSize),
             styleMask: [.borderless, .resizable],
             backing: .buffered,
             defer: false

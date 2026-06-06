@@ -33,7 +33,8 @@ final class AppModel {
     private var access: CameraAccess {
         switch permission {
         case .authorized: .granted
-        case .denied, .restricted: .denied
+        case .denied: .denied
+        case .restricted: .restricted
         default: .unknown
         }
     }
@@ -189,7 +190,10 @@ final class AppModel {
             await restart()
         }
     }
+}
 
+/// ── Connection lifecycle: discovery → auto-connect → retry → restart ──
+extension AppModel {
     /// A full `start()` reporting `isRunning` isn't proof of frames — a present-but-
     /// stalled device runs with none (frozen preview). Confirm a frame before treating
     /// the device as live; a stall routes into `failed` + Retry, same as a start that
@@ -223,6 +227,8 @@ final class AppModel {
             _ = await CameraPermission.request()
             permission = CameraPermission.status
         }
+        // No in-process re-check if access is withheld: macOS terminates the app when
+        // its camera TCC grant changes, so a later grant self-heals on relaunch.
         guard permission == .authorized else { return }
         monitor.start()
         for await devices in monitor.devices {

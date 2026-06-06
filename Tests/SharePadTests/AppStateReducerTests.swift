@@ -10,6 +10,10 @@ final class AppStateReducerTests: XCTestCase {
         XCTAssertEqual(state(.denied, device: true, running: true), .permissionDenied)
     }
 
+    func testRestrictedAccessIsDistinctFromDenied() {
+        XCTAssertEqual(state(.restricted, device: true, running: true), .permissionRestricted)
+    }
+
     func testGrantedNoDevice() {
         XCTAssertEqual(state(.granted), .noDevice)
     }

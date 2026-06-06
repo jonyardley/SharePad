@@ -35,9 +35,4 @@ final class DeviceMonitor: NSObject {
             ) })
         }
     }
-
-    func stop() {
-        observation = nil
-        continuation.finish()
-    }
 }

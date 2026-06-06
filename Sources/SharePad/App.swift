@@ -32,8 +32,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_: Notification) {
         // Skip capture/update startup under XCTest so the hosted unit tests stay
-        // side-effect-free (no CMIO opt-in / camera prompt during `just test`).
-        guard NSClassFromString("XCTestCase") == nil else { return }
+        // side-effect-free (no CMIO opt-in / camera prompt during `just test`). XCTest
+        // sets this env var in the host process; checking it keeps test-awareness out
+        // of the shipping binary's class lookups.
+        guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil
+        else { return }
         model.start()
         updater.start()
         WindowSharing.startGuarding()
