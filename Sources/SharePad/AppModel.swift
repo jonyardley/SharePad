@@ -22,6 +22,10 @@ final class AppModel {
         currentDeviceName != nil
     }
 
+    var isWindowHotkeyActive: Bool {
+        windowHotkey != nil
+    }
+
     var state: AppState {
         AppState.reduce(access: access, hasDevice: isConnected, isRunning: isLive, failed: failed)
     }
@@ -42,6 +46,7 @@ final class AppModel {
     private let preferences: Preferences
     private(set) var currentDeviceID: String?
     private var isReconfiguring = false
+    private var windowHotkey: GlobalHotkey?
 
     private static let defaultSize = CGSize(width: 820, height: 1180)
     private static let frameTimeout: TimeInterval = 1.5
@@ -81,6 +86,11 @@ final class AppModel {
         CMIO.allowScreenCaptureDevices()
         permission = CameraPermission.status
         window.setKeepOnTop(keepOnTop)
+        windowHotkey = GlobalHotkey(
+            id: GlobalHotkey.WindowToggle.id,
+            keyCode: GlobalHotkey.WindowToggle.keyCode,
+            modifiers: GlobalHotkey.WindowToggle.modifiers
+        ) { [weak self] in self?.toggleWindow() }
         Task { await beginMonitoring() }
         Task { await observeVideoSize() }
         Task { await observeRestarts() }
