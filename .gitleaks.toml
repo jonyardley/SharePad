@@ -25,6 +25,11 @@ path = '''(?i)(^|/)([^/]*\.(p12|p8|pem|key|keystore|jks|mobileprovision)|id_(rsa
 [allowlist]
 description = "Commit-safe public values"
 # SUPublicEDKey is the public half of the signing keypair — it is meant to live
-# in project.yml / the app's Info.plist. Match the line, not the captured value.
-regexTarget = "match"
-regexes = ['''SUPublicEDKey''']
+# in project.yml / the app's Info.plist. The Cloudflare Web Analytics beacon
+# token (data-cf-beacon) is a public client-side identifier shipped in the
+# landing page's HTML, not a secret. Match the line, not the captured value.
+regexTarget = "line"
+regexes = [
+  '''SUPublicEDKey''',
+  '''data-cf-beacon''',
+]
