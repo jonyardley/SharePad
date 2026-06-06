@@ -63,7 +63,7 @@ targets:
         # production EdDSA public key (safe to commit); its matching private key is
         # the SPARKLE_ED_PRIVATE_KEY CI secret used to sign the appcast.
         SUFeedURL: https://jonyardley.github.io/SharePad/appcast.xml
-        SUPublicEDKey: WaIGB4dHTyoJtyjtwoDUKxWDvPwCWGuLFZzk3XXhj1g=
+        SUPublicEDKey: dENS5eDuSc3QhXyD4HZ115jBNiZGK3gGbaVehtrk5yM=
         SUEnableAutomaticChecks: true
     scheme:
       testTargets:
