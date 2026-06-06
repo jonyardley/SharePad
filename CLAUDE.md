@@ -227,6 +227,11 @@ before touching capture.
   "two preview layers on one session" question was sidestepped, not tested.
 - **Locked iPad shows black**; sleep/wake can interrupt the session — restart on
   `runtimeErrorNotification` / interruption end.
+- **Only the feed window may be shared.** `WindowSharing` sets `sharingType = .none`
+  on every window except the feed (tagged via `shareWindowID`), so the About panel /
+  popover / Sparkle dialogs can't be picked in a call instead of the iPad. The guard
+  re-sweeps on `NSWindow.didBecomeKeyNotification`, so a new window type that becomes
+  shareable *without ever becoming key* would slip through — sweep it explicitly.
 
 ## Workflow
 

@@ -36,5 +36,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard NSClassFromString("XCTestCase") == nil else { return }
         model.start()
         updater.start()
+        WindowSharing.startGuarding()
     }
 }
