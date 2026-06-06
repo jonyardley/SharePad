@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
-# Block commits that contain secrets. Mirrors the CI gitleaks job against the
-# staged changes only, so a leak is caught before it ever leaves the machine.
-# Installed via `just install-hooks` (sets core.hooksPath to .githooks).
+# Scans staged changes for secrets — local complement to the CI scan, so a leak
+# is caught before it leaves the machine. Enable with `just install-hooks`.
 set -euo pipefail
 
 if ! command -v gitleaks >/dev/null 2>&1; then
