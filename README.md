@@ -3,6 +3,12 @@
 [![CI](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml/badge.svg)](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml)
 [![Buy / Support](https://img.shields.io/badge/Buy%20%2F%20Support-Gumroad-ff90e8)](https://yardley31.gumroad.com/l/sharepad)
 
+<p align="center">
+  <img src="docs/assets/demo.jpg" alt="SharePad sharing a connected iPad into a Google Meet call at full size, rather than a small webcam tile" width="820">
+  <br />
+  <em>SharePad on the left; the same window shared into Google Meet at full size on the right.</em>
+</p>
+
 A macOS **menu-bar app** that turns a USB-connected iPad into a clean,
 aspect-locked, always-ready **window** you share in any video call's "Share
 window" picker. Plug in the iPad → the window appears automatically → pick it in
@@ -10,6 +16,12 @@ the call. No more per-call QuickTime ritual.
 
 Primary use case: live drawing / whiteboarding shown as full shared content, not
 a webcam tile.
+
+<p align="center">
+  <img src="docs/assets/popover.png" alt="The SharePad menu-bar popover: a live preview of the connected iPad, the device name, a Hide window button, and toggles for auto-show on connect, keep window on top, and launch at login" width="280">
+  <br />
+  <em>The whole app — a menu-bar popover with a live preview and the controls a click away.</em>
+</p>
 
 > **Status: v1.0 shipped.** Signed, notarized, and auto-updating.
 > Get the ready-to-run build at [yardley31.gumroad.com/l/sharepad](https://yardley31.gumroad.com/l/sharepad),
