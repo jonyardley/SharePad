@@ -33,6 +33,15 @@ lint:
 test: gen
     xcodebuild -project SharePad.xcodeproj -scheme SharePad -configuration Debug -destination 'platform=macOS' -derivedDataPath .build test
 
+# scan full git history for committed secrets (same check CI runs)
+scan:
+    gitleaks git --config .gitleaks.toml --redact --no-banner --verbose .
+
+# install the repo git hooks (pre-commit secret scan). Run once per clone/worktree.
+install-hooks:
+    git config core.hooksPath .githooks
+    @echo "git hooks installed (core.hooksPath -> .githooks). Needs: brew install gitleaks"
+
 # ── Release / distribution ──
 # See specs/distribution.md. `release-build` is ad-hoc and credential-free (enough
 # for the Step 1 on-iPad camera check); `sign`/`notarize`/`dmg` need a Developer ID

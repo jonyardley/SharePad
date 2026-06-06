@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Scans staged changes for secrets — local complement to the CI scan, so a leak
+# is caught before it leaves the machine. Enable with `just install-hooks`.
+set -euo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+    echo "error: gitleaks not installed — run 'brew install gitleaks' (see CLAUDE.md setup)." >&2
+    echo "       to bypass for one commit (not recommended): git commit --no-verify" >&2
+    exit 1
+fi
+
+gitleaks git --staged --config .gitleaks.toml --redact --no-banner --verbose

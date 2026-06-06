@@ -45,7 +45,7 @@ Tests/SharePadTests/      # pure-logic tests (reducer, preferences)
 - **Capture**: AVFoundation (`AVCaptureSession`, `AVCaptureVideoPreviewLayer`)
 - **Device visibility**: CoreMediaIO (`kCMIOHardwarePropertyAllowScreenCaptureDevices`)
 - **Login item**: `SMAppService.mainApp`
-- **Tooling**: xcodegen, just, swiftformat, swiftlint
+- **Tooling**: xcodegen, just, swiftformat, swiftlint, gitleaks (secret scan)
 - **Third-party dependencies: none.** First-party frameworks only. Adding a
   dependency is a flagged decision, not a default.
 
@@ -59,6 +59,8 @@ just open          # open the generated project in Xcode
 just test          # run the unit tests
 just fmt           # swiftformat .   (must pass before commit)
 just lint          # swiftlint + swiftformat --lint (must pass before push)
+just scan          # gitleaks secret scan over full history (same check CI runs)
+just install-hooks # enable the pre-commit secret scan (run once per clone/worktree)
 just release-build # Release build, Hardened Runtime, ad-hoc (for local on-iPad checks)
 just release       # full pipeline: build → Developer ID sign → notarize → DMG (needs creds)
 ```
@@ -68,7 +70,8 @@ Release signing/notarization is env-driven; see `specs/distribution.md`.
 First-time setup:
 
 ```bash
-brew install xcodegen just swiftformat swiftlint
+brew install xcodegen just swiftformat swiftlint gitleaks
+just install-hooks   # enable the pre-commit secret scan
 just gen && just run
 ```
 
