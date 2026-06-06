@@ -3,15 +3,24 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>SharePad — Your iPad, share-ready in any call</title>
-<meta name="description" content="SharePad shows your USB-connected iPad as a normal window on your Mac, so you can share it in any video call. Plug it in and it’s already there in the share list." />
+<title>SharePad — Share your iPad on any call, in an instant</title>
+<meta name="description" content="Turn your iPad into a live whiteboard and share it in any call. Plug it into your Mac and it’s right there in the share list — without the faff." />
+<link rel="canonical" href="https://jonyardley.github.io/SharePad/" />
 
-<meta property="og:title" content="SharePad — Your iPad, share-ready in any call" />
-<meta property="og:description" content="A macOS menu-bar app that turns a USB-connected iPad into a clean, always-ready window for any video call's “Share window” picker." />
+<meta property="og:title" content="SharePad — Share your iPad on any call, in an instant" />
+<meta property="og:description" content="Share your thinking, not just your screen. Turn your iPad into a live whiteboard you can share in any video call — plug it in and it’s there in the share list." />
 <meta property="og:type" content="website" />
-<meta property="og:image" content="https://jonyardley.github.io/SharePad/assets/icon-512.png" />
-<meta property="og:image:alt" content="The SharePad app icon" />
+<meta property="og:site_name" content="SharePad" />
+<meta property="og:image" content="https://jonyardley.github.io/SharePad/assets/demo.jpg" />
+<meta property="og:image:width" content="2080" />
+<meta property="og:image:height" content="1238" />
+<meta property="og:image:alt" content="The SharePad window sharing a connected iPad into a Google Meet call at full size." />
 <meta property="og:url" content="https://jonyardley.github.io/SharePad/" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="SharePad — Share your iPad on any call, in an instant" />
+<meta name="twitter:description" content="Share your thinking, not just your screen. Turn your iPad into a live whiteboard you can share in any video call — without the faff." />
+<meta name="twitter:image" content="https://jonyardley.github.io/SharePad/assets/demo.jpg" />
 
 <link rel="icon" type="image/png" href="assets/icon-256.png" />
 <link rel="apple-touch-icon" href="assets/icon-256.png" />
@@ -247,6 +256,15 @@
   .step p { color: var(--ink-soft); font-size: 0.97rem; }
   .step .glyph { position: absolute; top: 22px; right: 22px; width: 30px; height: 30px; color: var(--sky); opacity: .85; }
 
+  /* Menu-bar popover shot */
+  .menubar-demo { margin-top: 64px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .menubar-demo img {
+    width: 100%; max-width: 300px; height: auto; border-radius: var(--radius-md);
+    box-shadow: 0 28px 64px rgba(40,48,120,0.30); display: block;
+  }
+  .menubar-demo figcaption { margin-top: 24px; color: var(--ink-soft); font-size: 0.97rem; max-width: 48ch; line-height: 1.5; }
+  .menubar-demo figcaption b { color: var(--ink); font-weight: 600; }
+
   /* Features */
   .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
   .feature {
@@ -322,6 +340,30 @@
     .float-chip.tl { left: 2%; } .float-chip.br { right: 2%; }
   }
 </style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "SharePad",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "macOS 14.0 or later",
+  "url": "https://jonyardley.github.io/SharePad/",
+  "downloadUrl": "https://yardley31.gumroad.com/l/sharepad",
+  "slogan": "Share your thinking, not just your screen.",
+  "description": "SharePad turns a USB-connected iPad into a clean, aspect-locked window on your Mac that you can share in any video call. Plug in your iPad and it appears in the Share window list of Zoom, Google Meet and Teams — ideal for live drawing and visual thinking.",
+  "image": "https://jonyardley.github.io/SharePad/assets/demo.jpg",
+  "sameAs": "https://github.com/jonyardley/SharePad",
+  "offers": {
+    "@type": "Offer",
+    "price": "1.99",
+    "priceCurrency": "GBP",
+    "availability": "https://schema.org/InStock",
+    "url": "https://yardley31.gumroad.com/l/sharepad"
+  },
+  "author": { "@type": "Person", "name": "Jon Yardley" }
+}
+</script>
 </head>
 <body>
 
@@ -346,13 +388,13 @@
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <h1 class="title reveal d2">
-        Your iPad,<br />
-        <span class="accent longshadow">share-ready</span><br />
-        in any call.
+        Share your<br />
+        <span class="accent longshadow">thinking</span>,<br />
+        not just your screen.
       </h1>
       <p class="lede reveal d3">
-        Plug your iPad into your Mac and it shows up as an ordinary window.
-        When a call asks what to share, it’s already there in the list.
+        Turn the iPad into a <b>live whiteboard</b> using your favourite drawing or
+        writing app. Plug it into your Mac and share in any call, without the faff.
       </p>
       <div class="hero-cta reveal d4">
         <a class="btn btn-primary" href="https://yardley31.gumroad.com/l/sharepad">
@@ -368,8 +410,8 @@
 
     <div class="stage reveal d5">
       <div class="float-chip tl">
-        <span class="ic"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span>
-        iPad connected
+        <span class="ic"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M7 8h10v3a5 5 0 0 1-10 0z"/><path d="M12 16v6"/></svg></span>
+        Connect your iPad
       </div>
       <div class="device">
         <div class="live"><span class="pulse"></span> Sharing</div>
@@ -391,13 +433,13 @@
 <section class="proof" id="demo">
   <div class="wrap">
     <div class="section-head">
-      <div class="kicker">See it for yourself</div>
-      <h2>Here it is in a real Google Meet.</h2>
-      <p>On the left, the SharePad window. On the right, Google Meet sharing it full size as a proper window, not a little webcam tile.</p>
+      <div class="kicker">The proof</div>
+      <h2>See it in action.</h2>
+      <p>On the left, the SharePad window. On the right, that same window shared into Google Meet at full size.</p>
     </div>
     <div class="demo-frame">
       <!-- Motion demo (GIF) to replace this still later — see docs/README.md -->
-      <img src="assets/demo.jpg" width="2080" height="1238" loading="lazy" alt="SharePad sharing a connected iPad's screen into a Google Meet call, shown full-size as a shared window rather than a small webcam tile." />
+      <img src="assets/demo.jpg" width="2080" height="1238" loading="lazy" alt="SharePad sharing a connected iPad's screen into a Google Meet call, shown full-size as a shared window." />
     </div>
     <div class="demo-caption">
       <span class="soon-chip">
@@ -413,8 +455,8 @@
   <div class="wrap">
     <div class="section-head">
       <div class="kicker">How it works</div>
-      <h2>It’s ready before you are.</h2>
-      <p>It sits in your menu bar and watches for the cable, so there’s nothing to open once a meeting has started.</p>
+      <h2>Ready the moment you plug in.</h2>
+      <p>SharePad lives in your menu bar and finds your iPad as soon as it connects to your Mac.</p>
     </div>
     <div class="steps">
       <div class="step">
@@ -427,15 +469,19 @@
         <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 20h8"/></svg>
         <div class="num">2</div>
         <h3>The window appears</h3>
-        <p>A clean window opens on your Mac, the same shape as the iPad, so nothing looks squished.</p>
+        <p>A clean window opens automatically, matched to your iPad’s shape so nothing looks squished. Show or hide it whenever you like.</p>
       </div>
       <div class="step">
         <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H4z"/><path d="M8 21h8M2 9h20"/></svg>
         <div class="num">3</div>
         <h3>Share it in the call</h3>
-        <p>In Zoom, Meet or Teams, pick it from the “Share window” list. Your drawing fills the screen.</p>
+        <p>Pick it from the “Share window” list in Zoom, Meet or Teams, open your favourite app, and you’re ready to go.</p>
       </div>
     </div>
+    <figure class="menubar-demo">
+      <img src="assets/popover.png" loading="lazy" alt="The SharePad menu-bar popover, showing a live preview of the connected iPad, the device name, a Hide window button, and toggles for auto-show on connect, keep window on top, and launch at login." />
+      <figcaption><b>The whole app lives in your menu bar</b> — a live preview of exactly what you’re sharing, with show/hide and keep-on-top controls a click away.</figcaption>
+    </figure>
   </div>
 </section>
 
@@ -446,7 +492,7 @@
         <div class="kicker">Privacy</div>
         <h2>Nothing leaves your Mac.</h2>
         <p style="color:rgba(255,255,255,0.82); max-width:54ch; margin-top:14px;">
-          SharePad just shows the iPad in a window on your machine. There’s no account to set up, and it never touches the internet. It only reads video, so macOS won’t even ask about your microphone.
+          SharePad just shows the iPad in a window on your machine. There’s no account to set up, and it never touches the internet.
         </p>
       </div>
     </div>
@@ -458,11 +504,11 @@
     <div class="section-head">
       <div class="kicker">Before you download</div>
       <h2>How it ships, honestly.</h2>
-      <p>SharePad isn’t on the Mac App Store, so you download it straight from here. A few things worth knowing first.</p>
+      <p>SharePad isn’t on the Mac App Store, so you download it straight from here.</p>
     </div>
     <div class="panel note" style="max-width:720px">
       <ul>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Every build is <b>signed and notarized by Apple</b>, so it opens with a normal double-click.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Every build is <b>signed and notarised by Apple</b>, so it opens with a normal double-click.</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>It runs outside Apple’s sandbox, because that’s the only way macOS will treat a plugged-in iPad as a camera. That’s also why it can’t be on the App Store.</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>The code is <a href="https://github.com/jonyardley/SharePad" style="color:var(--indigo);font-weight:600">open</a>, so you can read what it does.</span></li>
       </ul>
@@ -474,8 +520,8 @@
   <div class="wrap">
     <div class="final-card">
       <img src="assets/icon-256.png" alt="SharePad icon" />
-      <h2>Stop fiddling with QuickTime before every call.</h2>
-      <p>Plug in, pick the window, and draw. SharePad takes care of the rest.</p>
+      <h2>Make every call more visual.</h2>
+      <p>Plug in, pick the window, and draw.</p>
       <a class="btn btn-primary" href="https://yardley31.gumroad.com/l/sharepad">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.6 8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg>
         Get SharePad
@@ -487,7 +533,7 @@
 <footer>
   <div class="wrap">
     <a class="brand" href="#top"><img src="assets/icon-128.png" alt="" style="width:28px;height:28px;border-radius:7px" /> SharePad</a>
-    <div class="fcol">A small Mac app for getting your iPad into a call.</div>
+    <div class="fcol">A small utility app for getting your iPad into a call.</div>
     <div class="fcol"><a class="muted" href="https://github.com/jonyardley/SharePad">GitHub ↗</a></div>
   </div>
 </footer>
