@@ -281,7 +281,9 @@ final class AppModel {
         case .live, .superseded:
             return
         case .notLive:
-            retryTask = Task { [self] in await retryLoop(deviceID: device.id, generation: generation) }
+            retryTask = Task { [self] in
+                await retryLoop(deviceID: device.id, generation: generation)
+            }
         }
     }
 

@@ -111,7 +111,8 @@ final class AppModelTests: XCTestCase {
         await model.retryTask?.value // exhaust the bounded retry window
         XCTAssertFalse(model.isLive)
         XCTAssertTrue(model.failed)
-        XCTAssertEqual(capture.startedDeviceIDs.count, AppModel.firstConnectAttempts) // no infinite loop
+        XCTAssertEqual(capture.startedDeviceIDs.count,
+                       AppModel.firstConnectAttempts) // no infinite loop
     }
 
     func testSwitchToPersistsOnlyOnSuccess() async throws {
