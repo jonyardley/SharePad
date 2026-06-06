@@ -424,10 +424,58 @@
     },
     {
       "@type": "Question",
-      "name": "Why isn't SharePad on the Mac App Store?",
+      "name": "Why isn’t SharePad on the Mac App Store?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "macOS only treats a plugged-in iPad as a camera for apps that run outside Apple's sandbox, and App Store apps must be sandboxed. SharePad is still signed and notarised by Apple, so it opens with a normal double-click — you just download it directly rather than from the store."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which drawing or notes apps does it work with?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Any of them. SharePad shows your iPad’s whole screen, so you can use Procreate, GoodNotes, Freeform, Notability, Apple Notes — whatever you already draw or write in. There’s nothing to integrate."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need a cable, or does it work wirelessly?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You connect the iPad to your Mac with a USB cable. SharePad uses the same wired connection macOS already exposes for a plugged-in iPad — the one QuickTime uses — so there’s no wireless pairing or network involved."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is there any lag?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It’s a live feed rendered straight to your screen on the GPU, using the same capture path QuickTime and OBS use, so it stays responsive for drawing and writing."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "The shared window is black — what can I do?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Two usual causes: the iPad is locked (a locked iPad shows black, so unlock it), or you haven’t tapped “Trust This Computer” on the iPad yet. Also, browser-based Google Meet and Teams only transmit a window that’s actually visible — if it’s hidden behind other windows the share goes blank, so switch on “Keep window on top” in the popover."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it share the iPad’s sound too?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No — SharePad is video only by design. It shows the iPad’s screen, not its audio, so your call’s own microphone handles the talking."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Will my iPad notifications show up in the share?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "SharePad mirrors your whole iPad screen, so anything on the iPad — including notification banners — is visible to the call. Turn on a Focus or Do Not Disturb on the iPad before you share to keep things tidy."
       }
     },
     {
@@ -622,6 +670,36 @@
         <summary>Why isn’t SharePad on the Mac App Store?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
         <div class="faq-body">macOS only treats a plugged-in iPad as a camera for apps that run outside Apple’s sandbox, and App Store apps must be sandboxed. SharePad is still <a href="https://github.com/jonyardley/SharePad">signed and notarised</a> by Apple, so it opens with a normal double-click — you just download it directly rather than from the store.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Which drawing or notes apps does it work with?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+        <div class="faq-body">Any of them. SharePad shows your iPad’s whole screen, so you can use Procreate, GoodNotes, Freeform, Notability, Apple Notes — whatever you already draw or write in. There’s nothing to integrate.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Do I need a cable, or does it work wirelessly?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+        <div class="faq-body">You connect the iPad to your Mac with a USB cable. SharePad uses the same wired connection macOS already exposes for a plugged-in iPad — the one QuickTime uses — so there’s no wireless pairing or network involved.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Is there any lag?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+        <div class="faq-body">It’s a live feed rendered straight to your screen on the GPU, using the same capture path QuickTime and OBS use, so it stays responsive for drawing and writing.</div>
+      </details>
+      <details class="faq-item">
+        <summary>The shared window is black — what can I do?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+        <div class="faq-body">Two usual causes: the iPad is locked (a locked iPad shows black, so unlock it), or you haven’t tapped “Trust This Computer” on the iPad yet. Also, browser-based Google Meet and Teams only transmit a window that’s actually visible — if it’s hidden behind other windows the share goes blank, so switch on “Keep window on top” in the popover.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Does it share the iPad’s sound too?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+        <div class="faq-body">No — SharePad is video only by design. It shows the iPad’s screen, not its audio, so your call’s own microphone handles the talking.</div>
+      </details>
+      <details class="faq-item">
+        <summary>Will my iPad notifications show up in the share?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+        <div class="faq-body">SharePad mirrors your whole iPad screen, so anything on the iPad — including notification banners — is visible to the call. Turn on a Focus or Do Not Disturb on the iPad before you share to keep things tidy.</div>
       </details>
       <details class="faq-item">
         <summary>Is my data private?
