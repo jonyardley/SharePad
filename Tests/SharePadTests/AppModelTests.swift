@@ -111,7 +111,7 @@ final class AppModelTests: XCTestCase {
         await model.retryTask?.value // exhaust the bounded retry window
         XCTAssertFalse(model.isLive)
         XCTAssertTrue(model.failed)
-        XCTAssertEqual(capture.startedDeviceIDs.count, 4) // firstConnectAttempts, no infinite loop
+        XCTAssertEqual(capture.startedDeviceIDs.count, AppModel.firstConnectAttempts) // no infinite loop
     }
 
     func testSwitchToPersistsOnlyOnSuccess() async throws {
@@ -195,7 +195,10 @@ final class AppModelTests: XCTestCase {
         await model.retryTask?.value // exhaust the bounded retry window
         XCTAssertFalse(model.isLive)
         XCTAssertTrue(model.failed)
-        XCTAssertEqual(capture.startedDeviceIDs, ["a", "a", "a", "a"]) // firstConnectAttempts
+        XCTAssertEqual(
+            capture.startedDeviceIDs,
+            Array(repeating: "a", count: AppModel.firstConnectAttempts)
+        )
     }
 
     func testFirstConnectRecoversAfterStall() async throws {
@@ -227,7 +230,7 @@ final class AppModelTests: XCTestCase {
         await model.retryTask?.value
         XCTAssertFalse(model.isLive)
         XCTAssertTrue(model.failed)
-        XCTAssertEqual(capture.startedDeviceIDs.count, 4) // firstConnectAttempts
+        XCTAssertEqual(capture.startedDeviceIDs.count, AppModel.firstConnectAttempts)
         XCTAssertGreaterThanOrEqual(window.hideCount, 1)
     }
 

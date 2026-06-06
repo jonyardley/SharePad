@@ -53,7 +53,7 @@ final class AppModel {
     private static let frameTimeout: TimeInterval = 1.5
     private static let startFrameTimeout: TimeInterval = 3.0
     // Provisional — the iPad trust→ready latency is a hardware datum; tune on device.
-    private static let firstConnectAttempts = 4
+    static let firstConnectAttempts = 4
     private static let retryDelay: Duration = .milliseconds(1500)
 
     convenience init(preferences: Preferences = Preferences()) {
@@ -286,7 +286,7 @@ final class AppModel {
     }
 
     private func retryLoop(deviceID: String, generation: Int) async {
-        for _ in 1 ..< Self.firstConnectAttempts {
+        for _ in 0 ..< max(0, Self.firstConnectAttempts - 1) {
             await sleep(Self.retryDelay)
             guard generation == connectGeneration,
                   currentDeviceID == deviceID,
