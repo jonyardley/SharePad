@@ -1,0 +1,30 @@
+# Secret-scanning rules for SharePad — run in CI (full history) and the
+# pre-commit hook (staged changes). The Sparkle EdDSA *private* key leaked in
+# #40 was a bare 44-char base64 string with no provider signature, so GitHub's
+# native scanner missed it. The explicit rules below close that gap.
+
+title = "SharePad secret scan"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "sparkle-ed-private-key"
+description = "Sparkle EdDSA private key (generate_keys -x output)"
+# generate_keys -x writes the 32-byte seed as a single base64 line; the
+# conventional filename (specs/release-runbook.md) is sparkle_private_key.
+regex = '''^[A-Za-z0-9+/]{43}=\s*$'''
+path = '''(^|/)sparkle_private_key$'''
+
+[[rules]]
+id = "key-material-by-filename"
+description = "Signing material / private key committed by filename"
+regex = '''(?s).'''
+path = '''(?i)(^|/)([^/]*\.(p12|p8|pem|key|keystore|jks|mobileprovision)|id_(rsa|dsa|ecdsa|ed25519))$'''
+
+[allowlist]
+description = "Commit-safe public values"
+# SUPublicEDKey is the public half of the signing keypair — it is meant to live
+# in project.yml / the app's Info.plist. Match the line, not the captured value.
+regexTarget = "match"
+regexes = ['''SUPublicEDKey''']
