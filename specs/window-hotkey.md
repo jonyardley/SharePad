@@ -11,18 +11,20 @@ you want to hide (or re-show) the window without leaving the call.
 
 ## Approach
 
-Two bindings, both driving the existing `AppModel.toggleWindow()` — no new window
-logic, just new entry points.
+A single **global hotkey — `⌃⌥⌘H`** — driving the existing
+`AppModel.toggleWindow()`; no new window logic, just a new entry point. It fires
+system-wide, even while the meeting app is frontmost — the case that matters
+in-call. It **toggles** (show ↔ hide), mirroring the popover button.
+`toggleWindow()` already no-ops the "show" path when no iPad is connected, so the
+hotkey is safe to fire anytime.
 
-1. **Global hotkey — `⌃⌥⌘H`.** Fires system-wide, even while the meeting app is
-   frontmost. This is the one that matters in-call.
-2. **App-focused — `⌘H`.** A SwiftUI `.keyboardShortcut("h")` on the popover's
-   Show/Hide button. Works only when the popover is key, as a convenience when
-   you're already in SharePad.
-
-Both **toggle** (show ↔ hide), mirroring the button. `toggleWindow()` already
-no-ops the "show" path when no iPad is connected, so the hotkey is safe to fire
-anytime.
+> **Dropped — app-focused `⌘H`.** An earlier cut added a SwiftUI
+> `.keyboardShortcut("h")` on the popover button as a second, app-focused binding.
+> Removed: `⌘H` is macOS's reserved *Hide application* shortcut, so the view-level
+> binding loses to the system command (and an `LSUIElement` app has no app menu to
+> own it) — it didn't reliably fire. It was also redundant: it only worked with the
+> popover already open, where clicking the button is just as easy. The global
+> hotkey covers the real need.
 
 ## Key decisions
 
@@ -34,8 +36,7 @@ anytime.
   (no new dependency, per the no-third-party rule).
 - **Fixed combo, not user-configurable (v1).** A rebind UI + a `MASShortcut`-style
   recorder is scope we don't need yet. `⌃⌥⌘H`: `H` = hide, and the three modifiers
-  make a system/app collision unlikely (plain `⌘H` is "hide app", so it's kept for
-  the app-focused binding only).
+  make a system/app collision unlikely (plain `⌘H` is macOS's reserved "hide app").
 - **One source of truth for the combo.** `GlobalHotkey.WindowToggle` holds the
   key code, modifier mask, *and* the `⌃⌥⌘H` display string, so the popover hint
   can't drift from what's actually registered.
@@ -47,7 +48,7 @@ anytime.
   so the owning handler still receives them.
 - **Registration failure is non-fatal.** If another app already owns `⌃⌥⌘H`,
   `RegisterEventHotKey` fails and the initializer returns `nil`; the app runs
-  without the global hotkey (the popover button and `⌘H` still work). Unlike a
+  without the global hotkey (the popover button still works). Unlike a
   capture error (DESIGN.md non-negotiable 6) this isn't a dead state, so it gets
   no error UI — but the popover hint is gated on `AppModel.isWindowHotkeyActive`
   so we never advertise a shortcut that didn't register.
@@ -59,7 +60,6 @@ bucket as the AVFoundation capture path — **manual verify**:
 
 - With an iPad connected and the window shown, press `⌃⌥⌘H` while a meeting app is
   frontmost → window hides. Press again → it re-shows. (in-call case)
-- Open the popover, press `⌘H` → window toggles.
 - Fire `⌃⌥⌘H` with no iPad connected → nothing happens (no crash, no stray window).
 
 ## Open questions

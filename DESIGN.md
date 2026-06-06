@@ -91,8 +91,7 @@ From the design Q&A (2026-06-03):
    *Launch at login*, *Quit*. Plus a *Show/Hide window* affordance and, on error,
    an inline message with a **Open System Settings** button. The window also
    toggles via a system-wide hotkey **⌃⌥⌘H** (works mid-call, while the meeting app
-   is frontmost) and, when the popover is focused, **⌘H**. See
-   `specs/window-hotkey.md`.
+   is frontmost). See `specs/window-hotkey.md`.
 3. **Share window** — borderless, aspect-locked view of the iPad. This is the
    object you pick in the meeting app. No app chrome → pure feed.
 
