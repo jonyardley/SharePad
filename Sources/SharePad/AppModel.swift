@@ -13,6 +13,10 @@ final class AppModel {
     private(set) var videoSize: CGSize?
     private(set) var isWindowVisible = false
 
+    /// A one-shot, self-expiring event (not a steady AppState case): the iPad vanished
+    /// while its share window was up, so the user — possibly mid-call — lost their share.
+    private(set) var shareLostSignal = false
+
     private(set) var autoShowOnConnect: Bool
     private(set) var keepOnTop: Bool
     private(set) var launchAtLogin: Bool
@@ -54,6 +58,7 @@ final class AppModel {
     // device, so the first start can stall — re-attempt. (specs/first-connect-retry.md)
     private var connectGeneration = 0
     private(set) var retryTask: Task<Void, Never>?
+    private(set) var shareLostDismissTask: Task<Void, Never>?
 
     private static let defaultSize = CGSize(width: 820, height: 1180)
     private static let frameTimeout: TimeInterval = 1.5
@@ -61,6 +66,7 @@ final class AppModel {
     // Provisional — the iPad trust→ready latency is a hardware datum; tune on device.
     static let firstConnectAttempts = 4
     private static let retryDelay: Duration = .milliseconds(1500)
+    private static let shareLostDuration: Duration = .seconds(10)
 
     convenience init(preferences: Preferences = Preferences()) {
         let controller = CaptureController()
@@ -163,6 +169,25 @@ final class AppModel {
         capture.setThumbnailActive(false)
     }
 
+    func dismissShareLost() {
+        shareLostDismissTask?.cancel()
+        shareLostDismissTask = nil
+        shareLostSignal = false
+    }
+
+    /// Raise the lost-share signal and auto-expire it, so a stale banner/badge doesn't
+    /// linger after the user has moved on (or replugged). Reconnect/dismiss clear it early.
+    private func raiseShareLost() {
+        shareLostSignal = true
+        shareLostDismissTask?.cancel()
+        shareLostDismissTask = Task { [self] in
+            await sleep(Self.shareLostDuration)
+            guard !Task.isCancelled else { return }
+            shareLostSignal = false
+            shareLostDismissTask = nil
+        }
+    }
+
     private func presentWindow() {
         window.show(size: videoSize ?? Self.defaultSize)
         isWindowVisible = true
@@ -262,6 +287,9 @@ extension AppModel {
             lastUsed: preferences.lastDeviceID
         ) {
         case .teardown:
+            // Capture visibility *before* hide() clears it — a teardown while the share
+            // window was up is a lost share worth signalling; an idle unplug is silent.
+            let wasSharing = isWindowVisible
             cancelAutoConnect()
             currentDeviceID = nil
             currentDeviceName = nil
@@ -271,6 +299,7 @@ extension AppModel {
             window.hide()
             isWindowVisible = false
             await capture.stop()
+            if wasSharing { raiseShareLost() }
         case let .keep(device):
             currentDeviceName = device.name
         case let .switchTo(device):
@@ -333,6 +362,7 @@ extension AppModel {
         if running {
             isLive = true
             failed = false
+            dismissShareLost() // a reconnect supersedes a prior lost-share banner
             preferences.lastDeviceID = deviceID
             if autoShowOnConnect, !isWindowVisible {
                 presentWindow()

@@ -9,6 +9,8 @@ struct PopoverView: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
             header
 
+            shareLostBanner
+
             thumbnail
 
             statusText
@@ -77,6 +79,28 @@ struct PopoverView: View {
             .buttonStyle(.borderless)
             .foregroundStyle(.secondary)
             .help("About SharePad")
+        }
+    }
+
+    @ViewBuilder private var shareLostBanner: some View {
+        if model.shareLostSignal {
+            HStack(spacing: Theme.Spacing.row) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                Text("iPad disconnected — your share stopped.")
+                    .font(.caption)
+                Spacer()
+                Button {
+                    model.dismissShareLost()
+                } label: {
+                    Image(systemName: "xmark")
+                }
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+                .help("Dismiss")
+            }
+            .padding(Theme.Spacing.row)
+            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: Theme.Radius.card))
         }
     }
 

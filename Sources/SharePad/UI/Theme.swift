@@ -7,5 +7,6 @@ enum Theme {
 
     enum Radius {
         static let thumbnail: CGFloat = 8
+        static let card: CGFloat = 8
     }
 }

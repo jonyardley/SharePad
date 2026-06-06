@@ -351,10 +351,15 @@ Each phase is independently verifiable. Maps to PRs / plan steps.
   never a silent dead state.
 - **Multiple muxed sources** (two iPads, or iPhone + iPad) — device picker; remember
   last-used by `uniqueID`.
-- **Device vanishes mid-call** — auto-hide + status dim. ⚠️ You may be mid-share —
-  consider a brief notification rather than a silent disappearance (decide in Phase 4).
+- **Device vanishes mid-call** — auto-hide + status dim, **plus** a transient
+  lost-share signal (popover banner + alert status symbol) when the share window was
+  up at teardown, so a mid-call user isn't left guessing. (`specs/mid-call-disconnect.md`)
 - **Mac/display sleep → wake** — restart session on runtime error / interruption end.
-- **Locked iPad** — black feed until unlocked; surface a hint if detectable.
+- **Locked iPad** — black feed until unlocked. **Confirmed not reliably detectable
+  on macOS**: the session stays running and delivers valid-but-black frames (no
+  interruption — those APIs are iOS-only — and no CMIO/`AVCaptureDevice` lock
+  property). A hint would require a fuzzy pixel heuristic; deferred. Don't
+  re-investigate expecting a clean API.
 - **Normal-window share visibility** — Zoom desktop shares an occluded window fine;
   **browser Meet/Teams only transmit visible window content**. The *keep-on-top*
   toggle is the escape hatch. ⚠️ The one behavioural gotcha to remember.
@@ -393,8 +398,10 @@ hardware, so we **isolate the pure logic** and **manually verify the pipeline**.
 3. ~~**Auto-show guard**~~ — **Resolved (#6):** shipped an "Auto-show on connect"
    toggle (persisted via `Preferences.autoShowOnConnect`); off → the window stays
    hidden on connect and is opened manually.
-4. **Mid-call disconnect** — currently a **silent hide** (`reconcile` →
-   `window.hide()` + status dim). Revisit whether a brief notification is worth it.
+4. ~~**Mid-call disconnect**~~ — **Resolved (2026-06-06):** no longer a silent hide.
+   A teardown while the share window was up raises a transient lost-share signal
+   (popover banner + alert status symbol), auto-expiring and cleared on reconnect.
+   (`specs/mid-call-disconnect.md`)
 5. ~~**Distribution later**~~ — **Resolved (2026-06-05):** 1.0 is a notarized
    **direct download** (Developer ID + Hardened Runtime + the
    `com.apple.security.device.camera` entitlement; **no** sandbox, since it breaks

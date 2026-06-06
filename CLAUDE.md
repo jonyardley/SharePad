@@ -135,10 +135,11 @@ with literals.
   stay literal — don't force those into the scale.
 - **Colours via semantic names**, not raw values. Prefer system materials
   (`.regularMaterial`, `NSVisualEffectView`) so the popover/window match macOS.
-- The status item has exactly two visual states — **idle** (`ipad.landscape`) and
-  **live** (`ipad.landscape.badge.play`). It's a badged-symbol swap, not a tint:
-  the menu bar renders items monochrome and strips colour. Keep both legible at
-  menu-bar size.
+- The status item has two steady states — **idle** (`ipad.landscape`) and **live**
+  (`ipad.landscape.badge.play`) — plus a **transient alert** (`exclamationmark.triangle.fill`,
+  ~10s) when a share is lost mid-call (`specs/mid-call-disconnect.md`). It's a
+  symbol swap, not a tint: the menu bar renders items monochrome and strips colour.
+  Keep all three legible at menu-bar size.
 
 ## Code Style
 

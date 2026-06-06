@@ -19,9 +19,15 @@ private struct StatusItemLabel: View {
     var model: AppModel
 
     var body: some View {
-        // Menu-bar items render monochrome (template), so signal "armed" with a
-        // badged symbol rather than a colour the menu bar strips.
-        Image(systemName: model.isLive ? "ipad.landscape.badge.play" : "ipad.landscape")
+        // Menu-bar items render monochrome (template), so signal state with a symbol
+        // swap, not a colour the menu bar strips. The transient lost-share alert takes
+        // precedence so a closed-popover user still sees the share dropped.
+        Image(systemName: symbolName)
+    }
+
+    private var symbolName: String {
+        if model.shareLostSignal { return "exclamationmark.triangle.fill" }
+        return model.isLive ? "ipad.landscape.badge.play" : "ipad.landscape"
     }
 }
 
