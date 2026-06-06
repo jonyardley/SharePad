@@ -6,14 +6,18 @@ flat 45° long-shadow motif).
 
 ## GitHub Pages
 
-Live at **https://jonyardley.github.io/SharePad/**, served from the **`gh-pages`
+Live at **https://sharepad.co/**, served from the **`gh-pages`
 branch** (root) — Settings → Pages. No build step. The `.github/workflows/pages.yml`
 workflow rsyncs `docs/` → `gh-pages` on every push to `main` that touches `docs/**`,
 so edits publish within a minute or two. To redeploy without a content change, run
 the **Deploy Pages** workflow manually (Actions → Run workflow). The release
 workflow publishes `SharePad.dmg` + `appcast.xml` to the same branch separately, so
-the deploy leaves those two files untouched. (Add a custom domain on the settings
-page if you ever want one.)
+the deploy leaves those two files untouched.
+
+The custom domain is set by **`docs/CNAME`** (not via the Settings UI). Because the
+deploy rsync runs with `--delete`, a CNAME set through Settings → Pages would be
+wiped on the next deploy; keeping it in `docs/` makes it part of the synced source,
+so GitHub auto-detects `sharepad.co` on every publish.
 
 ## The demo
 
