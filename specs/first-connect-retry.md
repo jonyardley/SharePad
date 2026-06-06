@@ -3,8 +3,9 @@
 > Tier 3 + domain-sensitivity (state machine + permission flow + capture lifecycle →
 > highest ceremony). Builds on the #13 `resume()` watchdog and #24 start-confirm.
 > See DESIGN.md §5.3 (state machine), §6 (CMIO opt-in / trust caveats), §9 (Phase
-> 4/5), §11 (testing). **File a tracking issue before the PR** — referenced below as
-> the bug.
+> 4/5), §11 (testing). Tracks
+> [#58](https://github.com/jonyardley/SharePad/issues/58); implemented in
+> [#56](https://github.com/jonyardley/SharePad/pull/56).
 
 ## Problem
 
