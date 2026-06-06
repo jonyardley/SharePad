@@ -87,6 +87,7 @@ final class AppModel {
         permission = CameraPermission.status
         window.setKeepOnTop(keepOnTop)
         windowHotkey = GlobalHotkey(
+            id: GlobalHotkey.WindowToggle.id,
             keyCode: GlobalHotkey.WindowToggle.keyCode,
             modifiers: GlobalHotkey.WindowToggle.modifiers
         ) { [weak self] in self?.toggleWindow() }

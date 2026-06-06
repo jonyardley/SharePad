@@ -39,6 +39,12 @@ anytime.
 - **One source of truth for the combo.** `GlobalHotkey.WindowToggle` holds the
   key code, modifier mask, *and* the `⌃⌥⌘H` display string, so the popover hint
   can't drift from what's actually registered.
+- **Per-id callback filtering.** A Carbon event handler fires for *every*
+  hot-key press app-wide, not just its own combo. So `GlobalHotkey` tags each
+  binding with a distinct `EventHotKeyID` and the callback matches the event's id
+  to its own — otherwise a second binding would cross-fire (every instance's
+  action running on any combo). Non-matching presses return `eventNotHandledErr`
+  so the owning handler still receives them.
 - **Registration failure is non-fatal.** If another app already owns `⌃⌥⌘H`,
   `RegisterEventHotKey` fails and the initializer returns `nil`; the app runs
   without the global hotkey (the popover button and `⌘H` still work). Unlike a
