@@ -21,7 +21,14 @@ struct PopoverView: View {
             Button(model.isWindowVisible ? "Hide window" : "Show window") {
                 model.toggleWindow()
             }
+            .keyboardShortcut("h")
             .disabled(!model.isConnected)
+
+            if model.isWindowHotkeyActive {
+                Text("Toggle from anywhere: \(GlobalHotkey.WindowToggle.display)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
             Divider()
 
