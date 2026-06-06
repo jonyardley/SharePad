@@ -44,10 +44,6 @@ Deferred.)*
   *connection* when window-hidden + popover-closed, not an early-return; the
   `awaitFrame` watchdog re-enable is the landmine. **Tier 3 → needs on-iPad
   measurement before coding.** *Source: review + spike 2026-06-06.*
-- [ ] **Split `AppModelTests` to clear the lint warning.** Trips `type_body_length`
-  (now ~326 lines; warning only — CI stays green). Extract shared helpers, then
-  split by behaviour (connect/retry vs lifecycle vs share-lost). *Source: review #7
-  follow-on.*
 
 ---
 
@@ -73,4 +69,7 @@ Deferred.)*
 - 2026-06-06 — Review findings #2–#9 (simplicity / capture / permissions) shipped (#69).
 - 2026-06-06 — WindowSharing hardened against windows that never become key (#70).
 - 2026-06-06 — Mid-call disconnect signal: transient banner + alert status symbol
-  (mid-call PR). Resolves DESIGN.md §12.4. *`specs/mid-call-disconnect.md`.*
+  (#71). Resolves DESIGN.md §12.4. *`specs/mid-call-disconnect.md`.*
+- 2026-06-06 — Split `AppModelTests` into `AppModelTestCase` (shared fixtures) +
+  Connect/Lifecycle/ShareLost suites; clears the `type_body_length` warning (lint now
+  0 violations), 61 tests unchanged.
