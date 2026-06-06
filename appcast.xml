@@ -3,17 +3,19 @@
     <channel>
         <title>SharePad</title>
         <item>
-            <title>1.0.3</title>
-            <pubDate>Sat, 06 Jun 2026 07:59:25 +0000</pubDate>
-            <sparkle:version>6</sparkle:version>
-            <sparkle:shortVersionString>1.0.3</sparkle:shortVersionString>
+            <title>1.0.4</title>
+            <pubDate>Sat, 06 Jun 2026 14:57:29 +0000</pubDate>
+            <sparkle:version>7</sparkle:version>
+            <sparkle:shortVersionString>1.0.4</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <description sparkle:format="markdown"><![CDATA[## 1.0.3
-- Maintenance release: security and code-signing updates behind the scenes. No
-  changes to how SharePad works.
+            <description sparkle:format="markdown"><![CDATA[## 1.0.4
+- Show or hide the share window from anywhere with a global keyboard shortcut
+  (⌃⌥⌘H) — no need to leave your call to reach the menu bar.
+- Fix: the iPad now connects automatically the first time you plug it in, even
+  while macOS is still settling the camera-permission and trust prompts.
 
 ]]></description>
-            <enclosure url="https://jonyardley.github.io/SharePad/SharePad.dmg" length="1585867" type="application/octet-stream" sparkle:edSignature="7zjjzkgrBgKMlb1kjHm3twR5lbNqs/xTLcmiK35ItESOtEvAMps2ykyibKJmXYhu+84xKCthqwgIJuB1sz4CCw=="/>
+            <enclosure url="https://jonyardley.github.io/SharePad/SharePad.dmg" length="1604399" type="application/octet-stream" sparkle:edSignature="MrcRM3iqSDCASq0M1gUzGXVOG/TdgjTMaJVuBRryv8zPgfSvqyalpxFnGzORPgnog4wfFbsVFL4cFfU7ARP2Bw=="/>
         </item>
     </channel>
 </rss>
