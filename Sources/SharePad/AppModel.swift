@@ -44,13 +44,22 @@ final class AppModel {
     private let monitor: DeviceMonitor
     private let window: ShareWindowControlling
     private let preferences: Preferences
+    private let sleep: @Sendable (Duration) async -> Void
     private(set) var currentDeviceID: String?
     private var isReconfiguring = false
     private var windowHotkey: GlobalHotkey?
 
+    // First launch settles (camera grant + iPad trust) *after* discovery sees the
+    // device, so the first start can stall — re-attempt. (specs/first-connect-retry.md)
+    private var connectGeneration = 0
+    private(set) var retryTask: Task<Void, Never>?
+
     private static let defaultSize = CGSize(width: 820, height: 1180)
     private static let frameTimeout: TimeInterval = 1.5
     private static let startFrameTimeout: TimeInterval = 3.0
+    // Provisional — the iPad trust→ready latency is a hardware datum; tune on device.
+    static let firstConnectAttempts = 4
+    private static let retryDelay: Duration = .milliseconds(1500)
 
     convenience init(preferences: Preferences = Preferences()) {
         let controller = CaptureController()
@@ -70,12 +79,14 @@ final class AppModel {
         preferences: Preferences,
         capture: CaptureControlling,
         window: ShareWindowControlling,
-        thumbnailLayer: AVSampleBufferDisplayLayer
+        thumbnailLayer: AVSampleBufferDisplayLayer,
+        sleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
     ) {
         self.preferences = preferences
         self.capture = capture
         self.window = window
         self.thumbnailLayer = thumbnailLayer
+        self.sleep = sleep
         monitor = DeviceMonitor()
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
@@ -245,6 +256,7 @@ final class AppModel {
             lastUsed: preferences.lastDeviceID
         ) {
         case .teardown:
+            cancelAutoConnect()
             currentDeviceID = nil
             currentDeviceName = nil
             isLive = false
@@ -256,20 +268,72 @@ final class AppModel {
         case let .keep(device):
             currentDeviceName = device.name
         case let .switchTo(device):
-            currentDeviceID = device.id
-            currentDeviceName = device.name
-            let running = await startAndConfirm(deviceID: device.id)
-            isLive = running
-            failed = !running
-            if running {
-                preferences.lastDeviceID = device.id
-                if autoShowOnConnect {
-                    presentWindow()
-                }
-            } else {
-                window.hide()
-                isWindowVisible = false
+            await beginAutoConnect(device: device)
+        }
+    }
+
+    private enum ConnectOutcome { case live, notLive, superseded }
+
+    private func cancelAutoConnect() {
+        connectGeneration += 1
+        retryTask?.cancel()
+        retryTask = nil
+    }
+
+    private func beginAutoConnect(device: CaptureDevice) async {
+        cancelAutoConnect()
+        currentDeviceID = device.id
+        currentDeviceName = device.name
+        isLive = false
+        failed = false
+        let generation = connectGeneration
+        switch await connectOnce(deviceID: device.id, generation: generation) {
+        case .live, .superseded:
+            return
+        case .notLive:
+            retryTask = Task { [self] in
+                await retryLoop(deviceID: device.id, generation: generation)
             }
         }
+    }
+
+    private func retryLoop(deviceID: String, generation: Int) async {
+        for _ in 0 ..< max(0, Self.firstConnectAttempts - 1) {
+            await sleep(Self.retryDelay)
+            guard generation == connectGeneration,
+                  currentDeviceID == deviceID,
+                  !isLive,
+                  devices.contains(where: { $0.id == deviceID })
+            else { return }
+            switch await connectOnce(deviceID: deviceID, generation: generation) {
+            case .live, .superseded: return
+            case .notLive: continue
+            }
+        }
+        guard generation == connectGeneration, !isLive else { return }
+        failed = true
+        window.hide()
+        isWindowVisible = false
+    }
+
+    private func connectOnce(deviceID: String, generation: Int) async -> ConnectOutcome {
+        // Busy (a manual switch / restart owns the session) → not superseded; let the
+        // retry loop re-attempt once it frees, rather than stranding the device.
+        guard !isReconfiguring else { return .notLive }
+        isReconfiguring = true
+        let running = await startAndConfirm(deviceID: deviceID)
+        isReconfiguring = false
+        guard generation == connectGeneration else { return .superseded }
+        if running {
+            isLive = true
+            failed = false
+            preferences.lastDeviceID = deviceID
+            if autoShowOnConnect, !isWindowVisible {
+                presentWindow()
+            }
+            return .live
+        }
+        isLive = false
+        return .notLive
     }
 }
