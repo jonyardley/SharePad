@@ -156,7 +156,11 @@ From the design Q&A (2026-06-03):
   `AVCaptureDevice.DiscoverySession`, KVO-observes its `devices`, and emits
   connect/disconnect into `AppModel`.
 - **`ShareWindowController`** — manages the borderless `NSWindow`, aspect lock,
-  frame persistence, keep-on-top level.
+  frame persistence, keep-on-top level. Tags the feed window with a stable
+  identifier and a `"SharePad"` title so it's the named pick in a call's picker.
+- **`WindowSharing`** — guarantees the feed is the *only* shareable window: a
+  launch-time guard that sets `sharingType = .none` on every other window
+  (About panel, popover, Sparkle dialogs) whenever any window becomes key.
 - **`PreviewView`** — `NSViewRepresentable` wrapping an
   `AVCaptureVideoPreviewLayer` (used by both the window and the popover thumbnail).
 
@@ -305,6 +309,7 @@ ipad-share/
       CMIO.swift               # the opt-in helper (§6.1)
     Windows/
       ShareWindowController.swift
+      WindowSharing.swift      # excludes non-feed windows from screen sharing
       PreviewView.swift        # NSViewRepresentable over preview layer
     UI/
       PopoverView.swift
@@ -381,7 +386,10 @@ hardware, so we **isolate the pure logic** and **manually verify the pipeline**.
 
 1. ~~**Name + bundle id**~~ — **Resolved (Phase 0):** `SharePad` /
    `com.jonyardley.sharepad`.
-2. **Window chrome** — borderless-but-movable (proposed) vs a standard title bar?
+2. ~~**Window chrome**~~ — **Resolved:** borderless-but-movable feed, kept
+   chrome-free. A `"SharePad"` title (drawn as no title bar on a borderless
+   window) names it in the picker; `WindowSharing` excludes every *other* window
+   from screen sharing so a titled aux window can't be shared in its place.
 3. ~~**Auto-show guard**~~ — **Resolved (#6):** shipped an "Auto-show on connect"
    toggle (persisted via `Preferences.autoShowOnConnect`); off → the window stays
    hidden on connect and is opened manually.

@@ -120,6 +120,10 @@ final class ShareWindowController: ShareWindowControlling {
         window.backgroundColor = .black
         window.hasShadow = true
         window.isReleasedWhenClosed = false
+        // Tagged so WindowSharing keeps the feed capturable while excluding every
+        // other window; titled so it's the clearly-named pick in a call's picker.
+        window.identifier = WindowSharing.shareWindowID
+        window.title = "SharePad"
         return window
     }
 }
