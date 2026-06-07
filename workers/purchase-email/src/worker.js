@@ -124,7 +124,7 @@ function emailHtml(downloadUrl) {
     <div style="background:#FFFFFF;border:1px solid rgba(46,56,144,0.12);border-radius:24px;padding:36px 32px;">
       <h1 style="font-size:22px;line-height:1.25;margin:0 0 12px;">Thanks for buying SharePad</h1>
       <p style="font-size:15px;line-height:1.6;color:#4A4F78;margin:0 0 24px;">
-        Your download is ready whenever you need it — including if you ever switch Macs.
+        Your download is ready whenever you need it, including if you ever switch Macs.
         Keep this email; the link below always points at the latest version.
       </p>
       <a href="${downloadUrl}"
@@ -132,7 +132,7 @@ function emailHtml(downloadUrl) {
         Download SharePad
       </a>
       <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:24px 0 0;">
-        Signed &amp; notarised by Apple — open the DMG, drag SharePad to Applications,
+        Signed &amp; notarised by Apple. Open the DMG, drag SharePad to Applications,
         and it lives in your menu bar. Plug in your iPad over USB and the share window
         appears automatically.
       </p>
