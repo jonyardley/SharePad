@@ -21,12 +21,13 @@ was available at implementation time.
   content centre fixed — by design (matches Xcode / Preview); switch to nearest-corner
   anchoring if it bites in real use.
 - [x] **Normal connect still works end-to-end** (#69). ✅ verified 2026-06-06 (no mic prompt).
-- [ ] **Restricted-camera copy** (#69). MDM/Screen-Time device shows "blocked by a
-  device policy" + no Open-Settings button. *Skipped — no managed device available;
-  plain `.denied` path is unchanged.*
-- [x] **WindowSharing exclusion** (#70). ✅ partially verified 2026-06-06 — feed window
-  picks correctly. Real gap found: Sparkle's "Check for Updates" dialog was
-  share-pickable. See P2 below for the cause.
+- [x] **Restricted-camera copy** (#69). Accepted as shipped — verification needs a
+  managed (MDM/Screen-Time) device we don't have; the plain `.denied` path is
+  verified and the `.restricted` branch is a pure reducer case with unit coverage.
+- [x] **WindowSharing exclusion** (#70). ✅ verified 2026-06-06 — feed picks correctly.
+  Found Sparkle's "Check for Updates" dialog was share-pickable (observer race);
+  **fixed in #74** (synchronous `addObserver`). Re-verify the picker on the next
+  iPad pass.
 - [x] **Mid-call disconnect signal** (#71). ✅ verified 2026-06-06 (banner + alert
   appear on unplug-with-window; silent when window hidden).
 
@@ -41,27 +42,18 @@ Deferred.)*
 
 ## P2 — Quality / performance
 
-- [ ] **WindowSharing observer can lose the race with the share picker.** Verified
-  2026-06-06: Sparkle's in-process "Check for Updates" / "Up to date" dialog appeared
-  in a Zoom window-share picker. Cause: `WindowSharing` observes `didUpdate` via an
-  `AsyncStream`, which can run *after* the picker snapshots the window list in the
-  same runloop tick the dialog appeared. Real-world impact small (release notes are
-  public; dialog is user-triggered; `didBecomeKey` still excludes on focus). Fix
-  options: switch the observer to a synchronous `addObserver(forName:queue:.main:)`
-  so it fires in the same tick, or `sharingType = .none` on every `NSWindow` via
-  swizzling (invasive). Sparkle's Downloader/Installer XPC and `Updater.app` run in
-  separate processes — unreachable from `NSApp.windows` regardless. *Source:
-  on-iPad verification.*
-- [ ] **Idle-but-connected CPU: throttle the data output (issue #23).** Design
-  complete (`specs/idle-throttle.md`) — the real win is dropping the data-output
-  *connection* when window-hidden + popover-closed, not an early-return; the
-  `awaitFrame` watchdog re-enable is the landmine. **Tier 3 → needs on-iPad
-  measurement before coding.** *Source: review + spike 2026-06-06.*
+*(empty — all known items resolved or deferred; see Done log / Deferred.)*
 
 ---
 
 ## Deferred (decided, not doing now)
 
+- **Data-output idle throttle (issue #23): WON'T FIX (measured).** On-iPad, in the
+  exact state it would optimise (iPad connected, window hidden, popover closed),
+  SharePad measured **~0.7–0.8% CPU / 0.0% GPU** sustained (Activity Monitor). The
+  ~4–6% in DESIGN §9 is the *live-active* cost, not this hidden-armed state. <1% win
+  vs ~60 min of `AVCaptureSession` reconfiguration touching the watchdog → not worth
+  it. Full rationale + retained design in `specs/idle-throttle.md`.
 - **Locked-iPad "unlock" hint.** Spike (2026-06-06) confirmed lock is **not reliably
   detectable on macOS** — session stays running and delivers valid-but-black frames;
   interruption APIs are iOS-only; no CMIO/`AVCaptureDevice` lock property. Only a
@@ -86,3 +78,8 @@ Deferred.)*
 - 2026-06-06 — Split `AppModelTests` into `AppModelTestCase` (shared fixtures) +
   Connect/Lifecycle/ShareLost suites; clears the `type_body_length` warning (lint now
   0 violations), 61 tests unchanged.
+- 2026-06-06 — Fixed the WindowSharing observer race vs the share picker (#74);
+  synchronous `addObserver` so the sweep runs in the same runloop tick.
+- 2026-06-06 — **Shipped v1.0.5** (#75 changelog → tag → notarized DMG + signed
+  appcast published; auto-update verified self-consistent). On-iPad smoke test of the
+  released bundle (runbook Step 6) still owed before declaring the release proven.
