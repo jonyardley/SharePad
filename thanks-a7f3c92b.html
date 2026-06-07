@@ -165,7 +165,7 @@
         </a>
       </div>
       <p class="meta" id="receipt-note">A receipt is on its way to your email. Signed &amp; notarised by Apple, so it opens with a normal double-click.</p>
-      <p class="meta" id="owner-link" hidden>Already bought? <a href="?owner" style="color: var(--indigo); font-weight: 600;">Re-download your copy</a>.</p>
+      <p class="meta" id="redownload-note" hidden>Already bought? Check your email for your download link.</p>
 
       <div class="steps" id="steps">
         <h2>Get set up in a minute</h2>
@@ -210,7 +210,7 @@
         var ic = buy.querySelector("svg"); if (ic) ic.style.display = "none";
       }
       set("download-label", "Get SharePad · £6.99");
-      var rel = byId("owner-link"); if (rel) rel.hidden = false;
+      var rel = byId("redownload-note"); if (rel) rel.hidden = false;
     } else if (owner) {
       set("headline", "Download SharePad");
       set("lede", "The ready-to-run macOS build, signed and notarised. Your latest copy is below.");
