@@ -3,24 +3,18 @@
     <channel>
         <title>SharePad</title>
         <item>
-            <title>1.0.5</title>
-            <pubDate>Sun, 07 Jun 2026 04:21:15 +0000</pubDate>
-            <sparkle:version>8</sparkle:version>
-            <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
+            <title>1.0.6</title>
+            <pubDate>Sun, 07 Jun 2026 10:51:30 +0000</pubDate>
+            <sparkle:version>9</sparkle:version>
+            <sparkle:shortVersionString>1.0.6</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <description sparkle:format="markdown"><![CDATA[## 1.0.5
-- If your iPad disconnects while you're sharing, SharePad now tells you — a
-  brief alert appears in the menu-bar icon and the popover so you're not left
-  wondering why your share went black.
-- Privacy: only the iPad feed window can be picked in a video call's window
-  picker. Other SharePad surfaces (the About panel, update dialogs) can't be
-  shared by mistake.
-- Smoother handling of edge cases: a stalled iPad start now surfaces honestly
-  instead of looking live, and Camera-blocked-by-policy users see honest copy
-  instead of a Settings button they can't use.
+            <description sparkle:format="markdown"><![CDATA[## 1.0.6
+- The in-app About panel now links to sharepad.co for buying and support, with
+  quick "View Source" and "View Licence" links.
+- Maintenance: internal reliability and release-pipeline improvements.
 
 ]]></description>
-            <enclosure url="https://jonyardley.github.io/SharePad/SharePad.dmg" length="1620923" type="application/octet-stream" sparkle:edSignature="sjko6yV7dASakOZlfl7XL8/fRcoWKQb+WUnDBQ+i0EJQ+GXq8PaNKqM2ZB9DLXlUW3lygObZP6BNYg5kPQVnDw=="/>
+            <enclosure url="https://jonyardley.github.io/SharePad/SharePad-1.0.6-952f68ee.dmg" length="1621137" type="application/octet-stream" sparkle:edSignature="WClbRXdxrioAfg1VJP33vxcJEq5u/630DMb7BtdtVl22nNw+H+ici9lnB2Z7SFN+CkJgkzicmhqZcEcHKDRJCw=="/>
         </item>
     </channel>
 </rss>
