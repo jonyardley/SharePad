@@ -9,6 +9,12 @@ compatibility_date = "2026-06-01"
 DOWNLOAD_URL = "https://sharepad.co/thanks-a7f3c92b.html?owner"
 EMAIL_FROM = "SharePad <hello@sharepad.co>"
 
+# Capture logs/metrics so a Resend outage (Worker returns 500) is visible and
+# alertable. 100% sampling is fine: this is a low-volume money path.
+[observability]
+enabled = true
+head_sampling_rate = 1
+
 # Secrets are NOT set here. Add them with `wrangler secret put`:
 #   wrangler secret put STRIPE_WEBHOOK_SECRET   # whsec_… from the Stripe webhook endpoint
 #   wrangler secret put RESEND_API_KEY          # re_… from Resend

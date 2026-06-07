@@ -32,6 +32,12 @@ export default {
       return new Response("ignored", { status: 200 });
     }
 
+    // A completed checkout can still be unpaid (async/delayed payment methods),
+    // so only email someone who has actually paid.
+    if (event.data?.object?.payment_status !== "paid") {
+      return new Response("not paid", { status: 200 });
+    }
+
     const email = event.data?.object?.customer_details?.email;
     if (!email) {
       return new Response("no customer email", { status: 200 });
@@ -40,6 +46,9 @@ export default {
     try {
       await sendDownloadEmail(env, email);
     } catch (err) {
+      // Log so the failure is visible/alertable in Worker observability; a
+      // returned 5xx alone is not counted as a Worker error.
+      console.error("download email send failed:", err.message);
       // Non-2xx so Stripe retries; a duplicate email is acceptable (spec §5).
       return new Response(`email send failed: ${err.message}`, { status: 500 });
     }
