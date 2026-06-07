@@ -3,9 +3,14 @@ import AppKit
 enum AboutPanel {
     private static let repo = "https://github.com/jonyardley/SharePad"
     private static let issues = "https://github.com/jonyardley/SharePad/issues"
-    private static let support = "https://yardley31.gumroad.com/l/sharepad"
+    private static let licence = "https://github.com/jonyardley/SharePad/blob/main/LICENSE"
+    // The buy/support link points at the first-party site, not the payment
+    // processor, so switching storefront (Stripe ⇄ Paddle) needs no app release.
+    private static let support = "https://sharepad.co"
     private static let tagline =
         "Turn a USB-connected iPad into an always-ready window for any video call."
+    private static let licenceNotice =
+        "Free and open-source software under the GPLv3, provided with no warranty."
 
     static func present() {
         // As an LSUIElement agent app the panel can open behind the frontmost
@@ -16,13 +21,15 @@ enum AboutPanel {
 
     private static var credits: NSAttributedString {
         let body = NSMutableAttributedString(
-            string: tagline + "\n\n",
+            string: tagline + "\n\n" + licenceNotice + "\n\n",
             attributes: [
                 .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
                 .foregroundColor: NSColor.secondaryLabelColor,
             ]
         )
-        body.append(link("GitHub", url: repo))
+        body.append(link("View Source", url: repo))
+        body.append(separator)
+        body.append(link("View Licence", url: licence))
         body.append(separator)
         body.append(link("Report an Issue", url: issues))
         body.append(separator)
