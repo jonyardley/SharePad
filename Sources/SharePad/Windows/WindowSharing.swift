@@ -10,8 +10,14 @@ enum WindowSharing {
     /// pickable in a call. A window is shareable (`sharingType` defaults `.readOnly`)
     /// before it becomes key, so two triggers run: `didBecomeKey` (on focus) and a
     /// window-count-growth check on the app update tick — which is silent while idle, so
-    /// it doesn't regress idle CPU — to catch a window shown without focus. Residual: a
-    /// net-zero close+open within one tick is missed; fine, aux windows here are transient.
+    /// it doesn't regress idle CPU — to catch a window shown without focus. Residual gaps
+    /// to be honest about: (a) the AsyncStream-backed observer below can lose the race
+    /// with a share picker that snapshots the window list in the same runloop tick the
+    /// window appeared — Sparkle's in-process "Update Available" / "Up to date" dialog
+    /// has been seen this way; the next focus or update tick still excludes it; (b) a
+    /// net-zero close+open within one tick is missed; (c) Sparkle's Downloader/Installer
+    /// XPC services and Updater.app run in separate processes — out of `NSApp.windows`
+    /// reach and unreachable from here.
     static func startGuarding() {
         excludeAuxiliaryWindows()
         lastWindowCount = NSApp.windows.count
