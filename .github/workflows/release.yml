@@ -103,7 +103,7 @@ jobs:
           export SPARKLE_ED_KEY_PATH="$RUNNER_TEMP/sparkle_ed_key"
           trap 'rm -f "$SPARKLE_ED_KEY_PATH"' EXIT
           printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$SPARKLE_ED_KEY_PATH"
-          export DOWNLOAD_URL_PREFIX="https://jonyardley.github.io/SharePad/"
+          export DOWNLOAD_URL_PREFIX="https://sharepad.co/"
           export RELEASE_VERSION="${TAG#v}"
           just sparkle-appcast
 
