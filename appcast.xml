@@ -3,19 +3,24 @@
     <channel>
         <title>SharePad</title>
         <item>
-            <title>1.0.4</title>
-            <pubDate>Sat, 06 Jun 2026 14:57:29 +0000</pubDate>
-            <sparkle:version>7</sparkle:version>
-            <sparkle:shortVersionString>1.0.4</sparkle:shortVersionString>
+            <title>1.0.5</title>
+            <pubDate>Sun, 07 Jun 2026 04:21:15 +0000</pubDate>
+            <sparkle:version>8</sparkle:version>
+            <sparkle:shortVersionString>1.0.5</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <description sparkle:format="markdown"><![CDATA[## 1.0.4
-- Show or hide the share window from anywhere with a global keyboard shortcut
-  (⌃⌥⌘H) — no need to leave your call to reach the menu bar.
-- Fix: the iPad now connects automatically the first time you plug it in, even
-  while macOS is still settling the camera-permission and trust prompts.
+            <description sparkle:format="markdown"><![CDATA[## 1.0.5
+- If your iPad disconnects while you're sharing, SharePad now tells you — a
+  brief alert appears in the menu-bar icon and the popover so you're not left
+  wondering why your share went black.
+- Privacy: only the iPad feed window can be picked in a video call's window
+  picker. Other SharePad surfaces (the About panel, update dialogs) can't be
+  shared by mistake.
+- Smoother handling of edge cases: a stalled iPad start now surfaces honestly
+  instead of looking live, and Camera-blocked-by-policy users see honest copy
+  instead of a Settings button they can't use.
 
 ]]></description>
-            <enclosure url="https://jonyardley.github.io/SharePad/SharePad.dmg" length="1604399" type="application/octet-stream" sparkle:edSignature="MrcRM3iqSDCASq0M1gUzGXVOG/TdgjTMaJVuBRryv8zPgfSvqyalpxFnGzORPgnog4wfFbsVFL4cFfU7ARP2Bw=="/>
+            <enclosure url="https://jonyardley.github.io/SharePad/SharePad.dmg" length="1620923" type="application/octet-stream" sparkle:edSignature="sjko6yV7dASakOZlfl7XL8/fRcoWKQb+WUnDBQ+i0EJQ+GXq8PaNKqM2ZB9DLXlUW3lygObZP6BNYg5kPQVnDw=="/>
         </item>
     </channel>
 </rss>
