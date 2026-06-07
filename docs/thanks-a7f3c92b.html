@@ -166,7 +166,7 @@
       <p class="lede" id="lede">Your download is ready. You just helped fund the development of an open-source tool — that genuinely matters.</p>
 
       <div class="download-row">
-        <a class="btn btn-primary big" href="https://sharepad.co/SharePad.dmg" download>
+        <a class="btn btn-primary big" id="download" href="https://github.com/jonyardley/SharePad/releases">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
           Download SharePad for macOS
         </a>
@@ -201,6 +201,20 @@
     set("lede", "The ready-to-run macOS build. If you've just bought a copy — thank you. Your download is below.");
     var receipt = document.getElementById("receipt-note");
     if (receipt) receipt.hidden = true;
+  })();
+
+  // Resolve the download from the public appcast so the link never hardcodes a
+  // (now versioned) DMG filename — works before and after URL hardening. Same
+  // origin; falls back to the GitHub releases page if the fetch fails.
+  (function () {
+    fetch("/appcast.xml", { cache: "no-store" })
+      .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+      .then(function (xml) {
+        var enc = new DOMParser().parseFromString(xml, "application/xml").querySelector("enclosure[url]");
+        var url = enc && enc.getAttribute("url");
+        if (url) document.getElementById("download").setAttribute("href", url);
+      })
+      .catch(function () {});
   })();
 </script>
 
