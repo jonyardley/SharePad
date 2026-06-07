@@ -22,9 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Cache the resolved Sparkle checkout so each run skips the SPM clone/resolve.
-      # Keyed on project.yml (where the version is pinned); restore-keys reuses a
-      # stale cache when the pin moves, then the build re-resolves over it.
+      # Keyed on project.yml; SPM re-resolves over a stale cache, so a moved pin
+      # stays correct (a same-range `from:` bump won't change the key — the cache
+      # just lags until project.yml next changes, never shipping the wrong version).
       - name: Cache Swift packages
         uses: actions/cache@v4
         with:
