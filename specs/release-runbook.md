@@ -41,7 +41,7 @@ BIN=.build/SourcePackages/artifacts/sparkle/Sparkle/bin   # appears after a buil
 "$BIN/generate_keys" -x sparkle_private_key # export the private key to a file
 ```
 The exported key must match the committed `SUPublicEDKey`
-(`WaIGB4dHTyoJtyjtwoDUKxWDvPwCWGuLFZzk3XXhj1g=`). If you ever regenerate the keypair,
+(`dENS5eDuSc3QhXyD4HZ115jBNiZGK3gGbaVehtrk5yM=`). If you ever regenerate the keypair,
 update `SUPublicEDKey` in `project.yml` too.
 
 ## Step 4 — Set the GitHub secrets (8)
