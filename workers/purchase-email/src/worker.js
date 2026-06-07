@@ -94,7 +94,7 @@ function timingSafeEqualHex(a, b) {
 
 // ── Email ──
 async function sendDownloadEmail(env, to) {
-  const downloadUrl = env.DOWNLOAD_URL || "https://sharepad.co/thanks-a7f3c92b.html";
+  const downloadUrl = env.DOWNLOAD_URL || "https://sharepad.co/thanks-a7f3c92b.html?owner";
   const from = env.EMAIL_FROM || "SharePad <hello@sharepad.co>";
 
   const response = await fetch("https://api.resend.com/emails", {

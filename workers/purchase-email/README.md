@@ -4,8 +4,9 @@ A Cloudflare Worker that sends buyers a **re-download email** after checkout.
 
 Under Stripe **Managed Payments**, Stripe owns the receipt email and we can't add a
 download link to it. This Worker listens for `checkout.session.completed` and emails
-the buyer the durable thank-you page link (`thanks-a7f3c92b.html`), which resolves
-the current DMG from the appcast. See [`specs/purchase-email.md`](../../specs/purchase-email.md).
+the buyer the durable thank-you page link (`thanks-a7f3c92b.html?owner`), which
+resolves the current DMG from the appcast. The `?owner` param selects the page's
+re-download view (a plain download, no buy prompt). See [`specs/purchase-email.md`](../../specs/purchase-email.md).
 
 The link is sent **only by email**, never published on the site, so the
 download-URL-hardening funnel stays intact.
@@ -69,7 +70,7 @@ current DMG.
 |---|---|---|
 | `STRIPE_WEBHOOK_SECRET` | secret | Verify the `Stripe-Signature` header. |
 | `RESEND_API_KEY` | secret | Auth for the Resend send API. |
-| `DOWNLOAD_URL` | var (`wrangler.toml`) | Link in the email. Defaults to the thank-you page. |
+| `DOWNLOAD_URL` | var (`wrangler.toml`) | Link in the email. Defaults to the thank-you page re-download view (`?owner`). |
 | `EMAIL_FROM` | var (`wrangler.toml`) | Sender; the domain must be verified in Resend. |
 
 ## Notes

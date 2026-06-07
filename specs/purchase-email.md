@@ -20,16 +20,16 @@ download-URL-hardening funnel — see that spec).
 
 A small **Cloudflare Worker** subscribes to the Stripe `checkout.session.completed`
 webhook and sends a branded courtesy email containing the **existing thank-you page
-URL** (`https://sharepad.co/thanks-a7f3c92b.html`).
+URL** (`https://sharepad.co/thanks-a7f3c92b.html?owner`).
 
 Why this reconciles the constraints:
 
-- The thank-you page already (a) handles direct visits — it softens "payment
-  confirmed" copy when there's no `session_id` — and (b) resolves the current DMG
-  from `/appcast.xml` at load. So it's the **perfect durable link**: no hardcoded
-  (hashed) DMG filename, works forever across releases.
+- The thank-you page resolves the current DMG from `/appcast.xml` at load, so it's
+  the **perfect durable link**: no hardcoded (hashed) DMG filename, works forever
+  across releases. The `?owner` param selects its re-download view (a plain
+  download, no buy prompt); a visit without it shows the buy page.
 - The link lives **only in buyers' inboxes**, never on the public site, so casual
-  visitors still hit the paywall — the hardening funnel is intact.
+  visitors still hit the buy page; the hardening funnel is intact.
 - No licence key, no gating — consistent with `licensing.md` *Enforcement: None*.
   The email is a *courtesy*, not an entitlement. (Anyone reading the appcast can
   already get the build; that's an accepted ceiling.)
@@ -41,7 +41,7 @@ Why this reconciles the constraints:
 | **Host** | **Cloudflare Worker** | DNS + site already on Cloudflare; first-party, ~free, no server to run. |
 | **Email sender** | **Resend** | Simple HTTP API, free tier (3k/mo) covers this volume, easy domain auth. MailChannels dropped free Cloudflare sending in 2024; SES/Postmark are heavier. Isolated to this Worker — **not** an app dependency. |
 | **Trigger** | `checkout.session.completed` | Fires for Managed Payments payment links; carries `customer_details.email`. |
-| **Link target** | `thanks-a7f3c92b.html` | Reuse — already direct-visit-safe and appcast-resolving. No new page. |
+| **Link target** | `thanks-a7f3c92b.html?owner` | Reuse: already appcast-resolving; `?owner` gives the re-download view. No new page. |
 | **Signature** | **Verify `Stripe-Signature`** (HMAC-SHA256 via Web Crypto) | Webhook endpoints are public; an unverified endpoint lets anyone spam emails. Non-negotiable. |
 
 ## 4. Security
