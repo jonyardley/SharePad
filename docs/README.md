@@ -28,14 +28,17 @@ and swap the `<img src="assets/demo.jpg">` in the `#demo` section (there's a mar
 comment beside it). Motion is the stronger pitch; the still holds the spot until
 then.
 
-## The download button
+## The buy & download flow
 
-Both "Download" buttons point at
-`https://github.com/jonyardley/SharePad/releases`, which always renders (even with
-zero releases — unlike `/releases/latest`, which 404s until the first release
-exists). They become real downloads only once you publish a **signed + notarized**
-release with a `.dmg` asset attached (Developer ID signing → Hardened Runtime →
-`notarytool` → staple). Once releases exist, the newest is the top item there.
+The landing page's **"Get SharePad"** buttons point at `https://buy.sharepad.co`,
+a redirect (Cloudflare) to the live Stripe checkout — kept as a stable first-party
+URL so the storefront can change without touching the site. After payment, Stripe
+redirects to **`thanks-a7f3c92b.html`**, whose download button resolves the current
+DMG from the public **`appcast.xml`** (falling back to the GitHub releases page if
+that fetch fails). The price (**£6.99**) is shown on the page and declared once in
+the `schema.org` `Offer` block in `index.html` — keep those in sync if it changes.
+The product is a **one-time payment with automatic updates for life** (via Sparkle),
+which the copy advertises throughout. Legal pages: `privacy.html`, `terms.html`.
 
 ## Local preview
 

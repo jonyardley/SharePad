@@ -1,7 +1,7 @@
 # SharePad
 
 [![CI](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml/badge.svg)](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml)
-[![Buy / Support](https://img.shields.io/badge/Buy%20%2F%20Support-Gumroad-ff90e8)](https://yardley31.gumroad.com/l/sharepad)
+[![Buy SharePad — £6.99](https://img.shields.io/badge/Buy%20SharePad-%C2%A36.99-5B6BE8)](https://buy.sharepad.co)
 
 <p align="center">
   <img src="docs/assets/demo.jpg" alt="SharePad sharing a connected iPad into a Google Meet call at full size" width="820">
@@ -10,7 +10,7 @@
 </p>
 
 A macOS **menu-bar app** that turns a USB-connected iPad into a **live
-whiteboard** you can share in any video call. Plug it into your Mac and it shows
+whiteboard** you can share in any video call. Connect it to your Mac and it shows
 up as a clean, aspect-locked window — already waiting in the "Share window" list
 of Zoom, Meet, and Teams. **Share your thinking, not just your screen** — without
 the per-call QuickTime faff.
@@ -25,7 +25,8 @@ window.
 </p>
 
 > **Status: v1.0 shipped.** Signed, notarised, and auto-updating.
-> Get the ready-to-run build at [yardley31.gumroad.com/l/sharepad](https://yardley31.gumroad.com/l/sharepad),
+> Get the ready-to-run build for **£6.99 — a one-time payment with automatic
+> updates for life, no subscription** at [buy.sharepad.co](https://buy.sharepad.co),
 > or build it yourself (GPLv3, instructions below). App Store is ruled out — its
 > sandbox breaks the CMIO opt-in the capture depends on.
 
@@ -66,5 +67,6 @@ beats a small webcam tile. See
 
 SharePad is free and open source under the [GNU GPLv3](LICENSE). You're welcome to
 build it yourself from source. If you'd rather not, you can
-**[buy a ready-to-run, signed, notarised, auto-updating build](https://yardley31.gumroad.com/l/sharepad)**
-— the easiest way to get SharePad and the best way to support its development.
+**[buy a ready-to-run, signed, notarised build for £6.99](https://buy.sharepad.co)**
+— a one-time payment with automatic updates for life and no subscription. It's the
+easiest way to get SharePad and the best way to support its development.
