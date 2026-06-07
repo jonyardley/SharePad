@@ -1,9 +1,8 @@
 name: Deploy Worker
 
 # Deploy the purchase-email Cloudflare Worker whenever its code changes on main
-# (or on manual dispatch). The Worker's runtime secrets (RESEND_API_KEY,
-# STRIPE_WEBHOOK_SECRET) are synced from GitHub Actions secrets on every deploy,
-# so GitHub is the single source of truth — no manual `wrangler secret put`.
+# (or on manual dispatch). Worker runtime secrets are synced from GitHub Actions
+# secrets, so GitHub is the single source of truth — no manual `wrangler secret put`.
 on:
   push:
     branches: [main]
@@ -23,18 +22,33 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Deploy + sync the always-present Resend key. (RESEND_API_KEY is required;
+      # if it's unset the deploy fails loudly, which is correct.)
       - name: Deploy with Wrangler
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: workers/purchase-email
-          # Uploaded to the Worker before deploy; values come from the env below.
-          # An unset GitHub secret syncs as empty, which is safe: the Worker rejects
-          # all webhooks when STRIPE_WEBHOOK_SECRET is empty (no spurious emails).
           secrets: |
             RESEND_API_KEY
-            STRIPE_WEBHOOK_SECRET
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+
+      # STRIPE_WEBHOOK_SECRET is created only AFTER the Worker first exists (its URL
+      # is needed to register the Stripe webhook), so it's absent on the first
+      # deploy. Guard it: sync when present, skip otherwise. The Worker safely
+      # rejects every webhook while the secret is unset, so skipping is harmless.
+      - name: Sync Stripe webhook secret (if set)
+        working-directory: workers/purchase-email
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+        run: |
+          set -euo pipefail
+          if [ -n "${STRIPE_WEBHOOK_SECRET:-}" ]; then
+            printf '%s' "$STRIPE_WEBHOOK_SECRET" | npx --yes wrangler@3 secret put STRIPE_WEBHOOK_SECRET
+          else
+            echo "::notice::STRIPE_WEBHOOK_SECRET not set yet — skipping. The Worker rejects all webhooks until it is set."
+          fi
