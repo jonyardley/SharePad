@@ -10,11 +10,11 @@
 
 ---
 
-## P0 — Verification debt (blocks the next release)
+## P0 — Verification debt — ✅ CLEARED (2026-06-06)
 
-Shipped as code but touch capture/permission/window, so per `CLAUDE.md` → Testing
-they are **not "done" until run on a real iPad in a real meeting app**. No hardware
-was available at implementation time.
+All on-iPad checks below ran green, **and** the runbook Step 6 smoke test of the
+released, notarized v1.0.5 DMG passed (no Gatekeeper warning, camera-only prompt,
+feed appears). v1.0.5 is verified shipped — nothing here blocks a release.
 
 - [x] **Rotation keeps window placement** (#69). ✅ verified 2026-06-06. Minor: window
   drifts away from corners on rotation because `centeredResizeOrigin` keeps the
@@ -80,6 +80,6 @@ Deferred.)*
   0 violations), 61 tests unchanged.
 - 2026-06-06 — Fixed the WindowSharing observer race vs the share picker (#74);
   synchronous `addObserver` so the sweep runs in the same runloop tick.
-- 2026-06-06 — **Shipped v1.0.5** (#75 changelog → tag → notarized DMG + signed
-  appcast published; auto-update verified self-consistent). On-iPad smoke test of the
-  released bundle (runbook Step 6) still owed before declaring the release proven.
+- 2026-06-06 — **Shipped + verified v1.0.5** (#75 changelog → tag → notarized DMG +
+  signed appcast; auto-update self-consistent). Runbook Step 6 smoke test of the
+  released bundle passed on-iPad — release proven. Review fully closed.
