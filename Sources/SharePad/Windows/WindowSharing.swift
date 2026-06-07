@@ -31,9 +31,14 @@ enum WindowSharing {
     }
 
     static func excludeAuxiliaryWindows() {
-        for window in NSApp.windows where window.identifier != shareWindowID {
+        for window in NSApp.windows where excludesFromSharing(window.identifier) {
             window.sharingType = .none
         }
+    }
+
+    /// Pure so the feed-vs-auxiliary partition is testable without `NSApp.windows`.
+    static func excludesFromSharing(_ identifier: NSUserInterfaceItemIdentifier?) -> Bool {
+        identifier != shareWindowID
     }
 
     private static func observe(_ name: Notification.Name,
