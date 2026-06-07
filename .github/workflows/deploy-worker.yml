@@ -1,0 +1,40 @@
+name: Deploy Worker
+
+# Deploy the purchase-email Cloudflare Worker whenever its code changes on main
+# (or on manual dispatch). The Worker's runtime secrets (RESEND_API_KEY,
+# STRIPE_WEBHOOK_SECRET) are synced from GitHub Actions secrets on every deploy,
+# so GitHub is the single source of truth — no manual `wrangler secret put`.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/purchase-email/**"
+      - ".github/workflows/deploy-worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy purchase-email Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/purchase-email
+          # Uploaded to the Worker before deploy; values come from the env below.
+          # An unset GitHub secret syncs as empty, which is safe: the Worker rejects
+          # all webhooks when STRIPE_WEBHOOK_SECRET is empty (no spurious emails).
+          secrets: |
+            RESEND_API_KEY
+            STRIPE_WEBHOOK_SECRET
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}

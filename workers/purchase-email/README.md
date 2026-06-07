@@ -24,33 +24,33 @@ Stripe checkout.session.completed
   Resend API ──▶ branded email with the download button
 ```
 
-## One-time setup
+## Deployment — via GitHub Actions
 
-### 1. Resend (email sending)
-1. Sign up at [resend.com](https://resend.com) and **verify the `sharepad.co`
-   domain** (add the SPF/DKIM DNS records it gives you — you manage DNS in
-   Cloudflare, so this is quick). Verifying the domain is what lets you send from
-   `hello@sharepad.co`.
-2. Create an **API key** (`re_…`).
+`.github/workflows/deploy-worker.yml` deploys this Worker automatically on every push
+to `main` that touches `workers/purchase-email/**` (or on **Actions → Deploy Worker →
+Run workflow**). The Worker's runtime secrets are **synced from GitHub Actions
+secrets on each deploy**, so GitHub is the single source of truth — no manual
+`wrangler secret put`.
 
-### 2. Deploy the Worker
-```bash
-cd workers/purchase-email
-npx wrangler login          # once
-npx wrangler secret put RESEND_API_KEY        # paste the re_… key
-npx wrangler deploy                            # note the printed *.workers.dev URL
-```
+### GitHub repo secrets to set
+Settings → Secrets and variables → **Actions** → New repository secret:
 
-### 3. Wire up the Stripe webhook
-1. Stripe Dashboard → **Developers → Webhooks → Add endpoint**.
-2. **Endpoint URL** = the Worker URL from step 2.
-3. **Events**: select only `checkout.session.completed`.
-4. Copy the endpoint's **Signing secret** (`whsec_…`) and store it:
-   ```bash
-   npx wrangler secret put STRIPE_WEBHOOK_SECRET   # paste the whsec_… secret
-   ```
-5. The secret is read at request time — no redeploy needed, but `wrangler deploy`
-   again if you want to be sure.
+| Secret | Where to get it |
+|---|---|
+| `CLOUDFLARE_API_TOKEN` | Cloudflare → My Profile → API Tokens → Create Token → **Edit Cloudflare Workers** template. |
+| `CLOUDFLARE_ACCOUNT_ID` | Cloudflare → Workers & Pages → right-hand sidebar (Account ID). |
+| `RESEND_API_KEY` | Resend → API Keys (`re_…`). Verify the `sharepad.co` sending domain first. |
+| `STRIPE_WEBHOOK_SECRET` | The `whsec_…` from the Stripe webhook endpoint (created **after** the first deploy — see bootstrap). |
+
+### First-time bootstrap (chicken-and-egg)
+The Stripe signing secret can only be made *after* the Worker has a URL, so:
+
+1. Set `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `RESEND_API_KEY`.
+2. Merge to `main` (or run the workflow) → the Worker deploys. It's live but inert:
+   with no `STRIPE_WEBHOOK_SECRET` yet it safely rejects all webhooks (no emails).
+3. Create the Stripe webhook endpoint (`checkout.session.completed`) pointing at the
+   Worker's `*.workers.dev` URL; copy its `whsec_…` signing secret.
+4. Add `STRIPE_WEBHOOK_SECRET` to the repo secrets, then re-run the workflow. Done.
 
 ## Test it
 ```bash
@@ -65,11 +65,20 @@ Then do **one real live purchase** (your own card, refund after): confirm both t
 Stripe receipt *and* the re-download email arrive, and the button downloads the
 current DMG.
 
+## Local deploy (optional, for development only)
+You can still deploy by hand to iterate — run from `workers/purchase-email`:
+```bash
+npx wrangler login
+npx wrangler deploy
+```
+Local manual `wrangler secret put …` only affects your manual deploys; CI re-syncs
+secrets from the GitHub secrets above on its next run.
+
 ## Config
 | Name | Type | Purpose |
 |---|---|---|
-| `STRIPE_WEBHOOK_SECRET` | secret | Verify the `Stripe-Signature` header. |
-| `RESEND_API_KEY` | secret | Auth for the Resend send API. |
+| `STRIPE_WEBHOOK_SECRET` | secret (GitHub → Worker) | Verify the `Stripe-Signature` header. |
+| `RESEND_API_KEY` | secret (GitHub → Worker) | Auth for the Resend send API. |
 | `DOWNLOAD_URL` | var (`wrangler.toml`) | Link in the email. Defaults to the thank-you page re-download view (`?owner`). |
 | `EMAIL_FROM` | var (`wrangler.toml`) | Sender; the domain must be verified in Resend. |
 
