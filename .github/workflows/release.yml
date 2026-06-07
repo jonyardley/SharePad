@@ -86,6 +86,10 @@ jobs:
           export RELEASE_VERSION="${TAG#v}"
           just release
 
+      # Same camera-only / un-sandboxed guard as CI, on the actual shipped binary.
+      - name: Verify app invariants
+        run: just verify-app .build/Build/Products/Release/SharePad.app
+
       # Generate + EdDSA-sign the Sparkle appcast. DMG and appcast are published to
       # the gh-pages branch (GitHub Pages), so the Releases page shows only source
       # archives — not the compiled binary.
@@ -100,6 +104,12 @@ jobs:
           printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$SPARKLE_ED_KEY_PATH"
           export DOWNLOAD_URL_PREFIX="https://jonyardley.github.io/SharePad/"
           just sparkle-appcast
+
+      # Smoke-check the signed/stapled artifacts + appcast before they reach the
+      # auto-updater. Fails the release rather than shipping a broken update.
+      - name: Verify release artifacts
+        if: startsWith(github.ref, 'refs/tags/')
+        run: just verify-release
 
       # Push DMG + appcast to gh-pages so GitHub Pages serves them. The gh-pages
       # branch is not protected, so the Actions bot can push directly.
