@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Thank you — SharePad</title>
+<title>Thank you · SharePad</title>
 <meta name="description" content="Thank you for supporting SharePad. Download your copy and get set up in a minute." />
 <meta name="robots" content="noindex" />
 <link rel="canonical" href="https://sharepad.co/thanks-a7f3c92b.html" />
@@ -110,12 +110,6 @@
     margin-bottom: 26px;
   }
   .check svg { width: 32px; height: 32px; color: #fff; }
-  .eyebrow {
-    display: inline-block; font-size: 0.82rem; font-weight: 600; letter-spacing: 0.04em;
-    text-transform: uppercase; color: var(--indigo);
-    background: rgba(91,107,232,0.10); padding: 6px 13px; border-radius: 999px;
-    border: 1px solid var(--line); margin-bottom: 22px;
-  }
   h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.9rem, 4vw, 2.6rem); letter-spacing: -0.02em; line-height: 1.08; margin-bottom: 16px; }
   .lede { color: var(--ink-soft); font-size: 1.08rem; margin-bottom: 32px; }
   .download-row { margin-bottom: 14px; }
@@ -158,63 +152,83 @@
 <main>
   <div class="wrap">
     <div class="card">
-      <span class="check" aria-hidden="true">
+      <span class="check" id="check" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
       </span>
-      <div class="eyebrow" id="eyebrow">Payment complete</div>
       <h1 id="headline">Thank you for supporting SharePad</h1>
-      <p class="lede" id="lede">Your download is ready. You just helped fund the development of an open-source tool — that genuinely matters.</p>
+      <p class="lede" id="lede">Your download is ready. You just helped fund the development of an open-source tool, and that genuinely matters.</p>
 
       <div class="download-row">
         <a class="btn btn-primary big" id="download" href="https://github.com/jonyardley/SharePad/releases">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
-          Download SharePad for macOS
+          <span id="download-label">Download SharePad for macOS</span>
         </a>
       </div>
-      <p class="meta" id="receipt-note">A receipt is on its way to your email. Signed &amp; notarised by Apple — opens with a normal double-click.</p>
+      <p class="meta" id="receipt-note">A receipt is on its way to your email. Signed &amp; notarised by Apple, so it opens with a normal double-click.</p>
+      <p class="meta" id="owner-link" hidden>Already bought? <a href="?owner" style="color: var(--indigo); font-weight: 600;">Re-download your copy</a>.</p>
 
-      <div class="steps">
+      <div class="steps" id="steps">
         <h2>Get set up in a minute</h2>
         <ol>
           <li><strong>Open the DMG</strong> and drag SharePad into Applications.</li>
-          <li><strong>Launch it</strong> — SharePad lives in your menu bar, not the Dock.</li>
+          <li><strong>Launch it</strong> and find SharePad in your menu bar, not the Dock.</li>
           <li><strong>Plug in your iPad</strong> over USB and tap <em>Trust</em>. The share window appears automatically.</li>
           <li><strong>Pick the SharePad window</strong> in any call's "Share window" list, and you're live.</li>
         </ol>
       </div>
 
-      <p class="opensource">SharePad is free and open source under the GPLv3. You can always build it yourself from <a href="https://github.com/jonyardley/SharePad">the source on GitHub</a> — paying gets you the ready-to-run, auto-updating build and keeps the project going.</p>
+      <p class="opensource" id="opensource">Buying the ready-to-run build is what keeps SharePad going. You've got the signed, notarised, auto-updating app, set up in a click. And because SharePad is open source under the GPLv3, the full code is always on <a href="https://github.com/jonyardley/SharePad">GitHub</a> for you to inspect and trust.</p>
     </div>
   </div>
 </main>
 
 <script>
-  // Stripe's redirect carries ?session_id=…; its presence marks a real
-  // post-purchase visit. Cosmetic only — true verification needs a backend
-  // call to Stripe (static site has none) and the DMG is public regardless.
-  // No session → soften the copy away from "payment confirmed".
+  // Three views, chosen by URL param. The DMG is public, so this shapes the
+  // journey rather than gating it:
+  //   ?session_id  fresh Stripe purchase     -> keep the "thank you" copy
+  //   ?owner       buyer re-download (email)  -> download view, no buy nudge
+  //   (no param)   stumbled in               -> usher to buy.sharepad.co
   (function () {
-    if (new URLSearchParams(location.search).has("session_id")) return;
-    var set = function (id, text) { var el = document.getElementById(id); if (el) el.textContent = text; };
-    set("eyebrow", "Download");
-    set("headline", "Download SharePad");
-    set("lede", "The ready-to-run macOS build. If you've just bought a copy — thank you. Your download is below.");
-    var receipt = document.getElementById("receipt-note");
-    if (receipt) receipt.hidden = true;
-  })();
+    var params = new URLSearchParams(location.search);
+    var purchased = params.has("session_id");
+    var owner = params.has("owner");
 
-  // Resolve the download from the public appcast so the link never hardcodes a
-  // (now versioned) DMG filename — works before and after URL hardening. Same
-  // origin; falls back to the GitHub releases page if the fetch fails.
-  (function () {
-    fetch("/appcast.xml", { cache: "no-store" })
-      .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
-      .then(function (xml) {
-        var enc = new DOMParser().parseFromString(xml, "application/xml").querySelector("enclosure[url]");
-        var url = enc && enc.getAttribute("url");
-        if (url) document.getElementById("download").setAttribute("href", url);
-      })
-      .catch(function () {});
+    var byId = function (id) { return document.getElementById(id); };
+    var set = function (id, text) { var el = byId(id); if (el) el.textContent = text; };
+    var hide = function (id) { var el = byId(id); if (el) el.hidden = true; };
+
+    if (!purchased) hide("receipt-note");
+
+    if (!purchased && !owner) {
+      var check = byId("check"); if (check) check.style.display = "none";
+      hide("steps"); hide("opensource");
+      set("headline", "Get SharePad");
+      set("lede", "Turn your iPad into a live whiteboard you can share in any call. One payment of £6.99, with updates for life.");
+      var buy = byId("download");
+      if (buy) {
+        buy.setAttribute("href", "https://buy.sharepad.co");
+        var ic = buy.querySelector("svg"); if (ic) ic.style.display = "none";
+      }
+      set("download-label", "Get SharePad · £6.99");
+      var rel = byId("owner-link"); if (rel) rel.hidden = false;
+    } else if (owner) {
+      set("headline", "Download SharePad");
+      set("lede", "The ready-to-run macOS build, signed and notarised. Your latest copy is below.");
+    }
+
+    // Resolve the latest DMG from the public appcast for the download views
+    // only, so the stumble view's buy link is never overwritten. Falls back to
+    // the GitHub releases page if the fetch fails.
+    if (purchased || owner) {
+      fetch("/appcast.xml", { cache: "no-store" })
+        .then(function (r) { return r.ok ? r.text() : Promise.reject(); })
+        .then(function (xml) {
+          var enc = new DOMParser().parseFromString(xml, "application/xml").querySelector("enclosure[url]");
+          var url = enc && enc.getAttribute("url");
+          if (url) { var d = byId("download"); if (d) d.setAttribute("href", url); }
+        })
+        .catch(function () {});
+    }
   })();
 </script>
 
