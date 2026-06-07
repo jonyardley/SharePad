@@ -5,6 +5,17 @@ update dialog** (Sparkle shows it to people when they update), so write each ent
 for users, not developers. Add a new `## <version>` section at the top before you
 tag a release.
 
+## 1.0.5
+- If your iPad disconnects while you're sharing, SharePad now tells you — a
+  brief alert appears in the menu-bar icon and the popover so you're not left
+  wondering why your share went black.
+- Privacy: only the iPad feed window can be picked in a video call's window
+  picker. Other SharePad surfaces (the About panel, update dialogs) can't be
+  shared by mistake.
+- Smoother handling of edge cases: a stalled iPad start now surfaces honestly
+  instead of looking live, and Camera-blocked-by-policy users see honest copy
+  instead of a Settings button they can't use.
+
 ## 1.0.4
 - Show or hide the share window from anywhere with a global keyboard shortcut
   (⌃⌥⌘H) — no need to leave your call to reach the menu bar.
