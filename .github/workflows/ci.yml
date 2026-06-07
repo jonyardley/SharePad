@@ -26,7 +26,7 @@ jobs:
       # stays correct (a same-range `from:` bump won't change the key — the cache
       # just lags until project.yml next changes, never shipping the wrong version).
       - name: Cache Swift packages
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: .build/SourcePackages
           key: spm-${{ runner.os }}-${{ hashFiles('project.yml') }}
