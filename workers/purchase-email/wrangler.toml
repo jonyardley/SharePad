@@ -1,0 +1,12 @@
+name = "sharepad-purchase-email"
+main = "src/worker.js"
+compatibility_date = "2026-06-01"
+
+# Public, non-secret config. Override per-environment if needed.
+[vars]
+DOWNLOAD_URL = "https://sharepad.co/thanks-a7f3c92b.html"
+EMAIL_FROM = "SharePad <hello@sharepad.co>"
+
+# Secrets are NOT set here — add them with `wrangler secret put`:
+#   wrangler secret put STRIPE_WEBHOOK_SECRET   # whsec_… from the Stripe webhook endpoint
+#   wrangler secret put RESEND_API_KEY          # re_… from Resend
