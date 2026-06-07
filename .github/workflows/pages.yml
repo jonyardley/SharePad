@@ -29,7 +29,10 @@ jobs:
           git fetch origin gh-pages
           git worktree add /tmp/gh-pages gh-pages
           git config --global --add safe.directory /tmp/gh-pages
-          rsync -a --delete --exclude='.git' --exclude='SharePad.dmg' --exclude='appcast.xml' docs/ /tmp/gh-pages/
+          # Keep release artifacts (release.yml owns these): the versioned DMG
+          # (SharePad-<ver>-<hash>.dmg) + appcast. Excluding only SharePad.dmg would
+          # let --delete wipe the versioned DMG on the next docs push.
+          rsync -a --delete --exclude='.git' --exclude='SharePad*.dmg' --exclude='appcast.xml' docs/ /tmp/gh-pages/
           cd /tmp/gh-pages
           git add -A
           git diff --cached --quiet && echo "No changes to deploy" && exit 0

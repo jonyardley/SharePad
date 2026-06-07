@@ -152,18 +152,24 @@ release: release-build sign notarize dmg
 # generate + EdDSA-sign the Sparkle appcast from the notarized DMG into .build/appcast/.
 # CI attaches it to the GitHub Release (served at releases/latest/download/appcast.xml),
 # so there's no push to the protected main branch. Needs SPARKLE_ED_KEY_PATH (the
-# private key file) and DOWNLOAD_URL_PREFIX (the release-asset base URL, trailing slash);
+# private key file), DOWNLOAD_URL_PREFIX (the release-asset base URL, trailing slash),
+# and RELEASE_VERSION (tag without the leading v) for the versioned DMG filename;
 # generate_appcast reads the version from the app inside the DMG and writes appcast.xml.
 sparkle-appcast:
     #!/usr/bin/env bash
     set -euo pipefail
     GEN=$(find .build/SourcePackages/artifacts -path '*Sparkle*' -name generate_appcast | head -1)
     [ -n "$GEN" ] || { echo "generate_appcast not found — run a build first to resolve Sparkle" >&2; exit 1; }
+    VERSION="${RELEASE_VERSION:?set RELEASE_VERSION (the tag without the leading v)}"
+    # Versioned + content-hashed filename so the guessable SharePad.dmg URL 404s and
+    # shared links rot each release (see specs/download-url-hardening.md). The EdDSA
+    # signature signs DMG *content*, not the name, so renaming is signature-safe.
+    HASH=$(shasum -a 256 .build/SharePad.dmg | cut -c1-8)
+    DMG_NAME="SharePad-${VERSION}-${HASH}.dmg"
     rm -rf .build/appcast && mkdir -p .build/appcast
-    cp .build/SharePad.dmg .build/appcast/
-    # The newest CHANGELOG section becomes SharePad.md; generate_appcast matches it to
-    # SharePad.dmg by basename and --embed-release-notes bakes it into the appcast's
-    # <description>, which Sparkle shows in the update dialog. No section → no notes.
-    if [ -f CHANGELOG.md ]; then awk '/^## /{n++} n==1' CHANGELOG.md > .build/appcast/SharePad.md; fi
+    cp .build/SharePad.dmg ".build/appcast/${DMG_NAME}"
+    # generate_appcast matches the notes file to the DMG by basename, so the .md must
+    # share the versioned basename or --embed-release-notes silently drops the notes.
+    if [ -f CHANGELOG.md ]; then awk '/^## /{n++} n==1' CHANGELOG.md > ".build/appcast/SharePad-${VERSION}-${HASH}.md"; fi
     "$GEN" --ed-key-file "$SPARKLE_ED_KEY_PATH" --download-url-prefix "$DOWNLOAD_URL_PREFIX" --embed-release-notes .build/appcast
-    echo "Appcast written to .build/appcast/appcast.xml"
+    echo "Appcast written to .build/appcast/appcast.xml (DMG: ${DMG_NAME})"
