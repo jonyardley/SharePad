@@ -1,8 +1,17 @@
 # Licensing & Monetisation — Spec
 
-> Status: **accepted**. Supersedes the earlier trial/licence-key draft — see the
+> Status: **live**. Supersedes the earlier trial/licence-key draft — see the
 > decision below. Sibling: `specs/distribution.md` (the release pipeline this
 > builds on).
+>
+> **Live as of 2026-06-07:** Stripe storefront is up in live mode — product
+> "SharePad", **£6.99 GBP one-time**, tax-inclusive, tax code `txcd_10202000`
+> (Downloadable Software – Personal Use). Payment link runs **Managed Payments
+> (Stripe = merchant of record)**; checkout redirects to `thanks-a7f3c92b.html`,
+> which resolves the DMG from the public appcast. Buy path is
+> `https://buy.sharepad.co` → 302 → the Stripe link (decoupled, so swapping
+> storefront needs no site edit). Marketing site, **Privacy** (`docs/privacy.html`)
+> and **Terms & Refunds** (`docs/terms.html`) pages updated to match.
 
 ## 1. Problem & goal
 
@@ -73,7 +82,8 @@ cleanly (covered by `specs/distribution.md` §10).
    selling GPL binaries is legal and, with no key, stays the no-enforcement model).
    The full platform-evaluation trail is in the session memory
    (`sharepad-sales-platform-decision`).
-2. **Buy affordance placement** — About panel only, or also a quiet popover link?
+2. **Buy affordance placement** — **RESOLVED**: About panel ("Support SharePad" →
+   `sharepad.co`) plus the website's buy buttons. No popover buy link for now.
 3. **Donations** — also offer GitHub Sponsors, or keep a single buy path?
 4. **Per-file licence headers** — add GPLv3 headers to source files, or rely on the
    top-level `LICENSE` + About notice? (Proposed: top-level + About is enough for a
