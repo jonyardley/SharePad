@@ -58,6 +58,7 @@ verify-app app=".build/Build/Products/Debug/SharePad.app":
         note "NSMicrophoneUsageDescription present — the app must stay mic-free"
     fi
     ENT=$(codesign -d --entitlements - "$APP" 2>/dev/null || true)
+    [ -n "$ENT" ] || note "could not read entitlements from $APP" # else absence checks pass vacuously
     case "$ENT" in *com.apple.security.app-sandbox*) note "app-sandbox entitlement present — must stay un-sandboxed" ;; esac
     case "$ENT" in *com.apple.security.device.audio-input*) note "audio-input entitlement present — must stay mic-free" ;; esac
     case "$ENT" in *com.apple.security.device.camera*) : ;; *) note "camera entitlement missing" ;; esac
