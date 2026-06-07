@@ -1,8 +1,22 @@
-# Idle data-output throttle (queued — issue #23)
+# Idle data-output throttle (issue #23) — WON'T FIX (measured)
 
-> **Status: designed, not implemented.** Tier 3 (capture pipeline + session
-> reconfig) → needs Plan mode + **on-iPad measurement** before coding. From the
-> 2026-06-06 review spike.
+> **Decision (2026-06-06): not worth implementing.** The gate was a measurement;
+> the measurement killed it. On-iPad, with the iPad connected, the share window
+> **hidden**, and the popover **closed** — the exact state this would optimise —
+> SharePad sat at **~0.7–0.8% CPU, 0.0% GPU** (Activity Monitor, sustained). The
+> ~4–6% figure in DESIGN §9 was the *live-active* cost (window compositing +
+> thumbnail rendering), not this hidden-armed state: a hidden window isn't
+> composited and decoding a mostly-static iPad screen is nearly free. So the win
+> here is <1%, against ~60 min of `AVCaptureSession` reconfiguration touching the
+> `awaitFrame` watchdog (the highest-severity risk below). Bad trade — closed.
+>
+> The design below is retained only so a future reader sees it was considered and
+> why it was dropped. **Do not implement without a new measurement that contradicts
+> the above.**
+>
+> ---
+>
+> *Original design (Tier 3; was: needs Plan mode + on-iPad measurement before coding):*
 
 ## Problem
 
