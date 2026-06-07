@@ -220,7 +220,7 @@
     content: ""; position: absolute; inset: -10% 4% 30%; z-index: -1;
     background: radial-gradient(closest-side, rgba(91,107,232,0.30), transparent 72%); filter: blur(10px);
   }
-  .demo-frame img { display: block; width: 100%; height: auto; border-radius: var(--radius-lg); box-shadow: 0 10px 30px rgba(40,48,120,0.18); }
+  .demo-frame img, .demo-frame video { display: block; width: 100%; height: auto; border-radius: var(--radius-lg); box-shadow: 0 10px 30px rgba(40,48,120,0.18); }
   .demo-caption { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px 16px; margin-top: 72px; line-height: 1.5; }
   .demo-caption .cap-text { color: var(--ink-soft); font-size: 0.97rem; max-width: 56ch; text-align: center; }
   .demo-caption .cap-text b { color: var(--ink); font-weight: 600; }
@@ -572,8 +572,9 @@
       <p>On the left, the SharePad window. On the right, that same window shared into Google Meet at full size.</p>
     </div>
     <div class="demo-frame">
-      <!-- Motion demo (GIF) to replace this still later. See docs/README.md -->
-      <img src="assets/demo.jpg" width="2080" height="1238" loading="lazy" alt="SharePad sharing a connected iPad's screen into a Google Meet call, shown full-size as a shared window." />
+      <video src="assets/demo.mp4" poster="assets/demo.jpg" width="1172" height="762"
+             autoplay loop muted playsinline preload="metadata"
+             aria-label="SharePad sharing a connected iPad's screen into a Google Meet call, shown full-size as a shared window."></video>
     </div>
   </div>
 </section>
