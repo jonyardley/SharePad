@@ -16,17 +16,19 @@ Shipped as code but touch capture/permission/window, so per `CLAUDE.md` → Test
 they are **not "done" until run on a real iPad in a real meeting app**. No hardware
 was available at implementation time.
 
-- [ ] **Rotation keeps window placement** (#69). Show the window, move it, rotate the
-  iPad → keeps your position; survives relaunch. *`ShareWindowController.updateSize`.*
-- [ ] **Normal connect still works end-to-end** (#69). Plug in → live → shares cleanly
-  in Zoom **and** browser Meet/Teams; no mic prompt. *`CaptureController.configureAndRun`.*
+- [x] **Rotation keeps window placement** (#69). ✅ verified 2026-06-06. Minor: window
+  drifts away from corners on rotation because `centeredResizeOrigin` keeps the
+  content centre fixed — by design (matches Xcode / Preview); switch to nearest-corner
+  anchoring if it bites in real use.
+- [x] **Normal connect still works end-to-end** (#69). ✅ verified 2026-06-06 (no mic prompt).
 - [ ] **Restricted-camera copy** (#69). MDM/Screen-Time device shows "blocked by a
-  device policy" + no Open-Settings button; confirm plain `.denied` unchanged.
-- [ ] **WindowSharing exclusion** (#70). Open the About panel / a Sparkle dialog
-  mid-"call" → neither is pickable in a screen-share picker, only the feed.
-- [ ] **Mid-call disconnect signal** (mid-call PR). Live + window shown in a real
-  call → unplug: popover banner + alert status symbol appear; replug clears both.
-  Window hidden → unplug: silent. *`specs/mid-call-disconnect.md`.*
+  device policy" + no Open-Settings button. *Skipped — no managed device available;
+  plain `.denied` path is unchanged.*
+- [x] **WindowSharing exclusion** (#70). ✅ partially verified 2026-06-06 — feed window
+  picks correctly. Real gap found: Sparkle's "Check for Updates" dialog was
+  share-pickable. See P2 below for the cause.
+- [x] **Mid-call disconnect signal** (#71). ✅ verified 2026-06-06 (banner + alert
+  appear on unplug-with-window; silent when window hidden).
 
 ---
 
@@ -39,6 +41,17 @@ Deferred.)*
 
 ## P2 — Quality / performance
 
+- [ ] **WindowSharing observer can lose the race with the share picker.** Verified
+  2026-06-06: Sparkle's in-process "Check for Updates" / "Up to date" dialog appeared
+  in a Zoom window-share picker. Cause: `WindowSharing` observes `didUpdate` via an
+  `AsyncStream`, which can run *after* the picker snapshots the window list in the
+  same runloop tick the dialog appeared. Real-world impact small (release notes are
+  public; dialog is user-triggered; `didBecomeKey` still excludes on focus). Fix
+  options: switch the observer to a synchronous `addObserver(forName:queue:.main:)`
+  so it fires in the same tick, or `sharingType = .none` on every `NSWindow` via
+  swizzling (invasive). Sparkle's Downloader/Installer XPC and `Updater.app` run in
+  separate processes — unreachable from `NSApp.windows` regardless. *Source:
+  on-iPad verification.*
 - [ ] **Idle-but-connected CPU: throttle the data output (issue #23).** Design
   complete (`specs/idle-throttle.md`) — the real win is dropping the data-output
   *connection* when window-hidden + popover-closed, not an early-return; the
