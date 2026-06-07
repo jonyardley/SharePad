@@ -22,6 +22,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Keyed on project.yml; SPM re-resolves over a stale cache, so a moved pin
+      # stays correct (a same-range `from:` bump won't change the key — the cache
+      # just lags until project.yml next changes, never shipping the wrong version).
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: .build/SourcePackages
+          key: spm-${{ runner.os }}-${{ hashFiles('project.yml') }}
+          restore-keys: |
+            spm-${{ runner.os }}-
+
       # swiftlint isn't on the macos-26 arm64 image (actions/runner-images#10595); swiftformat is.
       - name: Install tools
         run: brew install xcodegen just swiftlint
@@ -33,3 +44,6 @@ jobs:
       # subsumes `just build` — one compile pass keeps macOS minutes down.
       - name: Build & test
         run: just test
+
+      - name: Coverage summary
+        run: just coverage
