@@ -11,7 +11,7 @@ tag a release.
 - Maintenance: internal reliability and release-pipeline improvements.
 
 ## 1.0.5
-- If your iPad disconnects while you're sharing, SharePad now tells you — a
+- If your iPad disconnects while you're sharing, SharePad now tells you: a
   brief alert appears in the menu-bar icon and the popover so you're not left
   wondering why your share went black.
 - Privacy: only the iPad feed window can be picked in a video call's window
@@ -23,7 +23,7 @@ tag a release.
 
 ## 1.0.4
 - Show or hide the share window from anywhere with a global keyboard shortcut
-  (⌃⌥⌘H) — no need to leave your call to reach the menu bar.
+  (⌃⌥⌘H), no need to leave your call to reach the menu bar.
 - Fix: the iPad now connects automatically the first time you plug it in, even
   while macOS is still settling the camera-permission and trust prompts.
 
@@ -36,5 +36,5 @@ tag a release.
 
 ## 1.0.0
 - First release. Plug in a USB-connected iPad and it appears as a clean,
-  aspect-locked, always-ready window you can share in any video call — no more
+  aspect-locked, always-ready window you can share in any video call, no more
   per-call QuickTime setup.
