@@ -22,6 +22,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Cache the resolved Sparkle checkout so each run skips the SPM clone/resolve.
+      # Keyed on project.yml (where the version is pinned); restore-keys reuses a
+      # stale cache when the pin moves, then the build re-resolves over it.
+      - name: Cache Swift packages
+        uses: actions/cache@v4
+        with:
+          path: .build/SourcePackages
+          key: spm-${{ runner.os }}-${{ hashFiles('project.yml') }}
+          restore-keys: |
+            spm-${{ runner.os }}-
+
       # swiftlint isn't on the macos-26 arm64 image (actions/runner-images#10595); swiftformat is.
       - name: Install tools
         run: brew install xcodegen just swiftlint
@@ -33,3 +44,6 @@ jobs:
       # subsumes `just build` — one compile pass keeps macOS minutes down.
       - name: Build & test
         run: just test
+
+      - name: Coverage summary
+        run: just coverage

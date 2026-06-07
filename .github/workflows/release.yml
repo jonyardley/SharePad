@@ -22,6 +22,24 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      # Fail before any signing/notarization spend if the CHANGELOG wasn't bumped.
+      # `sparkle-appcast` embeds the topmost `## ` section verbatim as the update's
+      # release notes, so a stale top section silently ships the previous version's
+      # notes. Tags are `vX.Y.Z`; CHANGELOG headings are `## X.Y.Z` (no `v`).
+      - name: Verify CHANGELOG matches tag
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#v}"
+          TOP=$(grep -m1 '^## ' CHANGELOG.md | sed 's/^##[[:space:]]*//')
+          if [ "$TOP" != "$VERSION" ]; then
+            echo "::error::CHANGELOG.md top section is '$TOP' but releasing '$VERSION'. Add a '## $VERSION' section at the top before tagging." >&2
+            exit 1
+          fi
+          echo "CHANGELOG top section matches $VERSION."
+
       - name: Install tools
         run: brew install xcodegen just create-dmg
 

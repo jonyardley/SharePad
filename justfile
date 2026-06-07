@@ -29,9 +29,17 @@ lint:
     swiftlint
     swiftformat --lint .
 
-# run unit tests
+# run unit tests (with code coverage; see `just coverage` for the report)
 test: gen
-    xcodebuild -project SharePad.xcodeproj -scheme SharePad -configuration Debug -destination 'platform=macOS' -derivedDataPath .build test
+    xcodebuild -project SharePad.xcodeproj -scheme SharePad -configuration Debug -destination 'platform=macOS' -derivedDataPath .build -enableCodeCoverage YES test
+
+# print the per-target coverage summary from the latest `just test` run
+coverage:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    RESULT=$(ls -td .build/Logs/Test/*.xcresult 2>/dev/null | head -1 || true)
+    [ -n "$RESULT" ] || { echo "no .xcresult found — run 'just test' first" >&2; exit 1; }
+    xcrun xccov view --report --only-targets "$RESULT"
 
 # scan full git history for committed secrets (same check CI runs)
 scan:
