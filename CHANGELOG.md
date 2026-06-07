@@ -5,6 +5,11 @@ update dialog** (Sparkle shows it to people when they update), so write each ent
 for users, not developers. Add a new `## <version>` section at the top before you
 tag a release.
 
+## 1.0.6
+- The in-app About panel now links to sharepad.co for buying and support, with
+  quick "View Source" and "View Licence" links.
+- Maintenance: internal reliability and release-pipeline improvements.
+
 ## 1.0.5
 - If your iPad disconnects while you're sharing, SharePad now tells you — a
   brief alert appears in the menu-bar icon and the popover so you're not left
