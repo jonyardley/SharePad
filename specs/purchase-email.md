@@ -39,6 +39,7 @@ Why this reconciles the constraints:
 | Decision | Choice | Rationale |
 |---|---|---|
 | **Host** | **Cloudflare Worker** | DNS + site already on Cloudflare; first-party, ~free, no server to run. |
+| **Deploy** | **GitHub Actions** (`deploy-worker.yml`) | Consistent with the other workflows (`pages.yml`/`release.yml`); no manual `wrangler` step. Worker secrets are synced from GitHub Actions secrets on each deploy, so GitHub is the single source of truth. |
 | **Email sender** | **Resend** | Simple HTTP API, free tier (3k/mo) covers this volume, easy domain auth. MailChannels dropped free Cloudflare sending in 2024; SES/Postmark are heavier. Isolated to this Worker — **not** an app dependency. |
 | **Trigger** | `checkout.session.completed` | Fires for Managed Payments payment links; carries `customer_details.email`. |
 | **Link target** | `thanks-a7f3c92b.html?owner` | Reuse: already appcast-resolving; `?owner` gives the re-download view. No new page. |
@@ -65,16 +66,20 @@ Why this reconciles the constraints:
 
 ## 6. Config & deploy (one-time)
 
-See `workers/purchase-email/README.md` for the click-by-click. Summary:
+Deploy is via **GitHub Actions** (`.github/workflows/deploy-worker.yml`): push to
+`main` touching `workers/purchase-email/**`, or run the workflow manually. Worker
+secrets are synced from GitHub Actions secrets on each deploy. See
+`workers/purchase-email/README.md` for the click-by-click. Summary:
 
 1. **Resend**: verify the `sharepad.co` sending domain (SPF/DKIM DNS records — added
    in Cloudflare), create an API key.
-2. `wrangler secret put RESEND_API_KEY`.
-3. `wrangler deploy` → note the Worker URL.
-4. **Stripe → Developers → Webhooks**: add endpoint = Worker URL, event =
-   `checkout.session.completed`; copy the signing secret →
-   `wrangler secret put STRIPE_WEBHOOK_SECRET`.
-5. Re-deploy if needed.
+2. Set GitHub repo **Actions secrets**: `CLOUDFLARE_API_TOKEN`,
+   `CLOUDFLARE_ACCOUNT_ID`, `RESEND_API_KEY`.
+3. Merge/dispatch → Worker deploys (inert until the Stripe secret exists: it safely
+   rejects all webhooks when `STRIPE_WEBHOOK_SECRET` is empty).
+4. **Stripe → Developers → Webhooks**: add endpoint = the Worker's `*.workers.dev`
+   URL, event = `checkout.session.completed`; copy the `whsec_…` signing secret.
+5. Add `STRIPE_WEBHOOK_SECRET` to the repo secrets, re-run the workflow.
 
 ## 7. Verification (pending)
 
