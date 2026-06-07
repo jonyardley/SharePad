@@ -1,7 +1,8 @@
 # Download-URL Hardening — Spec
 
-> Status: **proposed**. Sibling: `specs/distribution.md` (release pipeline this
-> modifies) and `specs/licensing.md` (the sell-the-build model this supports).
+> Status: **accepted** (2026-06-07). Sibling: `specs/distribution.md` (release
+> pipeline this modifies) and `specs/licensing.md` (the sell-the-build model this
+> supports). Decisions in §5/§6 resolved; implemented in the same PR.
 
 ## 1. Problem & goal
 
@@ -64,6 +65,10 @@ updating.
    links rot; it also stops `gh-pages` growing unbounded.)
 4. Leave both appcast locations regenerated as today — both inherit the versioned
    enclosure automatically.
+5. **`pages.yml`** docs-sync uses `rsync --delete` and excludes only `SharePad.dmg`
+   + `appcast.xml` from deletion. Widen to `SharePad*.dmg` or the next docs push
+   **deletes the versioned DMG** (breaking downloads *and* auto-update). This is
+   the easiest-to-miss trap in the change.
 
 ## 4. Compatibility analysis (the load-bearing part)
 
@@ -78,32 +83,34 @@ updating.
 - **First rollout:** the release that introduces this removes `SharePad.dmg`.
   Any link shared before then dies — intended.
 
-## 5. Open questions
+## 5. Decisions (resolved 2026-06-07)
 
-1. **Keep N old DMGs or only the latest?** Latest-only maximises link rot and
-   keeps gh-pages small, but Sparkle delta updates (if ever enabled) want history.
-   Proposed: **latest-only** (no deltas configured today).
-2. **Hash vs version in the name?** `SharePad-1.0.6.dmg` is predictable-per-version
-   (someone could guess the *next* version's URL). A short content hash
-   (`SharePad-1.0.6-9f3a.dmg`) is unguessable. Proposed: **version + short hash**.
-3. **Also rename the thanks-page download link each release?** The
-   `/thanks-*.html` page currently links the stable name. If the stable name
-   404s, the thanks page must point at the current versioned DMG — so the publish
-   step must also rewrite the thanks page's href, or the thanks page links a
-   stable `/download` redirect (which reintroduces a guessable URL). **Unresolved
-   — this is the main wrinkle; see §6.**
+1. **History:** **latest-only.** Maximises link rot and keeps gh-pages small. No
+   Sparkle deltas are configured, so version history isn't needed.
+2. **Name:** **version + short content hash** — `SharePad-1.0.6-9f3a.dmg`. The
+   hash makes even the *next* version's URL unguessable (a plain version is
+   predictable).
+3. **Thanks-page link:** resolved by §6 — the page reads the appcast, so the
+   pipeline does **not** rewrite it.
 
-## 6. The thanks-page coupling (must resolve before implementing)
+## 6. The thanks-page coupling — RESOLVED via appcast lookup
 
-Hardening the DMG name breaks the thanks page's hardcoded
-`https://sharepad.co/SharePad.dmg` link. Options:
+Hardening the DMG name breaks any hardcoded `https://sharepad.co/SharePad.dmg`
+link (the merged #84 has one). Two pipeline-side options were considered and
+**rejected**:
 
-- **(a)** Release pipeline rewrites the thanks page's `href` to the current
-  `$DMG_NAME` on each release (keeps everything versioned; one more publish step).
-- **(b)** Thanks page links a stable `/download` Cloudflare redirect → current
-  DMG. Simple, but `/download` is itself guessable/shareable — partly defeats the
-  point.
-- Proposed: **(a)** — keeps the no-stable-URL property intact.
+- **(a) pipeline rewrites the thanks-page `href` each release** — *fragile*:
+  `pages.yml` re-syncs `docs/` to gh-pages on any later docs push and would
+  clobber the rewrite back to whatever is in `docs/` on `main`.
+- **(b) stable `/download` redirect** — reintroduces a guessable, shareable URL,
+  defeating the point.
+
+**Chosen:** the thanks page **resolves the download URL from `/appcast.xml` at
+load** (same-origin `fetch`, parse `<enclosure url>`), falling back to the GitHub
+releases page. No hardcoded filename, nothing for the pipeline to rewrite, no
+`pages.yml` clobber. Works before *and* after this change (resolves to the stable
+name today, the versioned name after). Shipped in **PR #86** — must merge before
+this PR so the live thanks page never points at the retired stable URL.
 
 ## 7. Verification
 

@@ -97,12 +97,14 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         env:
           SPARKLE_ED_PRIVATE_KEY: ${{ secrets.SPARKLE_ED_PRIVATE_KEY }}
+          TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
           export SPARKLE_ED_KEY_PATH="$RUNNER_TEMP/sparkle_ed_key"
           trap 'rm -f "$SPARKLE_ED_KEY_PATH"' EXIT
           printf '%s' "$SPARKLE_ED_PRIVATE_KEY" > "$SPARKLE_ED_KEY_PATH"
           export DOWNLOAD_URL_PREFIX="https://jonyardley.github.io/SharePad/"
+          export RELEASE_VERSION="${TAG#v}"
           just sparkle-appcast
 
       # Smoke-check the signed/stapled artifacts + appcast before they reach the
@@ -119,15 +121,22 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
+          DMG_PATH=$(ls "$GITHUB_WORKSPACE"/.build/appcast/SharePad-*.dmg)
+          DMG_NAME=$(basename "$DMG_PATH")
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin gh-pages
           git worktree add /tmp/gh-pages gh-pages
           git config --global --add safe.directory /tmp/gh-pages
-          cp .build/SharePad.dmg /tmp/gh-pages/SharePad.dmg
-          cp .build/appcast/appcast.xml /tmp/gh-pages/appcast.xml
+          cp "$DMG_PATH" "/tmp/gh-pages/$DMG_NAME"
+          cp "$GITHUB_WORKSPACE"/.build/appcast/appcast.xml /tmp/gh-pages/appcast.xml
           cd /tmp/gh-pages
-          git add SharePad.dmg appcast.xml
+          # latest-only: retire the legacy stable name + any prior versioned DMG so the
+          # old URLs 404 and gh-pages stays small. The new DMG + appcast land in ONE
+          # commit, so no live appcast ever points at a missing file.
+          git rm -q --ignore-unmatch SharePad.dmg
+          for f in SharePad-*.dmg; do [ "$f" = "$DMG_NAME" ] || git rm -q --ignore-unmatch "$f"; done
+          git add "$DMG_NAME" appcast.xml
           git commit -m "Release $TAG: update DMG + appcast [skip ci]"
           git push origin gh-pages
 
