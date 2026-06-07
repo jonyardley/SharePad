@@ -47,3 +47,8 @@ jobs:
 
       - name: Coverage summary
         run: just coverage
+
+      # Guard the load-bearing entitlement/plist invariants (camera-only, no mic,
+      # un-sandboxed) on the built app — a regression otherwise surfaces only live.
+      - name: Verify app invariants
+        run: just verify-app

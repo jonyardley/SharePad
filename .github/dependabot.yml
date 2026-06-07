@@ -1,0 +1,14 @@
+version: 2
+updates:
+  # Keep the GitHub Actions pins (checkout, cache, …) patched. SPM is not watched
+  # here — Package.resolved lives inside the git-ignored generated .xcodeproj, so
+  # there's nothing for Dependabot to read; Sparkle is bumped by hand in project.yml.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ["*"]

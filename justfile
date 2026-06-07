@@ -41,6 +41,44 @@ coverage:
     [ -n "$RESULT" ] || { echo "no .xcresult found — run 'just test' first" >&2; exit 1; }
     xcrun xccov view --report --only-targets "$RESULT"
 
+# assert the built app keeps its load-bearing invariants — camera-only (no mic) and
+# un-sandboxed (Non-Negotiable 5 / DESIGN.md §6). A regression here otherwise only
+# surfaces live, as a surprise mic prompt or an empty device list.
+verify-app app=".build/Build/Products/Debug/SharePad.app":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    APP="{{ app }}"
+    PLIST="$APP/Contents/Info.plist"
+    [ -d "$APP" ] || { echo "app not found at $APP — build it first" >&2; exit 1; }
+    fail=0
+    note() { echo "  ✗ $1" >&2; fail=1; }
+    plutil -extract NSCameraUsageDescription raw "$PLIST" >/dev/null 2>&1 \
+        || note "NSCameraUsageDescription missing from Info.plist"
+    if plutil -extract NSMicrophoneUsageDescription raw "$PLIST" >/dev/null 2>&1; then
+        note "NSMicrophoneUsageDescription present — the app must stay mic-free"
+    fi
+    ENT=$(codesign -d --entitlements - "$APP" 2>/dev/null || true)
+    case "$ENT" in *com.apple.security.app-sandbox*) note "app-sandbox entitlement present — must stay un-sandboxed" ;; esac
+    case "$ENT" in *com.apple.security.device.audio-input*) note "audio-input entitlement present — must stay mic-free" ;; esac
+    case "$ENT" in *com.apple.security.device.camera*) : ;; *) note "camera entitlement missing" ;; esac
+    if [ "$fail" -eq 0 ]; then echo "verify-app OK: $APP"; else echo "verify-app FAILED" >&2; exit 1; fi
+
+# post-notarization smoke check (CI runs it before publishing): the signed+stapled
+# DMG and app pass Gatekeeper and the appcast is well-formed + EdDSA-signed, so a
+# broken release can't reach the auto-updater. Needs a completed `just release`.
+verify-release:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    APP=.build/Build/Products/Release/SharePad.app
+    DMG=.build/SharePad.dmg
+    APPCAST=.build/appcast/appcast.xml
+    echo "→ Gatekeeper assessment (app)"; spctl -a -vvv "$APP"
+    echo "→ staple validation (app)"; xcrun stapler validate "$APP"
+    echo "→ staple validation (dmg)"; xcrun stapler validate "$DMG"
+    echo "→ appcast well-formed"; xmllint --noout "$APPCAST"
+    grep -q 'sparkle:edSignature' "$APPCAST" || { echo "appcast missing EdDSA signature" >&2; exit 1; }
+    echo "verify-release OK"
+
 # scan full git history for committed secrets (same check CI runs)
 scan:
     gitleaks git --config .gitleaks.toml --redact --no-banner --verbose .
