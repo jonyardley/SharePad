@@ -21,12 +21,12 @@ so GitHub auto-detects `sharepad.co` on every publish.
 
 ## The demo
 
-The `#demo` section shows a **still** (`docs/assets/demo.jpg`) of SharePad live in
-a Google Meet call. The still is the placeholder for a **motion demo**: record
-the plug-in → window → share flow, export a GIF or MP4 to `docs/assets/demo.gif`,
-and swap the `<img src="assets/demo.jpg">` in the `#demo` section (there's a marker
-comment beside it). Motion is the stronger pitch; the still holds the spot until
-then.
+The `#demo` section plays a short **looping MP4** (`docs/assets/demo.mp4`) of the
+plug-in → window → share-in-Meet flow, with `docs/assets/demo.jpg` as the poster
+(instant first paint, a no-JS fallback, and the social-card image in the `og:image`
+/ `twitter:image` tags). To refresh it, replace `demo.mp4` (keep it small, around
+500KB, H.264/yuv420p so it plays everywhere). The same MP4 is the asset for social
+posts — Bluesky, Mastodon and Reddit all accept video, so no GIF is needed.
 
 ## The buy & download flow
 
