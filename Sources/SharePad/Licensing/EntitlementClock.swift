@@ -8,12 +8,12 @@ enum Entitlement: Equatable {
 
 enum EntitlementClock {
     static let trialDays = 7
+    static let day: TimeInterval = 86400
 
     static func entitlement(firstLaunch: Date, now: Date, isLicensed: Bool) -> Entitlement {
         if isLicensed { return .licensed }
-        // Spec §5: a clock set backwards never restarts the trial.
+        // specs/licensing.md §5: a clock set backwards never restarts the trial.
         guard now >= firstLaunch else { return .trialExpired }
-        let day: TimeInterval = 86400
         let remaining = firstLaunch
             .addingTimeInterval(TimeInterval(trialDays) * day)
             .timeIntervalSince(now)

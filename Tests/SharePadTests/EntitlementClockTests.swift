@@ -3,7 +3,7 @@ import XCTest
 
 final class EntitlementClockTests: XCTestCase {
     private let start = Date(timeIntervalSince1970: 1_700_000_000)
-    private let day: TimeInterval = 86400
+    private let day = EntitlementClock.day
 
     func testLicensedOverridesEverything() {
         let result = EntitlementClock.entitlement(
@@ -45,5 +45,12 @@ final class EntitlementClockTests: XCTestCase {
             firstLaunch: start, now: start - 1, isLicensed: false
         )
         XCTAssertEqual(result, .trialExpired)
+    }
+
+    func testLicensedOverridesActiveTrial() {
+        let result = EntitlementClock.entitlement(
+            firstLaunch: start, now: start + 1 * day, isLicensed: true
+        )
+        XCTAssertEqual(result, .licensed)
     }
 }
