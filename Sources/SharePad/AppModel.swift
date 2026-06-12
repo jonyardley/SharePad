@@ -182,8 +182,12 @@ final class AppModel {
         guard entitlement == .trialExpired, sessionTimer == nil else { return }
         sessionTimer = Task { [weak self] in
             guard let self else { return }
-            try? await Task.sleep(for: .seconds(sessionLimit))
-            guard !Task.isCancelled, isWindowVisible, entitlement == .trialExpired else { return }
+            do {
+                try await Task.sleep(for: .seconds(sessionLimit))
+            } catch {
+                return
+            }
+            guard isWindowVisible, entitlement == .trialExpired else { return }
             isTrialOverlayShown = true
             window.setTrialOverlay(true)
         }
@@ -300,6 +304,7 @@ final class AppModel {
         } else {
             window.hide()
             isWindowVisible = false
+            endTrialSession()
         }
         isReconfiguring = false
     }
@@ -337,6 +342,7 @@ final class AppModel {
             } else {
                 window.hide()
                 isWindowVisible = false
+                endTrialSession()
             }
         }
     }
