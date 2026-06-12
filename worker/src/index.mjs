@@ -1,11 +1,20 @@
 import { escapeHtml, importPrivateKey, licenseKey, normalizeEmail } from './license.mjs';
 
+class StripeUnavailableError extends Error {}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
-    if (url.pathname === '/key') return keyPage(url, env);
-    if (url.pathname === '/recover') return recoverPage(url, env);
-    return htmlResponse(messagePage('Not found', 'Nothing to see here.'), 404);
+    try {
+      if (url.pathname === '/key') return await keyPage(url, env);
+      if (url.pathname === '/recover') return await recoverPage(url, env);
+      return htmlResponse(messagePage('Not found', 'Nothing to see here.'), 404);
+    } catch {
+      return htmlResponse(messagePage(
+        'Temporary problem',
+        'We could not reach Stripe just now — please try again in a minute.',
+      ), 502);
+    }
   },
 };
 
@@ -48,14 +57,18 @@ async function stripeGet(path, env) {
   const response = await fetch(`https://api.stripe.com${path}`, {
     headers: { Authorization: `Bearer ${env.STRIPE_API_KEY}` },
   });
-  if (!response.ok) return null;
-  return response.json();
+  if (response.ok) return response.json();
+  if (response.status === 404) return null;
+  throw new StripeUnavailableError(`Stripe responded ${response.status}`);
 }
 
 function htmlResponse(body, status = 200) {
   return new Response(body, {
     status,
-    headers: { 'content-type': 'text/html; charset=utf-8' },
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'cache-control': 'no-store',
+    },
   });
 }
 
