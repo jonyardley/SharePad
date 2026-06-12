@@ -27,6 +27,10 @@ final class ShareWindowController: ShareWindowControlling {
         window?.level = enabled ? .floating : .normal
     }
 
+    func setTrialOverlay(_ visible: Bool) {
+        _ = visible
+    }
+
     /// Bring the window (and app) to the front. Without activation an accessory app's
     /// window orders in *behind* the active app, so the user never sees it.
     func show(size: CGSize) {
