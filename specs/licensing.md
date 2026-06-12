@@ -23,7 +23,7 @@ builders can compile out. We sell convenience, not enforcement.
 | Trial | **7 days**, full-featured, starts at first launch | Client-side only; no server involvement. |
 | Expired-trial gate | **Session limit**: share window works ~20 min/session, then a polite overlay; app relaunch resets it | Converts daily users without ever bricking someone mid-meeting — they can always restart. |
 | Checkout | **Stripe Managed Payments** (merchant of record on Jon's existing Stripe account) + **Stripe Payment Link**, opened in the default browser | MoR handles global VAT/sales tax (the thing that made self-remittance a non-starter); ~3.5% on top of standard processing, ≈6–7% all-in. Browser checkout beats an embedded webview for autofill/Apple Pay/trust. |
-| Licence keys | **Offline-signed**: Ed25519 signature of the buyer's email, base32-encoded; app verifies with an embedded public key via CryptoKit | No activation server, no network calls, works offline forever, no third-party dependency (~50 lines, no CocoaFob). |
+| Licence keys | **Offline-signed**: Ed25519 signature of the buyer's email, base64url-encoded; app verifies with an embedded public key via CryptoKit | No activation server, no network calls, works offline forever, no third-party dependency (~50 lines, no CocoaFob). |
 | Key issuance | **One Cloudflare Worker, two GET routes, no webhook, no database** | Ed25519 signatures are deterministic → a key can always be re-derived from the email; Stripe itself is the purchase record. |
 | Gumroad | **Removed everywhere** (README, landing page, About panel, specs) | Off the platform. |
 
@@ -33,7 +33,7 @@ embedded webview checkout, online revocation, obfuscating or hardening the gate.
 ## 3. Licence key scheme
 
 ```text
-key = base32( Ed25519-sign(privateKey, lowercase(trim(email))) )
+key = base64url( Ed25519-sign(privateKey, lowercase(trim(email))) )
 ```
 
 - The **private key** exists only as a Cloudflare Worker secret.
