@@ -1,13 +1,14 @@
 # SharePad — Development Guidelines
 
-> Last reviewed: 2026-06-04.
+> Last reviewed: 2026-06-12.
 >
-> **Status: Phases 0–4 landed, plus #7 (window-frame persistence) and #10 (popover
-> live thumbnail + device picker).** The full pipeline exists — CMIO opt-in,
-> `.muxed` capture, borderless aspect-locked share window, popover, and automatic
-> connect/disconnect/wake lifecycle. Only **Phase 5 (polish)** remains. The module
-> map below is the *actual* layout. The design spec is the source of truth for
-> *what* we're building and *why*; this file is *how* we build it. Read
+> **Status: Phases 0–5 landed, plus #7 (window-frame persistence), #10 (popover
+> live thumbnail + device picker), and licensing/trial-gate (7-day trial, Ed25519
+> licence keys, Stripe checkout, Cloudflare Worker).** The full pipeline exists —
+> CMIO opt-in, `.muxed` capture, borderless aspect-locked share window, popover,
+> automatic connect/disconnect/wake lifecycle, and the in-app purchase gate. The
+> module map below is the *actual* layout. The design spec is the source of truth
+> for *what* we're building and *why*; this file is *how* we build it. Read
 > `DESIGN.md` first.
 
 ## Project Overview
@@ -35,6 +36,7 @@ CLAUDE.md                   # this file
 specs/                      # per-feature specs, Tier 3 only (see Workflow)
 Sources/SharePad/         # app code (see DESIGN.md §8 for the module map)
 Tests/SharePadTests/      # pure-logic tests (reducer, preferences)
+worker/                     # Cloudflare Worker: licence key issuance (Stripe)
 ```
 
 ## Tech Stack
@@ -218,6 +220,15 @@ before touching capture.
   "two preview layers on one session" question was sidestepped, not tested.
 - **Locked iPad shows black**; sleep/wake can interrupt the session — restart on
   `runtimeErrorNotification` / interruption end.
+- **Licence keys are Ed25519 signatures** of the normalized buyer email
+  (base64url); the app validates fully offline against the public key embedded in
+  `Licensing/License.swift` — `LicenseValidatorTests.testProductionKeyIsConfigured`
+  guards the embedded key. The signing private key lives only in the Cloudflare
+  Worker (and Jon's password manager), never in the repo.
+- **The trial overlay is a foreign `NSHostingView` subview** inside the window's
+  SwiftUI hosting view — stable only because the window's root SwiftUI hierarchy
+  is static (a single `PreviewView`). If the share window's content becomes
+  dynamic, revisit (ZStack-in-root is the safer shape).
 
 ## Workflow
 

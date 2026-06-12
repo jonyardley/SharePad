@@ -1,6 +1,6 @@
 # Licensing & Monetisation — Spec (v2)
 
-> Status: **approved 2026-06-12**. Supersedes the v1 "no trial, no keys, Gumroad"
+> Status: **implemented 2026-06-12** (app + worker landed; Stripe/Cloudflare deployment + live URLs pending — §8). Supersedes the v1 "no trial, no keys, Gumroad"
 > decision of 2026-06-05 — Gumroad is gone (fees/experience), and we now add a
 > friendly in-app trial + licence gate with Stripe checkout. Sibling:
 > `specs/distribution.md` (release pipeline this builds on).
@@ -117,9 +117,9 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
 
 1. **Price** — set in the Stripe dashboard; decide before live mode.
 2. **Worker domain** — workers.dev subdomain vs a custom domain on the existing
-   gh-pages site's DNS.
+   gh-pages site's DNS. *(pending deployment)*
 3. **SMP availability** — §4 blocking check; if SMP turns out unavailable on the
    account, fall back is Lemon Squeezy (built-in licence API) — revisit, don't
-   improvise.
+   improvise. *(pending deployment)*
 4. **Past-buyer outreach** — how to reach Gumroad-era buyers with their minted
    keys (Gumroad export?).

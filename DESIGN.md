@@ -1,7 +1,7 @@
 # SharePad — Design Spec
 
 > Status: **Living spec — implementation in progress.** This document informs the
-> plan; it is not the plan. Last reviewed: 2026-06-04.
+> plan; it is not the plan. Last reviewed: 2026-06-12.
 >
 > Name **SharePad**, bundle id `com.jonyardley.sharepad` — confirmed at Phase 0.
 
@@ -29,10 +29,11 @@ displayed as full shared content (not a webcam tile).
 - **No** iPad audio routing into the call.
 - **No** annotation, recording, cropping, or multi-device mosaic.
 - ~~**No** distribution / App Store / notarization — personal local build.~~
-  **Superseded (2026-06-05):** 1.0 ships as a notarized **direct download**
-  (Developer ID, not App Store — the sandbox breaks the CMIO opt-in). The app is
-  **open source (GPLv3)**; the notarized build is sold as a paid convenience, not
-  enforced by a licence key. See `specs/distribution.md` and `specs/licensing.md`.
+  **Superseded (2026-06-05, updated 2026-06-12):** 1.0 ships as a notarized
+  **direct download** (Developer ID, not App Store — the sandbox breaks the CMIO
+  opt-in). The app is **open source (GPLv3)** with a 7-day trial soft gate and
+  one-time purchase via Stripe; honor-system (source builders can compile the gate
+  out). See `specs/distribution.md` and `specs/licensing.md` v2.
 
 ---
 
@@ -302,17 +303,24 @@ ipad-share/
       DeviceMonitor.swift      # CMIO opt-in + DiscoverySession KVO
       CMIO.swift               # the opt-in helper (§6.1)
     Windows/
-      ShareWindowController.swift
+      ShareWindowController.swift  # manages NSWindow; trial overlay added as NSHostingView subview of contentView
       PreviewView.swift        # NSViewRepresentable over preview layer
     UI/
       PopoverView.swift
       StatusItem.swift
+      LicenseSheet.swift       # email + key entry sheet
+      TrialOverlayView.swift   # full-window overlay shown at session limit
+    Licensing/
+      License.swift            # embedded Ed25519 public key + checkout URLs
+      EntitlementClock.swift   # pure trial state: (firstLaunchDate, now, licensed) → Entitlement
+      LicenseValidator.swift   # CryptoKit Ed25519 offline verification
     Support/
-      Preferences.swift        # UserDefaults: frame, toggles
+      Preferences.swift        # UserDefaults: frame, toggles, licence email/key
       Permissions.swift        # camera authorization
   Tests/SharePadTests/
     AppStateReducerTests.swift
     PreferencesTests.swift
+  worker/                      # Cloudflare Worker: licence key issuance (Stripe)
 ```
 
 ---
@@ -380,14 +388,16 @@ hardware, so we **isolate the pure logic** and **manually verify the pipeline**.
    hidden on connect and is opened manually.
 4. **Mid-call disconnect** — currently a **silent hide** (`reconcile` →
    `window.hide()` + status dim). Revisit whether a brief notification is worth it.
-5. ~~**Distribution later**~~ — **Resolved (2026-06-05):** 1.0 is a notarized
-   **direct download** (Developer ID + Hardened Runtime + the
+5. ~~**Distribution later**~~ — **Resolved (2026-06-05, updated 2026-06-12):** 1.0
+   is a notarized **direct download** (Developer ID + Hardened Runtime + the
    `com.apple.security.device.camera` entitlement; **no** sandbox, since it breaks
    the CMIO opt-in — so App Store is out), auto-updating via Sparkle. The app is
-   **open source under GPLv3**: anyone may build it; the prebuilt signed build is
-   **sold as a paid convenience** (no trial, no licence keys — open source makes
-   enforcement moot). Full plan in `specs/distribution.md` (release pipeline) and
-   `specs/licensing.md` (the sell-the-build model).
+   **open source under GPLv3**. Monetisation: **GPLv3 + 7-day trial soft gate +
+   one-time purchase via Stripe Managed Payments** — honor-system (source builders
+   can compile the gate out). Licence keys are Ed25519 signatures of the buyer's
+   email, verified offline; issued by a Cloudflare Worker. Full plan in
+   `specs/distribution.md` (release pipeline) and `specs/licensing.md` v2
+   (trial + Stripe gate).
 
 ---
 
