@@ -19,6 +19,8 @@ final class AppModel {
     private(set) var launchAtLoginFailed = false
 
     private(set) var entitlement: Entitlement = .trial(daysLeft: EntitlementClock.trialDays)
+    private(set) var isTrialOverlayShown = false
+    private var sessionTimer: Task<Void, Never>?
     private let validator: LicenseValidator
     private let now: () -> Date
     private let sessionLimit: TimeInterval
@@ -106,6 +108,7 @@ final class AppModel {
         if isWindowVisible {
             window.hide()
             isWindowVisible = false
+            endTrialSession()
         } else if isConnected {
             presentWindow()
         }
@@ -152,6 +155,7 @@ final class AppModel {
         preferences.licenseEmail = LicenseValidator.normalize(email)
         preferences.licenseKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshEntitlement()
+        endTrialSession()
         return true
     }
 
@@ -171,6 +175,27 @@ final class AppModel {
             now: now(),
             isLicensed: isStoredLicenseValid
         )
+    }
+
+    private func startTrialSessionIfNeeded() {
+        refreshEntitlement()
+        guard entitlement == .trialExpired, sessionTimer == nil else { return }
+        sessionTimer = Task { [weak self] in
+            guard let self else { return }
+            try? await Task.sleep(for: .seconds(sessionLimit))
+            guard !Task.isCancelled, isWindowVisible, entitlement == .trialExpired else { return }
+            isTrialOverlayShown = true
+            window.setTrialOverlay(true)
+        }
+    }
+
+    private func endTrialSession() {
+        sessionTimer?.cancel()
+        sessionTimer = nil
+        if isTrialOverlayShown {
+            isTrialOverlayShown = false
+            window.setTrialOverlay(false)
+        }
     }
 
     private var isStoredLicenseValid: Bool {
@@ -195,6 +220,7 @@ final class AppModel {
     private func presentWindow() {
         window.show(size: videoSize ?? Self.defaultSize)
         isWindowVisible = true
+        startTrialSessionIfNeeded()
     }
 
     private func observeVideoSize() async {
@@ -293,6 +319,7 @@ final class AppModel {
             videoSize = nil
             window.hide()
             isWindowVisible = false
+            endTrialSession()
             await capture.stop()
         case let .keep(device):
             currentDeviceName = device.name

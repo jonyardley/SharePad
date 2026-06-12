@@ -98,4 +98,53 @@ final class LicenseGateTests: XCTestCase {
         prefs.licenseKey = try signedKey(for: "buyer@example.com")
         XCTAssertEqual(makeModel(preferences: prefs).entitlement, .licensed)
     }
+
+    func testOverlayAppearsAfterSessionLimitWhenExpired() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+        XCTAssertTrue(model.isWindowVisible)
+        try await Task.sleep(for: .seconds(0.3))
+        XCTAssertEqual(window.trialOverlayStates, [true])
+        XCTAssertTrue(model.isTrialOverlayShown)
+    }
+
+    func testNoOverlayDuringTrial() async throws {
+        let window = FakeShareWindow()
+        let model = try makeModel(
+            preferences: ephemeralPreferences(),
+            window: window,
+            sessionLimit: 0.05
+        )
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+        try await Task.sleep(for: .seconds(0.3))
+        XCTAssertEqual(window.trialOverlayStates, [])
+    }
+
+    func testHidingWindowClearsOverlayAndTimer() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+        try await Task.sleep(for: .seconds(0.3))
+        model.toggleWindow()
+        XCTAssertFalse(model.isTrialOverlayShown)
+        XCTAssertEqual(window.trialOverlayStates, [true, false])
+    }
+
+    func testEnteringLicenseClearsOverlay() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+        try await Task.sleep(for: .seconds(0.3))
+        let key = try signedKey(for: "buyer@example.com")
+        XCTAssertTrue(model.enterLicense(email: "buyer@example.com", key: key))
+        XCTAssertFalse(model.isTrialOverlayShown)
+        XCTAssertEqual(window.trialOverlayStates, [true, false])
+    }
 }
