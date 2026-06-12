@@ -2,5 +2,5 @@
 --indent 4
 --maxwidth 100
 # Keep `{` on the wrapped line, not its own, so it agrees with swiftlint's opening_brace rule.
---disable wrapMultilineStatementBraces
+--disable wrapMultilineStatementBraces,docComments
 --exclude .build,DerivedData

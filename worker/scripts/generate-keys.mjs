@@ -1,7 +1,5 @@
-// worker/scripts/generate-keys.mjs
-// One-off: prints the Ed25519 keypair for SharePad licensing.
-// The PRIVATE key is a secret — store it in a password manager and
-// `wrangler secret put ED25519_PRIVATE_KEY`. Never commit it.
+// PRIVATE key must never be committed — store it in a password manager and
+// `wrangler secret put ED25519_PRIVATE_KEY`.
 const { publicKey, privateKey } = await crypto.subtle.generateKey(
   { name: 'Ed25519' }, true, ['sign', 'verify'],
 );
