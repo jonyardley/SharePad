@@ -1,6 +1,6 @@
 --swiftversion 6.0
 --indent 4
 --maxwidth 100
-# Keep `{` on the wrapped line, not its own, so it agrees with swiftlint's opening_brace rule.
+# Keep `{` on the wrapped line, not its own, so it agrees with swiftlint's opening_brace rule; docComments off so policy `//` comments aren't auto-promoted to `///`.
 --disable wrapMultilineStatementBraces,docComments
 --exclude .build,DerivedData

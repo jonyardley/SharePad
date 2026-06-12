@@ -96,3 +96,12 @@ at the newest release — so cutting a new tag is all it takes to ship an update
 Separate from shipping. The storefront is the gh-pages landing page (free trial download)
 plus a Stripe Payment Link for the licence; key issuance is the `worker/` Cloudflare Worker
 (see `specs/licensing.md`).
+
+**Pre-release checklist for the first gated release — do NOT tag until all of these are done:**
+
+- [ ] The Stripe Payment Link is live (not test mode) and the placeholder URLs in
+  `Sources/SharePad/Licensing/License.swift` and the landing-page Buy buttons are replaced
+  with the real link. Shipping placeholder URLs means every "Buy" tap 404s.
+- [ ] Keys for past Gumroad buyers have been minted (`worker/scripts/mint-key.mjs`) and
+  sent. Existing paying customers will hit the 20-minute session gate 7 days after updating
+  if their keys aren't in-hand before the gated build lands.

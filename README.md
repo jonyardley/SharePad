@@ -1,7 +1,7 @@
 # SharePad
 
 [![CI](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml/badge.svg)](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml)
-[![Download](https://img.shields.io/badge/Download-7--day_free_trial-635bff)](https://jonyardley.github.io/SharePad/)
+[![Download](https://img.shields.io/badge/Download-free-635bff)](https://jonyardley.github.io/SharePad/)
 
 A macOS **menu-bar app** that turns a USB-connected iPad into a clean,
 aspect-locked, always-ready **window** you share in any video call's "Share
@@ -12,7 +12,7 @@ Primary use case: live drawing / whiteboarding shown as full shared content, not
 a webcam tile.
 
 > **Status: v1.0 shipped.** Signed, notarized, and auto-updating.
-> Download the ready-to-run build from [jonyardley.github.io/SharePad](https://jonyardley.github.io/SharePad/) — free for 7 days, then a one-time licence purchase.
+> Download the ready-to-run build from [jonyardley.github.io/SharePad](https://jonyardley.github.io/SharePad/) — free download (licence purchase coming with the next release).
 > Or build it yourself (GPLv3, instructions below). App Store is ruled out — its
 > sandbox breaks the CMIO opt-in the capture depends on.
 
@@ -53,4 +53,4 @@ beats a small webcam tile. See
 
 SharePad is free and open source under the [GNU GPLv3](LICENSE). You're welcome to
 build it yourself from source. If you'd rather not, you can
-**[download the signed, notarized, auto-updating build](https://jonyardley.github.io/SharePad/)** — free 7-day trial, one-time purchase.
+**[download the signed, notarized, auto-updating build](https://jonyardley.github.io/SharePad/)** — the easiest way to get SharePad. A one-time licence purchase (with a 7-day free trial) ships with the next release.
