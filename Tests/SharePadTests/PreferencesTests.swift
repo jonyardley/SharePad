@@ -59,6 +59,27 @@ final class PreferencesTests: XCTestCase {
         XCTAssertNil(Preferences(defaults: defaults).windowOrigin)
     }
 
+    func testLicensingDefaultsAreNil() throws {
+        let prefs = try Preferences(defaults: makeEphemeralDefaults())
+        XCTAssertNil(prefs.firstLaunchDate)
+        XCTAssertNil(prefs.licenseEmail)
+        XCTAssertNil(prefs.licenseKey)
+    }
+
+    func testLicensingValuesRoundTrip() throws {
+        let defaults = try makeEphemeralDefaults()
+        let prefs = Preferences(defaults: defaults)
+        let date = Date(timeIntervalSince1970: 1_700_000_000)
+        prefs.firstLaunchDate = date
+        prefs.licenseEmail = "buyer@example.com"
+        prefs.licenseKey = "some-key"
+
+        let reloaded = Preferences(defaults: defaults)
+        XCTAssertEqual(reloaded.firstLaunchDate, date)
+        XCTAssertEqual(reloaded.licenseEmail, "buyer@example.com")
+        XCTAssertEqual(reloaded.licenseKey, "some-key")
+    }
+
     private func makeEphemeralDefaults() throws -> UserDefaults {
         let name = "sharepad.tests.\(UUID().uuidString)"
         addTeardownBlock { UserDefaults.standard.removePersistentDomain(forName: name) }

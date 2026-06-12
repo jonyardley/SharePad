@@ -56,6 +56,21 @@ struct Preferences {
         }
     }
 
+    var firstLaunchDate: Date? {
+        get { defaults.object(forKey: Key.firstLaunchDate) as? Date }
+        nonmutating set { defaults.set(newValue, forKey: Key.firstLaunchDate) }
+    }
+
+    var licenseEmail: String? {
+        get { defaults.string(forKey: Key.licenseEmail) }
+        nonmutating set { defaults.set(newValue, forKey: Key.licenseEmail) }
+    }
+
+    var licenseKey: String? {
+        get { defaults.string(forKey: Key.licenseKey) }
+        nonmutating set { defaults.set(newValue, forKey: Key.licenseKey) }
+    }
+
     private enum Key {
         static let autoShowOnConnect = "autoShowOnConnect"
         static let keepOnTop = "keepOnTop"
@@ -63,5 +78,8 @@ struct Preferences {
         static let windowOriginX = "windowOriginX"
         static let windowOriginY = "windowOriginY"
         static let windowLongSide = "windowLongSide"
+        static let firstLaunchDate = "firstLaunchDate"
+        static let licenseEmail = "licenseEmail"
+        static let licenseKey = "licenseKey"
     }
 }
