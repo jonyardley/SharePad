@@ -93,5 +93,6 @@ at the newest release — so cutting a new tag is all it takes to ship an update
   `just sparkle-appcast` locally and upload `appcast.xml` to the release.
 
 ## After a verified build: selling it
-Separate from shipping. Add a **storefront** (a "Buy → download the DMG" page; Gumroad
-is the low-friction option) — `specs/licensing.md`. No app code; an account + buy button.
+Separate from shipping. The storefront is the gh-pages landing page (free trial download)
+plus a Stripe Payment Link for the licence; key issuance is the `worker/` Cloudflare Worker
+(see `specs/licensing.md`).
