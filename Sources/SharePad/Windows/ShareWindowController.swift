@@ -9,6 +9,7 @@ final class ShareWindowController: ShareWindowControlling {
     private let preferences: Preferences
     private var keepOnTop = false
     private var isObserving = false
+    private var overlayHost: NSView?
 
     /// The frame as we last set it ourselves. The move/resize observers persist only
     /// when the live frame differs from this, so a programmatic restore/resize never
@@ -28,7 +29,22 @@ final class ShareWindowController: ShareWindowControlling {
     }
 
     func setTrialOverlay(_ visible: Bool) {
-        _ = visible
+        guard visible else {
+            overlayHost?.removeFromSuperview()
+            overlayHost = nil
+            return
+        }
+        guard overlayHost == nil, let contentView = window?.contentView else { return }
+        let host = NSHostingView(rootView: TrialOverlayView())
+        host.translatesAutoresizingMaskIntoConstraints = false
+        contentView.addSubview(host)
+        NSLayoutConstraint.activate([
+            host.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            host.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            host.topAnchor.constraint(equalTo: contentView.topAnchor),
+            host.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
+        ])
+        overlayHost = host
     }
 
     /// Bring the window (and app) to the front. Without activation an accessory app's
