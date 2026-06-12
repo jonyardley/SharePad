@@ -29,6 +29,10 @@ final class AppModel {
         currentDeviceName != nil
     }
 
+    var sessionLimitMinutes: Int {
+        Int(sessionLimit / 60)
+    }
+
     var state: AppState {
         AppState.reduce(access: access, hasDevice: isConnected, isRunning: isLive, failed: failed)
     }

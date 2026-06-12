@@ -34,6 +34,8 @@ struct LicenseSheet: View {
                 .disabled(email.isEmpty || key.isEmpty)
             }
         }
+        .onChange(of: email) { failed = false }
+        .onChange(of: key) { failed = false }
         .padding()
         .frame(width: 340)
     }

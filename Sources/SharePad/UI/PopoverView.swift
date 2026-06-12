@@ -134,7 +134,9 @@ struct PopoverView: View {
         case let .trial(daysLeft):
             licenseRow(status: "Trial — \(daysLeft) day\(daysLeft == 1 ? "" : "s") left")
         case .trialExpired:
-            licenseRow(status: "Trial ended — sharing pauses after 20 min")
+            licenseRow(
+                status: "Trial ended — sharing pauses after \(model.sessionLimitMinutes) min"
+            )
         }
     }
 
