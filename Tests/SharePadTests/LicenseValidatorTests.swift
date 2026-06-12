@@ -60,7 +60,8 @@ final class LicenseValidatorTests: XCTestCase {
     func testBadPublicKeyRejectsEverythingAndIsNotConfigured() throws {
         let broken = LicenseValidator(publicKeyBase64: "garbage")
         XCTAssertFalse(broken.isConfigured)
-        XCTAssertFalse(try broken.isValid(key: key(for: "a@b.c"), email: "a@b.c"))
+        let signedKey = try key(for: "a@b.c")
+        XCTAssertFalse(broken.isValid(key: signedKey, email: "a@b.c"))
     }
 
     func testProductionKeyIsConfigured() {

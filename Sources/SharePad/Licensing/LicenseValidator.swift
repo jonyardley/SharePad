@@ -11,8 +11,7 @@ struct LicenseValidator {
             .flatMap { try? Curve25519.Signing.PublicKey(rawRepresentation: $0) }
     }
 
-    // A malformed embedded key fails safe (nothing validates);
-    // testProductionKeyIsConfigured guards against shipping that state.
+    // testProductionKeyIsConfigured guards against shipping a malformed embedded key.
     var isConfigured: Bool {
         publicKey != nil
     }
