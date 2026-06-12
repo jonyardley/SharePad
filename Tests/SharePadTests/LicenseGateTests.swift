@@ -52,7 +52,7 @@ final class LicenseGateTests: XCTestCase {
 
     func testFreshInstallIsInTrial() throws {
         let model = try makeModel(preferences: ephemeralPreferences())
-        XCTAssertEqual(model.entitlement, .trial(daysLeft: 7))
+        XCTAssertEqual(model.entitlement, .trial(daysLeft: EntitlementClock.trialDays))
     }
 
     func testOldInstallIsExpired() throws {
@@ -74,9 +74,21 @@ final class LicenseGateTests: XCTestCase {
     }
 
     func testEnterInvalidLicenseIsRejected() throws {
-        let model = try makeModel(preferences: ephemeralPreferences())
+        let prefs = try ephemeralPreferences()
+        let model = makeModel(preferences: prefs)
         XCTAssertFalse(model.enterLicense(email: "buyer@example.com", key: "bogus"))
         XCTAssertNotEqual(model.entitlement, .licensed)
+        XCTAssertNil(prefs.licenseEmail)
+        XCTAssertNil(prefs.licenseKey)
+    }
+
+    func testKeyForDifferentEmailIsRejected() throws {
+        let prefs = try ephemeralPreferences()
+        let model = makeModel(preferences: prefs)
+        let key = try signedKey(for: "other@example.com")
+        XCTAssertFalse(model.enterLicense(email: "buyer@example.com", key: key))
+        XCTAssertNotEqual(model.entitlement, .licensed)
+        XCTAssertNil(prefs.licenseEmail)
     }
 
     func testStoredLicenseSurvivesRelaunch() throws {
