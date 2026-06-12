@@ -80,6 +80,19 @@ final class PreferencesTests: XCTestCase {
         XCTAssertEqual(reloaded.licenseKey, "some-key")
     }
 
+    func testClearingLicenseRemovesIt() throws {
+        let defaults = try makeEphemeralDefaults()
+        let prefs = Preferences(defaults: defaults)
+        prefs.licenseEmail = "buyer@example.com"
+        prefs.licenseKey = "some-key"
+        prefs.licenseEmail = nil
+        prefs.licenseKey = nil
+
+        let reloaded = Preferences(defaults: defaults)
+        XCTAssertNil(reloaded.licenseEmail)
+        XCTAssertNil(reloaded.licenseKey)
+    }
+
     private func makeEphemeralDefaults() throws -> UserDefaults {
         let name = "sharepad.tests.\(UUID().uuidString)"
         addTeardownBlock { UserDefaults.standard.removePersistentDomain(forName: name) }
