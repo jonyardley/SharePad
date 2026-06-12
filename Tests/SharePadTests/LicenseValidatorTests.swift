@@ -49,7 +49,9 @@ final class LicenseValidatorTests: XCTestCase {
     }
 
     func testTamperedKeyFails() throws {
-        let tampered = try String(key(for: "buyer@example.com").dropLast()) + "A"
+        let original = try key(for: "buyer@example.com")
+        let replacement: Character = original.first == "A" ? "B" : "A"
+        let tampered = String(replacement) + original.dropFirst()
         XCTAssertFalse(validator.isValid(key: tampered, email: "buyer@example.com"))
     }
 
