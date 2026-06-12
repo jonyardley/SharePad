@@ -1,0 +1,89 @@
+import AVFoundation
+import CryptoKit
+@testable import SharePad
+import XCTest
+
+@MainActor
+final class LicenseGateTests: XCTestCase {
+    private let privateKey = Curve25519.Signing.PrivateKey()
+    private let day: TimeInterval = 86400
+
+    private func ephemeralPreferences() throws -> Preferences {
+        let name = "sharepad.tests.\(UUID().uuidString)"
+        addTeardownBlock { UserDefaults.standard.removePersistentDomain(forName: name) }
+        return try Preferences(defaults: XCTUnwrap(UserDefaults(suiteName: name)))
+    }
+
+    private func validator() -> LicenseValidator {
+        LicenseValidator(
+            publicKeyBase64: privateKey.publicKey.rawRepresentation.base64EncodedString()
+        )
+    }
+
+    private func signedKey(for email: String) throws -> String {
+        let message = Data(LicenseValidator.normalize(email).utf8)
+        return try privateKey.signature(for: message).base64EncodedString()
+    }
+
+    private func makeModel(
+        preferences: Preferences,
+        window: FakeShareWindow = FakeShareWindow(),
+        now: @escaping () -> Date = Date.init,
+        sessionLimit: TimeInterval = 1200
+    ) -> AppModel {
+        AppModel(
+            preferences: preferences,
+            capture: FakeCaptureController(),
+            window: window,
+            thumbnailLayer: AVSampleBufferDisplayLayer(),
+            validator: validator(),
+            now: now,
+            sessionLimit: sessionLimit
+        )
+    }
+
+    func testFirstLaunchIsRecordedOnce() throws {
+        let prefs = try ephemeralPreferences()
+        _ = makeModel(preferences: prefs)
+        let recorded = try XCTUnwrap(prefs.firstLaunchDate)
+        _ = makeModel(preferences: prefs)
+        XCTAssertEqual(prefs.firstLaunchDate, recorded)
+    }
+
+    func testFreshInstallIsInTrial() throws {
+        let model = try makeModel(preferences: ephemeralPreferences())
+        XCTAssertEqual(model.entitlement, .trial(daysLeft: 7))
+    }
+
+    func testOldInstallIsExpired() throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let model = makeModel(preferences: prefs)
+        XCTAssertEqual(model.entitlement, .trialExpired)
+    }
+
+    func testEnterValidLicensePersistsAndLicenses() throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let model = makeModel(preferences: prefs)
+        let key = try signedKey(for: "buyer@example.com")
+        XCTAssertTrue(model.enterLicense(email: " Buyer@Example.com ", key: key))
+        XCTAssertEqual(model.entitlement, .licensed)
+        XCTAssertEqual(prefs.licenseEmail, "buyer@example.com")
+        XCTAssertNotNil(prefs.licenseKey)
+    }
+
+    func testEnterInvalidLicenseIsRejected() throws {
+        let model = try makeModel(preferences: ephemeralPreferences())
+        XCTAssertFalse(model.enterLicense(email: "buyer@example.com", key: "bogus"))
+        XCTAssertNotEqual(model.entitlement, .licensed)
+    }
+
+    func testStoredLicenseSurvivesRelaunch() throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        prefs.licenseEmail = "buyer@example.com"
+        prefs.licenseKey = try signedKey(for: "buyer@example.com")
+        XCTAssertEqual(makeModel(preferences: prefs).entitlement, .licensed)
+    }
+}

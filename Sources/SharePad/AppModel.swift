@@ -18,6 +18,11 @@ final class AppModel {
     private(set) var launchAtLogin: Bool
     private(set) var launchAtLoginFailed = false
 
+    private(set) var entitlement: Entitlement = .trial(daysLeft: EntitlementClock.trialDays)
+    private let validator: LicenseValidator
+    private let now: () -> Date
+    private let sessionLimit: TimeInterval
+
     var isConnected: Bool {
         currentDeviceName != nil
     }
@@ -65,16 +70,26 @@ final class AppModel {
         preferences: Preferences,
         capture: CaptureControlling,
         window: ShareWindowControlling,
-        thumbnailLayer: AVSampleBufferDisplayLayer
+        thumbnailLayer: AVSampleBufferDisplayLayer,
+        validator: LicenseValidator = .production,
+        now: @escaping () -> Date = Date.init,
+        sessionLimit: TimeInterval = 20 * 60
     ) {
         self.preferences = preferences
         self.capture = capture
         self.window = window
         self.thumbnailLayer = thumbnailLayer
+        self.validator = validator
+        self.now = now
+        self.sessionLimit = sessionLimit
         monitor = DeviceMonitor()
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
         launchAtLogin = LaunchAtLogin.isEnabled
+        if preferences.firstLaunchDate == nil {
+            preferences.firstLaunchDate = now()
+        }
+        refreshEntitlement()
     }
 
     func start() {
@@ -129,11 +144,47 @@ final class AppModel {
         NSWorkspace.shared.open(url)
     }
 
+    // ── Licensing ──
+
+    @discardableResult
+    func enterLicense(email: String, key: String) -> Bool {
+        guard validator.isValid(key: key, email: email) else { return false }
+        preferences.licenseEmail = LicenseValidator.normalize(email)
+        preferences.licenseKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        refreshEntitlement()
+        return true
+    }
+
+    func openBuyPage() {
+        guard let url = License.buyURL else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    func openRecoverPage() {
+        guard let url = License.recoverURL else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    func refreshEntitlement() {
+        entitlement = EntitlementClock.entitlement(
+            firstLaunch: preferences.firstLaunchDate ?? now(),
+            now: now(),
+            isLicensed: isStoredLicenseValid
+        )
+    }
+
+    private var isStoredLicenseValid: Bool {
+        guard let email = preferences.licenseEmail,
+              let key = preferences.licenseKey else { return false }
+        return validator.isValid(key: key, email: email)
+    }
+
     func retry() {
         Task { await restart() }
     }
 
     func popoverDidAppear() {
+        refreshEntitlement()
         capture.setThumbnailActive(true)
     }
 
