@@ -1,8 +1,10 @@
 import SwiftUI
 
 struct TrialOverlayView: View {
+    var buyURL: URL? = License.buyURL
+
     var body: some View {
-        VStack(spacing: Theme.Spacing.row * 2) {
+        VStack(spacing: Theme.Spacing.section) {
             Image(systemName: "hourglass")
                 .font(.system(size: 36))
                 .foregroundStyle(.secondary)
@@ -11,12 +13,12 @@ struct TrialOverlayView: View {
             Text("Restart SharePad to keep sharing, or buy a licence to remove this pause.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
-            if let url = License.buyURL {
-                Link("Buy SharePad", destination: url)
+            if let buyURL {
+                Link("Buy SharePad", destination: buyURL)
                     .buttonStyle(.borderedProminent)
             }
         }
-        .padding(Theme.Spacing.row * 4)
+        .padding(Theme.Spacing.overlayInset)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.regularMaterial)
     }

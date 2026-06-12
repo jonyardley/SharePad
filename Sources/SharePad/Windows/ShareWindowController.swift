@@ -36,14 +36,9 @@ final class ShareWindowController: ShareWindowControlling {
         }
         guard overlayHost == nil, let contentView = window?.contentView else { return }
         let host = NSHostingView(rootView: TrialOverlayView())
-        host.translatesAutoresizingMaskIntoConstraints = false
+        host.frame = contentView.bounds
+        host.autoresizingMask = [.width, .height]
         contentView.addSubview(host)
-        NSLayoutConstraint.activate([
-            host.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            host.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            host.topAnchor.constraint(equalTo: contentView.topAnchor),
-            host.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-        ])
         overlayHost = host
     }
 
