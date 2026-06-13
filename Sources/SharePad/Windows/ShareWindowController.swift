@@ -9,7 +9,7 @@ final class ShareWindowController: ShareWindowControlling {
     private let preferences: Preferences
     private var keepOnTop = false
     private var isObserving = false
-    private var overlayHost: NSView?
+    private let overlayModel = ShareOverlayModel()
 
     /// The frame as we last set it ourselves. The move/resize observers persist only
     /// when the live frame differs from this, so a programmatic restore/resize never
@@ -62,17 +62,7 @@ final class ShareWindowController: ShareWindowControlling {
     }
 
     func setTrialOverlay(_ visible: Bool) {
-        guard visible else {
-            overlayHost?.removeFromSuperview()
-            overlayHost = nil
-            return
-        }
-        guard overlayHost == nil, let contentView = window?.contentView else { return }
-        let host = NSHostingView(rootView: TrialOverlayView())
-        host.frame = contentView.bounds
-        host.autoresizingMask = [.width, .height]
-        contentView.addSubview(host)
-        overlayHost = host
+        overlayModel.trialOverlayVisible = visible
     }
 
     private func apply(size videoSize: CGSize, to window: NSWindow) {
@@ -132,7 +122,7 @@ final class ShareWindowController: ShareWindowControlling {
             defer: false
         )
         window.contentViewController = NSHostingController(
-            rootView: PreviewView(layer: previewLayer)
+            rootView: ShareRootView(previewLayer: previewLayer, overlay: overlayModel)
         )
         window.isMovableByWindowBackground = true
         window.backgroundColor = .black
@@ -143,5 +133,28 @@ final class ShareWindowController: ShareWindowControlling {
         window.identifier = WindowSharing.shareWindowID
         window.title = "SharePad"
         return window
+    }
+}
+
+// The trial overlay lives *inside* the window's SwiftUI root (a ZStack over the
+// preview) rather than as a foreign NSHostingView subview — the latter doesn't
+// reliably composite above the layer-backed preview. Driven by an @Observable flag.
+@MainActor
+@Observable
+final class ShareOverlayModel {
+    var trialOverlayVisible = false
+}
+
+private struct ShareRootView: View {
+    let previewLayer: AVCaptureVideoPreviewLayer
+    let overlay: ShareOverlayModel
+
+    var body: some View {
+        ZStack {
+            PreviewView(layer: previewLayer)
+            if overlay.trialOverlayVisible {
+                TrialOverlayView()
+            }
+        }
     }
 }
