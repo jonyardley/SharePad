@@ -3,18 +3,21 @@
     <channel>
         <title>SharePad</title>
         <item>
-            <title>1.0.6</title>
-            <pubDate>Sun, 07 Jun 2026 10:51:30 +0000</pubDate>
-            <sparkle:version>9</sparkle:version>
-            <sparkle:shortVersionString>1.0.6</sparkle:shortVersionString>
+            <title>1.1.0</title>
+            <pubDate>Sat, 13 Jun 2026 17:49:01 +0000</pubDate>
+            <sparkle:version>10</sparkle:version>
+            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <description sparkle:format="markdown"><![CDATA[## 1.0.6
-- The in-app About panel now links to sharepad.co for buying and support, with
-  quick "View Source" and "View Licence" links.
-- Maintenance: internal reliability and release-pipeline improvements.
+            <description sparkle:format="markdown"><![CDATA[## 1.1.0
+- SharePad now has a 7-day free trial. After it ends, sharing pauses briefly each
+  session until you add a licence — a one-time £6.99 purchase that works offline,
+  with no account.
+- Already bought SharePad? You won't be charged again. In the menu bar choose
+  "Enter licence…", then "Lost your key?" to fetch your key with your purchase
+  email, and paste it in — the pause is gone for good.
 
 ]]></description>
-            <enclosure url="https://jonyardley.github.io/SharePad/SharePad-1.0.6-952f68ee.dmg" length="1621137" type="application/octet-stream" sparkle:edSignature="WClbRXdxrioAfg1VJP33vxcJEq5u/630DMb7BtdtVl22nNw+H+ici9lnB2Z7SFN+CkJgkzicmhqZcEcHKDRJCw=="/>
+            <enclosure url="https://sharepad.co/SharePad-1.1.0-3de01d4c.dmg" length="1722562" type="application/octet-stream" sparkle:edSignature="kRdfuCzy4Xv0lM1iQyM+/BLX+3O5FfGmYrbTI4B/Pf/VHKw4pjVzUVDvjy5CWj1c6YKUQPdpMJ75Z6WuqgEeDA=="/>
         </item>
     </channel>
 </rss>
