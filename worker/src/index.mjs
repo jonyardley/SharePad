@@ -91,7 +91,7 @@ function keyHtml(email, key) {
     <p><strong>Key:</strong></p>
     <pre>${escapeHtml(key)}</pre>
     <p>In SharePad's menu-bar popover, choose <em>Enter licence…</em> and paste both.
-    It activates instantly and works offline — SharePad never phones home to check it.</p>
+    It takes effect straight away and works offline — SharePad never checks in with a server.</p>
     <p>No need to save this page: you can recover your key anytime at
     <a href="/recover">/recover</a> with the email above — no account needed.</p>`);
 }
