@@ -8,15 +8,19 @@ struct TrialOverlayView: View {
             Image(systemName: "hourglass")
                 .font(.system(size: 36))
                 .foregroundStyle(.secondary)
-            Text("Free trial ended")
+            Text("Your free trial has ended")
                 .font(.title2.bold())
-            Text("Restart SharePad to keep sharing, or buy a licence to remove this pause.")
+            Text("Buy a licence to keep sharing your iPad, interruption-free.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
             if let buyURL {
-                Link("Buy SharePad", destination: buyURL)
+                Link("Buy a licence", destination: buyURL)
                     .buttonStyle(.borderedProminent)
             }
+            Text("Already purchased? Open SharePad in the menu bar to enter your licence.")
+                .font(.caption)
+                .multilineTextAlignment(.center)
+                .foregroundStyle(.tertiary)
         }
         .padding(Theme.Spacing.overlayInset)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

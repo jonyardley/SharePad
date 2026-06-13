@@ -11,10 +11,13 @@ struct LicenseSheet: View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
             Text("Enter your licence")
                 .font(.headline)
+            Text("A one-time licence. Works offline — no account, no sign-in.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             TextField("Email used at purchase", text: $email)
             TextField("Licence key", text: $key)
             if failed {
-                Text("That key doesn't match this email.")
+                Text("That key doesn't match this email — check both and try again.")
                     .font(.caption)
                     .foregroundStyle(.red)
             }

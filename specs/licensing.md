@@ -86,11 +86,12 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
 - **`AppModel`** owns entitlement state and the session-limit timer: starts when
   the share window opens while `.trialExpired`, fires at 5 minutes. Never runs
   mid-trial or when licensed. Views render state and send intents only.
-- **Gate overlay**: at the limit, a polite full-window overlay renders *in* the
-  share window ("Trial ended — restart SharePad to keep sharing, or buy a
-  licence" + Buy button). The capture session keeps running underneath;
+- **Gate overlay**: at the limit, an opaque full-window overlay renders *in* the
+  share window ("Your free trial has ended — buy a licence to keep sharing your
+  iPad" + Buy button). Copy never mentions the relaunch reset (honor-system, but
+  don't advertise the bypass). The capture session keeps running underneath;
   relaunching resets the session.
-- **Popover**: a status row — "Trial — N days left" / "Trial ended — sharing
+- **Popover**: a status row — "Free trial — N days left" / "Free trial ended — sharing
   pauses after 5 min" — with **Buy** (opens `buy.sharepad.co`) and **Enter
   licence…** (sheet: email + key). Licensed state stays quiet.
 - **Trial start** = first-launch date in UserDefaults. Deliberately resettable —

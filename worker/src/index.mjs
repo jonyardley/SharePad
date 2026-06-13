@@ -84,12 +84,14 @@ function htmlResponse(body, status = 200) {
 
 function keyHtml(email, key) {
   return page('Your SharePad licence', `
-    <p>Thanks for buying SharePad! Your licence:</p>
+    <p>Thanks for buying SharePad — here's your one-time licence:</p>
     <p><strong>Email:</strong> <code>${escapeHtml(normalizeEmail(email))}</code></p>
     <p><strong>Key:</strong></p>
     <pre>${escapeHtml(key)}</pre>
-    <p>In SharePad's menu-bar popover choose <em>Enter licence…</em> and paste both.</p>
-    <p>Lost it later? Recover it anytime at <a href="/recover">/recover</a> — no account needed.</p>`);
+    <p>In SharePad's menu-bar popover, choose <em>Enter licence…</em> and paste both.
+    It activates instantly and works offline — SharePad never phones home to check it.</p>
+    <p>No need to save this page: you can recover your key anytime at
+    <a href="/recover">/recover</a> with the email above — no account needed.</p>`);
 }
 
 function recoverFormHtml() {

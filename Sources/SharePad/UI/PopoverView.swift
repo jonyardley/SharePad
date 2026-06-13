@@ -77,10 +77,10 @@ struct PopoverView: View {
         case .licensed:
             EmptyView()
         case let .trial(daysLeft):
-            licenseRow(status: "Trial — \(daysLeft) day\(daysLeft == 1 ? "" : "s") left")
+            licenseRow(status: "Free trial — \(daysLeft) day\(daysLeft == 1 ? "" : "s") left")
         case .trialExpired:
             licenseRow(
-                status: "Trial ended — sharing pauses after \(model.sessionLimitMinutes) min"
+                status: "Free trial ended — sharing pauses after \(model.sessionLimitMinutes) min"
             )
         }
     }
@@ -92,7 +92,7 @@ struct PopoverView: View {
                 .foregroundStyle(.secondary)
             HStack {
                 if License.buyURL != nil {
-                    Button("Buy SharePad…") { model.openBuyPage() }
+                    Button("Buy a licence") { model.openBuyPage() }
                 }
                 Button("Enter licence…") { showingLicenseSheet = true }
             }
