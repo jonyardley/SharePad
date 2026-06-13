@@ -103,5 +103,5 @@ plus a Stripe Payment Link for the licence; key issuance is the `worker/` Cloudf
   `Sources/SharePad/Licensing/License.swift` and the landing-page Buy buttons are replaced
   with the real link. Shipping placeholder URLs means every "Buy" tap 404s.
 - [ ] Keys for past Gumroad buyers have been minted (`worker/scripts/mint-key.mjs`) and
-  sent. Existing paying customers will hit the 20-minute session gate 7 days after updating
+  sent. Existing paying customers will hit the 5-minute session gate 7 days after updating
   if their keys aren't in-hand before the gated build lands.

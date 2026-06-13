@@ -21,7 +21,7 @@ builders can compile out. We sell convenience, not enforcement.
 | Source licence | **GPLv3** (unchanged) | Still truly open source; the gate is honor-system by design. |
 | Price model | **One-time purchase**, all updates included | Right weight for a single-purpose menu-bar utility. Price set in the Stripe dashboard (open question — not load-bearing). |
 | Trial | **7 days**, full-featured, starts at first launch | Client-side only; no server involvement. |
-| Expired-trial gate | **Session limit**: share window works ~20 min/session, then a polite overlay; app relaunch (or window re-show) resets it; a trial expiring while the window is already open gates on the next show — deliberate honor-system leniency | Converts daily users without ever bricking someone mid-meeting — they can always restart. |
+| Expired-trial gate | **Session limit**: share window works ~5 min/session, then a polite overlay; app relaunch (or window re-show) resets it; a trial expiring while the window is already open gates on the next show — deliberate honor-system leniency | Converts daily users without ever bricking someone mid-meeting — they can always restart. |
 | Checkout | **Stripe Managed Payments** (merchant of record on Jon's existing Stripe account) + **Stripe Payment Link**, opened in the default browser | MoR handles global VAT/sales tax (the thing that made self-remittance a non-starter); ~3.5% on top of standard processing, ≈6–7% all-in. Browser checkout beats an embedded webview for autofill/Apple Pay/trust. |
 | Licence keys | **Offline-signed**: Ed25519 signature of the buyer's email, base64url-encoded; app verifies with an embedded public key via CryptoKit | No activation server, no network calls, works offline forever, no third-party dependency (~50 lines, no CocoaFob). |
 | Key issuance | **One Cloudflare Worker, two GET routes, no webhook, no database** | Ed25519 signatures are deterministic → a key can always be re-derived from the email; Stripe itself is the purchase record. |
@@ -76,7 +76,7 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
     `Entitlement = .trial(daysLeft) | .trialExpired | .licensed`.
   - No AVFoundation imports; both fully unit-tested.
 - **`AppModel`** owns entitlement state and the session-limit timer: starts when
-  the share window opens while `.trialExpired`, fires at 20 minutes. Never runs
+  the share window opens while `.trialExpired`, fires at 5 minutes. Never runs
   mid-trial or when licensed. Views render state and send intents only.
 - **Gate overlay**: at the limit, a polite full-window overlay renders *in* the
   share window ("Trial ended — restart SharePad to keep sharing, or buy a
@@ -100,7 +100,7 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
   1. Stripe **test mode** end-to-end: Payment Link → pay → `/key` page shows key
      → paste into app → licensed persists across relaunch.
   2. `/recover` returns the same key for a paid email; rejects an unknown email.
-  3. 20-minute overlay appears (debug-shortened limit), restart resets, Buy
+  3. 5-minute overlay appears (debug-shortened limit), restart resets, Buy
      button opens checkout; overlay never appears mid-trial or licensed.
   4. Gate changes don't touch capture — share still works in Zoom + a browser
      meeting (standard capture checklist).

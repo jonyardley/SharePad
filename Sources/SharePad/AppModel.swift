@@ -79,7 +79,7 @@ final class AppModel {
         thumbnailLayer: AVSampleBufferDisplayLayer,
         validator: LicenseValidator = .production,
         now: @escaping () -> Date = Date.init,
-        sessionLimit: TimeInterval = 20 * 60
+        sessionLimit: TimeInterval = 5 * 60
     ) {
         self.preferences = preferences
         self.capture = capture
