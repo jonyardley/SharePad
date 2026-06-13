@@ -155,23 +155,26 @@
       <span class="check" id="check" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
       </span>
-      <h1 id="headline">Thank you for supporting SharePad</h1>
-      <p class="lede" id="lede">Your download is ready. You just helped fund the development of an open-source tool, and that genuinely matters.</p>
+      <h1 id="headline">Thanks — you're all set.</h1>
+      <p class="lede" id="lede">Your licence key and download link are on their way to your email. You just helped fund the development of an open-source tool, and that genuinely matters.</p>
+
+      <p class="meta" id="activation-note" style="margin-bottom:36px">Already running the trial? To switch it on, open SharePad from the menu bar, choose “Enter licence…”, and paste the email you used here along with your key. It takes effect straight away and works offline.</p>
 
       <div class="download-row">
-        <a class="btn btn-primary big" id="download" href="https://github.com/jonyardley/SharePad/releases">
+        <a class="btn btn-primary big" id="download" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
           <span id="download-label">Download SharePad for macOS</span>
         </a>
       </div>
-      <p class="meta" id="receipt-note">A receipt is on its way to your email. Signed &amp; notarised by Apple, so it opens with a normal double-click.</p>
+      <p class="meta" id="receipt-note">Don't have the app yet? Grab it above. A receipt is on its way to your email too. Signed &amp; notarised by Apple, so it opens with a normal double-click.</p>
+      <p class="meta" id="lostkey-note">Lost your key later? You can recover it anytime — no account needed, and no need to buy again.</p>
       <p class="meta" id="redownload-note" hidden>Already bought? Check your email for your download link.</p>
 
       <div class="steps" id="steps">
         <h2>Get set up in a minute</h2>
         <ol>
-          <li><strong>Open the DMG</strong> and drag SharePad into Applications.</li>
-          <li><strong>Launch it</strong> and find SharePad in your menu bar, not the Dock.</li>
+          <li><strong>Open the DMG</strong> and drag SharePad into Applications, unless you're already running the trial.</li>
+          <li><strong>Enter your licence</strong> from the menu bar: choose "Enter licence…" and paste the email you bought with plus your key. It takes effect straight away and works offline.</li>
           <li><strong>Plug in your iPad</strong> over USB and tap <em>Trust</em>. The share window appears automatically.</li>
           <li><strong>Pick the SharePad window</strong> in any call's "Share window" list, and you're live.</li>
         </ol>
@@ -201,7 +204,7 @@
 
     if (!purchased && !owner) {
       var check = byId("check"); if (check) check.style.display = "none";
-      hide("steps"); hide("opensource");
+      hide("steps"); hide("opensource"); hide("activation-note"); hide("lostkey-note");
       set("headline", "Get SharePad");
       set("lede", "Turn your iPad into a live whiteboard you can share in any call. One payment of £6.99, with updates for life.");
       var buy = byId("download");
