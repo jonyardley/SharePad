@@ -30,7 +30,7 @@ enum AboutPanel {
         body.append(separator)
         body.append(link("Report an Issue", url: issues))
         // Buy link uses the same decoupled buy path as the in-app gate
-        // (buy.sharepad.co → 302 → processor), so it's the single source of truth.
+        // (buy.sharepad.co -> 302 -> processor), so it's the single source of truth.
         if let buy = License.buyURL?.absoluteString {
             body.append(separator)
             body.append(link("Buy a licence", url: buy))
