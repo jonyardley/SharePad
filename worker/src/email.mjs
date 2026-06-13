@@ -4,39 +4,40 @@ export function buildLicenseEmail({ email, key, recoverUrl }) {
   const address = normalizeEmail(email);
   const subject = 'Your SharePad licence';
   const text = [
-    'Thanks for buying SharePad — here is your one-time licence.',
+    "Thanks for buying SharePad. Here's your licence — a one-time key, yours for good.",
     '',
     `Email: ${address}`,
     'Key:',
     key,
     '',
-    'To activate: open SharePad from the menu bar, choose "Enter licence...",',
-    'and paste both. It activates instantly and works offline — SharePad never',
-    'phones home to check it.',
+    'Open SharePad from the menu bar, choose "Enter licence...", and paste both.',
+    'It takes effect straight away and works offline — SharePad never checks in',
+    'with a server.',
     '',
-    `Keep this email, or recover your key anytime at ${recoverUrl} with the email`,
-    'above. No account needed.',
+    `No need to keep this email: you can get your key again anytime at ${recoverUrl}`,
+    'with the email above. No account, no sign-in.',
     '',
-    'Happy sharing,',
-    'Jon — Yardley Software',
+    'Thanks for the support,',
+    'Jon',
     '',
-    'Do not have the app yet? Download it at https://sharepad.co.',
+    "Don't have the app yet? Download it at https://sharepad.co.",
   ].join('\n');
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8"></head>
 <body style="font: 16px/1.6 -apple-system, system-ui, sans-serif; color: #1d1d1f;">
-  <p>Thanks for buying SharePad — here is your <strong>one-time licence</strong>.</p>
+  <p>Thanks for buying SharePad. Here's your licence — a <strong>one-time key,
+  yours for good</strong>.</p>
   <p><strong>Email:</strong> <code>${escapeHtml(address)}</code></p>
   <p><strong>Key:</strong></p>
   <pre style="background:#f5f5f7;padding:12px 16px;border-radius:8px;overflow-x:auto;">${escapeHtml(key)}</pre>
-  <p>To activate: open SharePad from the menu bar, choose <em>Enter licence...</em>,
-  and paste both. It activates instantly and works offline — SharePad never phones
-  home to check it.</p>
-  <p>Keep this email, or recover your key anytime at
+  <p>Open SharePad from the menu bar, choose <em>Enter licence...</em>, and paste
+  both. It takes effect straight away and works offline — SharePad never checks in
+  with a server.</p>
+  <p>No need to keep this email: you can get your key again anytime at
   <a href="${escapeHtml(recoverUrl)}">${escapeHtml(recoverUrl)}</a> with the email
-  above. No account needed.</p>
-  <p>Happy sharing,<br>Jon — Yardley Software</p>
-  <p style="color:#86868b;">Do not have the app yet? Download it at
+  above. No account, no sign-in.</p>
+  <p>Thanks for the support,<br>Jon</p>
+  <p style="color:#86868b;">Don't have the app yet? Download it at
   <a href="https://sharepad.co">sharepad.co</a>.</p>
 </body></html>`;
   return { subject, text, html };
