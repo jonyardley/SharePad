@@ -42,8 +42,6 @@ struct LicenseEntryView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
-            Text("Enter your licence")
-                .font(.headline)
             Text("A one-time licence. Works offline — no account, no sign-in.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -61,6 +59,7 @@ struct LicenseEntryView: View {
                 }
                 Spacer()
                 Button("Cancel") { onClose() }
+                    .keyboardShortcut(.cancelAction)
                 Button("Activate") {
                     if model.enterLicense(email: email, key: key) {
                         onClose()
