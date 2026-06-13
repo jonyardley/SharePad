@@ -27,9 +27,12 @@ description = "Commit-safe public values"
 # SUPublicEDKey is the public half of the signing keypair — it is meant to live
 # in project.yml / the app's Info.plist. The Cloudflare Web Analytics beacon
 # token (data-cf-beacon) is a public client-side identifier shipped in the
-# landing page's HTML, not a secret. Match the line, not the captured value.
+# landing page's HTML, not a secret. workerKey is a licence-key test vector — an
+# Ed25519 *signature* of an email, public by construction (the app verifies it
+# with the embedded public key). Match the line, not the captured value.
 regexTarget = "line"
 regexes = [
   '''SUPublicEDKey''',
   '''data-cf-beacon''',
+  '''workerKey''',
 ]
