@@ -140,9 +140,12 @@ jobs:
           git commit -m "Release $TAG: update DMG + appcast [skip ci]"
           git push origin gh-pages
 
-      # Create the GitHub Release. The DMG is NOT attached (served from gh-pages).
-      # appcast.xml IS attached so that v1.0.x installs (whose SUFeedURL points at
-      # releases/latest/download/appcast.xml) can still auto-update to newer builds.
+      # Create the GitHub Release. appcast.xml is attached so v1.0.x installs (whose
+      # SUFeedURL points at releases/latest/download/appcast.xml) keep auto-updating.
+      # The DMG is ALSO attached under the STABLE name SharePad.dmg, so the website's
+      # human "Download" button can use the permanent
+      # releases/latest/download/SharePad.dmg URL. (Sparkle still pulls the versioned
+      # DMG from gh-pages via the appcast; this stable copy is purely the human download.)
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         env:
@@ -150,4 +153,9 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           set -euo pipefail
-          gh release create "$TAG" .build/appcast/appcast.xml --title "$TAG" --generate-notes
+          DMG_PATH=$(ls "$GITHUB_WORKSPACE"/.build/appcast/SharePad-*.dmg)
+          cp "$DMG_PATH" "$RUNNER_TEMP/SharePad.dmg"
+          gh release create "$TAG" \
+            .build/appcast/appcast.xml \
+            "$RUNNER_TEMP/SharePad.dmg" \
+            --title "$TAG" --generate-notes

@@ -96,3 +96,16 @@ at the newest release — so cutting a new tag is all it takes to ship an update
 Separate from shipping. The **storefront** is live — Stripe Managed Payments at
 [buy.sharepad.co](https://buy.sharepad.co); see `specs/licensing.md` for the decision
 record. No app code; a buy button → DMG download.
+
+### Pre-release checklist for the first *gated* (trial + licence-key) release
+The 7-day trial gate (`specs/licensing.md` v2) reopens the no-gate model. Do **not**
+tag the first gated build until all of these are done — otherwise paying customers hit
+the 5-minute session pause 7 days after updating:
+- [ ] Checkout is wired to licence-key issuance: the `worker/` route is deployed
+  (`wrangler deploy` + `ED25519_PRIVATE_KEY` / restricted `STRIPE_API_KEY` secrets), and
+  `https://buy.sharepad.co`'s success URL redirects to `/key?session_id={CHECKOUT_SESSION_ID}`.
+- [ ] `License.recoverURL` points at the deployed worker (it's a placeholder → `nil` until
+  then, which correctly hides the in-app "Lost your key?" affordance).
+- [ ] Keys for existing `buy.sharepad.co` buyers are minted (`worker/scripts/mint-key.mjs`)
+  and sent.
+- [ ] A Cloudflare rate-limit rule guards `/recover` (it's a purchase oracle + Stripe-quota drain).

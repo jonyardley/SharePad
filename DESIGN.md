@@ -1,7 +1,7 @@
 # SharePad — Design Spec
 
 > Status: **Living spec — implementation in progress.** This document informs the
-> plan; it is not the plan. Last reviewed: 2026-06-04.
+> plan; it is not the plan. Last reviewed: 2026-06-13.
 >
 > Name **SharePad**, bundle id `com.jonyardley.sharepad` — confirmed at Phase 0.
 
@@ -314,13 +314,26 @@ ipad-share/
     UI/
       PopoverView.swift
       StatusItem.swift
+    Licensing/
+      License.swift            # embedded Ed25519 public key + checkout URLs
+      EntitlementClock.swift   # pure trial-state reducer (unit-tested)
+      LicenseValidator.swift   # offline Ed25519 verification (CryptoKit)
     Support/
-      Preferences.swift        # UserDefaults: frame, toggles
+      Preferences.swift        # UserDefaults: frame, toggles, licensing fields
       Permissions.swift        # camera authorization
   Tests/SharePadTests/
     AppStateReducerTests.swift
     PreferencesTests.swift
+  worker/                       # Cloudflare Worker: Stripe licence-key issuance
 ```
+
+The 7-day trial gate is owned by `AppModel` (per-session timer + entitlement
+state); once the trial expires the share window pauses behind a `TrialOverlayView`,
+rendered as a `ZStack` layer over the preview in the window's SwiftUI root (toggled
+by an `@Observable` flag) — so it composites over the live feed and into the
+shared pixels.
+The `worker/` directory holds the Cloudflare Worker that issues offline Ed25519
+licence keys after Stripe checkout — see §12 and `specs/licensing.md` v2.
 
 ---
 
@@ -410,6 +423,15 @@ hardware, so we **isolate the pure logic** and **manually verify the pipeline**.
    **sold as a paid convenience** (no trial, no licence keys — open source makes
    enforcement moot). Full plan in `specs/distribution.md` (release pipeline) and
    `specs/licensing.md` (the sell-the-build model).
+
+   **Extended (2026-06-13):** the "no-gate" stance is reopened — the model now
+   layers a GPLv3 honor-system **7-day trial + one-time licence-key gate** onto the
+   live Stripe Managed Payments storefront (the live-storefront decision above
+   stands; this evolves it). After the trial the share window pauses after 5
+   minutes/session behind a trial overlay until a key is entered. Keys are offline
+   Ed25519 signatures of the buyer email, issued by a Cloudflare Worker (`worker/`)
+   and validated against an embedded public key. App + worker have landed;
+   deployment is pending. See `specs/licensing.md` v2.
 
 ---
 

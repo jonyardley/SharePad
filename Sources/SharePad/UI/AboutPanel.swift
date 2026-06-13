@@ -4,9 +4,6 @@ enum AboutPanel {
     private static let repo = "https://github.com/jonyardley/SharePad"
     private static let issues = "https://github.com/jonyardley/SharePad/issues"
     private static let licence = "https://github.com/jonyardley/SharePad/blob/main/LICENSE"
-    // The buy/support link points at the first-party site, not the payment
-    // processor, so switching storefront (Stripe ⇄ Paddle) needs no app release.
-    private static let support = "https://sharepad.co"
     private static let tagline =
         "Turn a USB-connected iPad into an always-ready window for any video call."
     private static let licenceNotice =
@@ -32,8 +29,12 @@ enum AboutPanel {
         body.append(link("View Licence", url: licence))
         body.append(separator)
         body.append(link("Report an Issue", url: issues))
-        body.append(separator)
-        body.append(link("Support SharePad", url: support))
+        // Buy link uses the same decoupled buy path as the in-app gate
+        // (buy.sharepad.co -> 302 -> processor), so it's the single source of truth.
+        if let buy = License.buyURL?.absoluteString {
+            body.append(separator)
+            body.append(link("Buy a licence", url: buy))
+        }
 
         let centered = NSMutableParagraphStyle()
         centered.alignment = .center

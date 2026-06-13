@@ -1,0 +1,49 @@
+name: Deploy Licenses Worker
+
+# Deploy the sharepad-licenses Cloudflare Worker (the /key + /recover licence
+# endpoints) whenever its code changes on main, or on manual dispatch. Runtime
+# secrets are synced from GitHub Actions secrets, so GitHub is the single source
+# of truth — no manual `wrangler secret put`.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "worker/**"
+      - ".github/workflows/deploy-licenses-worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy sharepad-licenses Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Test
+        working-directory: worker
+        run: npm test
+
+      # Deploy + sync the required secrets. ED25519_PRIVATE_KEY must be the same
+      # value as the purchase-email Worker and pair with the public key embedded
+      # in the app; STRIPE_API_KEY is the restricted "Checkout Sessions: read" key.
+      # If either GitHub secret is unset the deploy fails loudly, which is correct.
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: worker
+          secrets: |
+            ED25519_PRIVATE_KEY
+            STRIPE_API_KEY
+        env:
+          ED25519_PRIVATE_KEY: ${{ secrets.ED25519_PRIVATE_KEY }}
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}

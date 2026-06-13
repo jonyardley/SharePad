@@ -4,6 +4,7 @@ import SwiftUI
 struct PopoverView: View {
     @Environment(AppModel.self) private var model
     let updater: SoftwareUpdating
+    @State private var showingLicenseSheet = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
@@ -53,6 +54,8 @@ struct PopoverView: View {
 
             Divider()
 
+            licenseSection
+
             Button("Check for Updates…") { updater.checkForUpdates() }
 
             Button("Quit SharePad") {
@@ -62,8 +65,39 @@ struct PopoverView: View {
         }
         .padding()
         .frame(width: 260)
+        .sheet(isPresented: $showingLicenseSheet) {
+            LicenseSheet().environment(model)
+        }
         .onAppear { model.popoverDidAppear() }
         .onDisappear { model.popoverDidDisappear() }
+    }
+
+    @ViewBuilder private var licenseSection: some View {
+        switch model.entitlement {
+        case .licensed:
+            EmptyView()
+        case let .trial(daysLeft):
+            licenseRow(status: "Free trial — \(daysLeft) day\(daysLeft == 1 ? "" : "s") left")
+        case .trialExpired:
+            licenseRow(
+                status: "Free trial ended — sharing pauses after \(model.sessionLimitMinutes) min"
+            )
+        }
+    }
+
+    private func licenseRow(status: String) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.row) {
+            Text(status)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            HStack {
+                if License.buyURL != nil {
+                    Button("Buy a licence") { model.openBuyPage() }
+                }
+                Button("Enter licence…") { showingLicenseSheet = true }
+            }
+            Divider()
+        }
     }
 
     private var header: some View {

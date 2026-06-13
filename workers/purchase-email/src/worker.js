@@ -1,8 +1,8 @@
-// Stripe checkout.session.completed -> branded re-download email (via Resend).
-// Why this exists: under Managed Payments, Stripe owns the receipt email and we
-// can't inject a download link into it, so a buyer who closes the thank-you tab
-// loses their download. This sends a courtesy email with the durable thank-you
-// page link. See specs/purchase-email.md.
+// Stripe checkout.session.completed -> branded email with the download link AND
+// the buyer's offline licence key (via Resend). This is the single, exactly-once
+// post-purchase email: the webhook fires once per paid checkout, so a buyer who
+// closes the thank-you tab still gets both their download and their key.
+// See specs/purchase-flow.md.
 
 const SIG_TOLERANCE_SECONDS = 300;
 
@@ -44,11 +44,12 @@ export default {
     }
 
     try {
-      await sendDownloadEmail(env, email);
+      const key = await licenseKey(await importPrivateKey(env.ED25519_PRIVATE_KEY), email);
+      await sendPurchaseEmail(env, email, key);
     } catch (err) {
       // Log so the failure is visible/alertable in Worker observability; a
       // returned 5xx alone is not counted as a Worker error.
-      console.error("download email send failed:", err.message);
+      console.error("purchase email send failed:", err.message);
       // Non-2xx so Stripe retries; a duplicate email is acceptable (spec §5).
       return new Response(`email send failed: ${err.message}`, { status: 500 });
     }
@@ -56,6 +57,34 @@ export default {
     return new Response("ok", { status: 200 });
   },
 };
+
+// ── Licence key (Ed25519 signature of the normalized email; base64url) ──
+// Same scheme the app validates offline and the sharepad-licenses worker derives.
+export function normalizeEmail(email) {
+  return email.trim().toLowerCase();
+}
+
+export function base64url(bytes) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
+export async function importPrivateKey(pkcs8Base64) {
+  const der = Uint8Array.from(atob(pkcs8Base64), (c) => c.charCodeAt(0));
+  return crypto.subtle.importKey("pkcs8", der, { name: "Ed25519" }, false, ["sign"]);
+}
+
+export async function licenseKey(privateKey, email) {
+  const message = new TextEncoder().encode(normalizeEmail(email));
+  const signature = await crypto.subtle.sign("Ed25519", privateKey, message);
+  return base64url(new Uint8Array(signature));
+}
+
+export function escapeHtml(text) {
+  const map = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  return text.replace(/[&<>"']/g, (c) => map[c]);
+}
 
 // ── Stripe signature verification (Web Crypto; no SDK) ──
 async function verifyStripeSignature(payload, header, secret) {
@@ -102,8 +131,9 @@ function timingSafeEqualHex(a, b) {
 }
 
 // ── Email ──
-async function sendDownloadEmail(env, to) {
+async function sendPurchaseEmail(env, to, key) {
   const downloadUrl = env.DOWNLOAD_URL || "https://sharepad.co/thanks-a7f3c92b.html?owner";
+  const recoverUrl = env.RECOVER_URL || "https://sharepad-licenses.jonyardley.workers.dev/recover";
   const from = env.EMAIL_FROM || "SharePad <hello@sharepad.co>";
 
   const response = await fetch("https://api.resend.com/emails", {
@@ -115,8 +145,8 @@ async function sendDownloadEmail(env, to) {
     body: JSON.stringify({
       from,
       to,
-      subject: "Your SharePad download",
-      html: emailHtml(downloadUrl),
+      subject: "Your SharePad licence and download",
+      html: purchaseEmailHtml(downloadUrl, to, key, recoverUrl),
     }),
   });
 
@@ -125,7 +155,8 @@ async function sendDownloadEmail(env, to) {
   }
 }
 
-function emailHtml(downloadUrl) {
+export function purchaseEmailHtml(downloadUrl, email, key, recoverUrl) {
+  const address = escapeHtml(normalizeEmail(email));
   return `<!doctype html>
 <html lang="en">
 <body style="margin:0;background:#F3F4FB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#181C44;">
@@ -145,7 +176,22 @@ function emailHtml(downloadUrl) {
         and it lives in your menu bar. Plug in your iPad over USB and the share window
         appears automatically.
       </p>
-      <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:16px 0 0;">
+      <div style="margin-top:28px;padding-top:24px;border-top:1px solid rgba(46,56,144,0.12);">
+        <p style="font-size:15px;line-height:1.6;color:#181C44;margin:0 0 12px;font-weight:600;">Your licence</p>
+        <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 4px;">Email: <code>${address}</code></p>
+        <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 6px;">Key:</p>
+        <pre style="font-size:12px;background:#F3F4FB;border-radius:10px;padding:12px 14px;overflow-x:auto;margin:0 0 16px;color:#181C44;">${escapeHtml(key)}</pre>
+        <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 12px;">
+          In SharePad's menu bar, choose "Enter licence..." and paste both. It takes
+          effect straight away and works offline &mdash; SharePad never checks in with a server.
+        </p>
+        <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0;">
+          Lost your key later? Get it again anytime at
+          <a href="${escapeHtml(recoverUrl)}" style="color:#3E4CB3;">recover your licence</a>
+          with the email above &mdash; no account, no sign-in.
+        </p>
+      </div>
+      <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:24px 0 0;">
         SharePad is open source (GPLv3) with automatic updates for life. Need a hand?
         Just reply to this email.
       </p>

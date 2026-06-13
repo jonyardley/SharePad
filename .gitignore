@@ -32,3 +32,6 @@ sparkle_private_key
 *.p8
 *.pem
 *.key
+
+# Wrangler local cache (account id, build artifacts)
+.wrangler/
