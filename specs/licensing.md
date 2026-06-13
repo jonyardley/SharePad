@@ -66,11 +66,12 @@ key = base64url( Ed25519-sign(privateKey, lowercase(trim(email))) )
   in Stripe → re-show the key. Gated by purchase existence, so it leaks nothing.
 - Secrets: the Ed25519 private key + a **restricted** Stripe API key (read
   Checkout Sessions / Customers only).
-- Licence email: best-effort Resend send from `/key` (`worker/src/email.mjs`),
-  gated behind `RESEND_API_KEY` (no-op until configured). Sends per `/key` load,
-  so a refresh can duplicate; a Stripe webhook would make it exactly-once
-  (deferred — reopens the no-webhook stance). All buyer-journey wording lives in
-  `specs/marketing-copy.md`.
+- Licence email: sent exactly-once by the existing `sharepad-purchase-email`
+  webhook worker (`checkout.session.completed`), which now carries the download
+  link **and** the licence key. It needs `ED25519_PRIVATE_KEY` (same value as the
+  licences worker). The `sharepad-licenses` worker sends no email; it serves
+  `/recover` (and an optional `/key` page). Buyer-journey wording lives in
+  `specs/marketing-copy.md`; flow + Stripe config in `specs/purchase-flow.md`.
 
 **Note:** Stripe Managed Payments is already live for the no-gate storefront
 (`buy.sharepad.co`), so SMP availability is settled. The remaining work is wiring

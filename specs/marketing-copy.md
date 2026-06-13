@@ -105,42 +105,32 @@ one-time payment with automatic updates for life, and no subscription.
 
 ---
 
-## 3. Licence email — `worker/src/email.mjs`
+## 3. Purchase email — `workers/purchase-email/src/worker.js`
 
-Stripe sends the receipt automatically. This is the durable key-delivery email
-(best-effort from the worker; see §4). The code mirrors this copy.
+One email, sent exactly-once by the Stripe webhook on `checkout.session.completed`:
+the **download link + the licence key**. The HTML lives in `purchaseEmailHtml`.
 
-- **Subject:** Your SharePad licence
-- **Body:**
-  Thanks for buying SharePad. Here's your licence — a one-time key, yours for good.
-
-  Email: {email}
-  Key:
-  {key}
-
-  Open SharePad from the menu bar, choose "Enter licence...", and paste both. It
-  takes effect straight away and works offline — SharePad never checks in with a
-  server.
-
-  No need to keep this email: you can get your key again anytime at {recover_url}
-  with the email above. No account, no sign-in.
-
-  Thanks for the support,
-  Jon
-
-  Don't have the app yet? Download it at https://sharepad.co.
+- **Subject:** Your SharePad licence and download
+- **Shape:**
+  - Heading: Thanks for buying SharePad
+  - Download: "Your download is ready whenever you need it, including if you ever
+    switch Macs. Keep this email; the link below always points at the latest
+    version." + a **Download SharePad** button, then the signed/notarised install note.
+  - **Your licence:** Email + Key, then "In SharePad's menu bar, choose 'Enter
+    licence...' and paste both. It takes effect straight away and works offline —
+    SharePad never checks in with a server." + "Lost your key later? Get it again
+    anytime at {recover_url} with the email above — no account, no sign-in."
+  - Footer: open source (GPLv3), updates for life, "reply to this email" for help.
 
 ---
 
-## 4. Wiring notes (delivery, deferred steps)
+## 4. Wiring notes
 
-- **Licence email** is best-effort from the worker's `/key` route, gated behind
-  `RESEND_API_KEY`. To turn it on: verify a sending domain in Resend, then
-  `wrangler secret put RESEND_API_KEY` (and optionally `RESEND_FROM`, default
-  `SharePad <licences@sharepad.co>`).
-- **Known limitation:** `/key` sends on each load, so a buyer who refreshes could
-  get a duplicate. For exactly-once delivery, move the send to a Stripe webhook
-  (`checkout.session.completed`) — deferred; it reopens the "no webhook" stance in
-  `specs/licensing.md`, so decide deliberately.
+- **The purchase email** is sent by the `sharepad-purchase-email` webhook worker,
+  exactly-once per paid checkout. It needs `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`,
+  and `ED25519_PRIVATE_KEY` (same value as the licences worker). Deploy it *with* the
+  gated app release — until then, a no-gate buyer would get a key they can't yet use.
+- **`sharepad-licenses`** worker: `/recover` (self-service re-derivation) and an
+  optional `/key` page. It does not send email.
 - **Existing buyers** (from the no-gate era): mint with `worker/scripts/mint-key.mjs`
-  and send by hand using the §3 copy.
+  and send by hand using the §3 shape.

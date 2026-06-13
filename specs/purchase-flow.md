@@ -21,9 +21,13 @@ why "buy again" behaves the way it does (below).
    an overlay; relaunch resets it (honor system). Popover shows "Free trial ended".
 3. **Buy.** "Buy a licence" opens `buy.sharepad.co` -> 302 -> Stripe Checkout
    (GBP 6.99, Apple Pay or card). Buyer pays.
-4. **Deliver.** Stripe redirects to the worker `/key?session_id=...`. The worker
-   confirms the session is paid via the Stripe API, derives the key from the
-   buyer's email, shows it, and emails it (best-effort).
+4. **Deliver.** Two paths, both fed by the same email-derived key:
+   - **Email (primary, exactly-once):** the `sharepad-purchase-email` webhook fires
+     on `checkout.session.completed`, derives the key, and sends one branded email
+     with the **download link + licence key**.
+   - **Page (instant, optional):** if the Payment Link redirects to the
+     `sharepad-licenses` worker `/key?session_id=...`, that page also shows the key.
+   `/recover` re-derives the key for any paid email at any time.
 5. **Activate.** Buyer opens SharePad -> Enter licence... -> pastes email + key.
    The app validates it **offline** against the embedded public key -> Licensed.
    The pause stops and the Buy button disappears.
@@ -66,26 +70,33 @@ Instead, make a duplicate unnecessary and detectable:
    page, the "recover anytime, no account" line, and a "you don't need to buy
    again" nudge on the recover page. (Done.)
 3. Refund accidental same-email duplicates by hand (trivial volume at GBP 6.99).
-   If duplicates ever get common, add a `checkout.session.completed` webhook that
-   auto-refunds a second same-email payment and re-sends the key — deferred,
-   because it reopens the "no webhook" stance.
+   If duplicates ever get common, extend the existing `sharepad-purchase-email`
+   webhook to auto-refund a second same-email payment — the webhook is already
+   there, so this is a small add when it's worth it.
+
+## Delivery architecture
+
+- **`sharepad-purchase-email`** (webhook, `checkout.session.completed`): the single
+  exactly-once post-purchase email — download link + licence key. Needs
+  `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, and `ED25519_PRIVATE_KEY` (same value
+  as the licences worker).
+- **`sharepad-licenses`** (`/key`, `/recover`): `/recover` is the self-service
+  "lost my key" path; `/key` optionally shows the key instantly if the Payment
+  Link redirects there. No email is sent from here (the webhook owns email).
 
 ## Stripe configuration
 
 **Do before launch (wiring + hygiene):**
-1. **Success redirect** on the Payment Link: *Don't show confirmation page ->
-   Redirect to* `https://<worker>/key?session_id={CHECKOUT_SESSION_ID}` (keep the
-   placeholder literal). This is the link that delivers the key.
-2. **Receipt emails** on (Settings -> Customer emails -> Successful payments).
-3. **Statement descriptor -> `SHAREPAD`** (otherwise it reads "Yardley Software"
+1. **Receipt emails** on (Settings -> Customer emails -> Successful payments).
+2. **Statement descriptor -> `SHAREPAD`** (otherwise it reads "Yardley Software"
    and invites "what's this charge?" disputes).
-4. **Turn off "let customers adjust quantity"** — a per-email licence has no
+3. **Turn off "let customers adjust quantity"** — a per-email licence has no
    "buy 5 of".
-5. **Link Terms & refunds** (`docs/terms.html`) in checkout.
+4. **Link Terms & refunds** (`docs/terms.html`) in checkout.
+5. *(Optional)* point the success redirect at the `sharepad-licenses` worker
+   `/key?session_id={CHECKOUT_SESSION_ID}` for an instant on-screen key; not
+   required, since the webhook email already delivers it.
 
-**Confirm (likely already true):** email is collected at checkout (the worker needs
-`customer_details.email`); Apple Pay / wallets on; Managed Payments handles tax
-(merchant of record).
-
-**Later, only if needed:** a `checkout.session.completed` webhook for exactly-once
-licence email + auto-refund of same-email duplicates.
+**Confirm (likely already true):** the `checkout.session.completed` webhook is
+configured and points at `sharepad-purchase-email`; email is collected at checkout;
+Apple Pay / wallets on; Managed Payments handles tax (merchant of record).

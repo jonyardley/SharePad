@@ -8,6 +8,8 @@ compatibility_date = "2026-06-01"
 # download, no buy prompt). Without it, buyers land on the stumble/buy view.
 DOWNLOAD_URL = "https://sharepad.co/thanks-a7f3c92b.html?owner"
 EMAIL_FROM = "SharePad <hello@sharepad.co>"
+# Self-service licence recovery (the sharepad-licenses worker's /recover route).
+RECOVER_URL = "https://sharepad-licenses.jonyardley.workers.dev/recover"
 
 # Capture logs/metrics so a Resend outage (Worker returns 500) is visible and
 # alertable. 100% sampling is fine: this is a low-volume money path.
@@ -18,3 +20,6 @@ head_sampling_rate = 1
 # Secrets are NOT set here. Add them with `wrangler secret put`:
 #   wrangler secret put STRIPE_WEBHOOK_SECRET   # whsec_… from the Stripe webhook endpoint
 #   wrangler secret put RESEND_API_KEY          # re_… from Resend
+#   wrangler secret put ED25519_PRIVATE_KEY     # pkcs8 base64; SAME value as the
+#                                               # sharepad-licenses worker (pairs with
+#                                               # the public key embedded in the app)

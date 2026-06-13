@@ -1,5 +1,4 @@
 import { escapeHtml, importPrivateKey, licenseKey, normalizeEmail } from './license.mjs';
-import { sendLicenseEmail } from './email.mjs';
 
 class StripeUnavailableError extends Error {}
 
@@ -36,17 +35,9 @@ async function keyPage(url, env) {
       'We could not verify this checkout. If you paid, recover your key at /recover.',
     ), 404);
   }
-  const key = await deriveKey(env, email);
-  // Best-effort licence email — a Resend outage must never block the key page,
-  // which is itself a complete delivery (it shows the key). No-op until
-  // RESEND_API_KEY is set. NOTE: sends on each /key load, so a buyer refreshing
-  // could get a duplicate; a Stripe webhook would make it exactly-once (deferred).
-  try {
-    await sendLicenseEmail(env, { email, key, recoverUrl: new URL('/recover', url).toString() });
-  } catch {
-    // swallow — delivery is best-effort; the page still shows the key
-  }
-  return htmlResponse(keyHtml(email, key));
+  // The licence EMAIL is sent by the sharepad-purchase-email webhook worker
+  // (exactly-once on checkout.session.completed). This page just shows the key.
+  return htmlResponse(keyHtml(email, await deriveKey(env, email)));
 }
 
 async function recoverPage(url, env) {

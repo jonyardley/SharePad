@@ -26,20 +26,6 @@ test('/key without session_id is 400', async () => {
   assert.equal(response.status, 400);
 });
 
-test('/key still shows the key when licence email delivery fails (best-effort)', async () => {
-  // Stripe ok (session paid), Resend down — the page must still serve the key.
-  globalThis.fetch = async (url) => {
-    if (String(url).includes('api.resend.com')) return new Response('down', { status: 500 });
-    return new Response(JSON.stringify({
-      payment_status: 'paid', customer_details: { email: 'buyer@example.com' },
-    }), { status: 200 });
-  };
-  const env = { ...(await generateEnv()), RESEND_API_KEY: 're_test' };
-  const response = await worker.fetch(new Request('https://w.test/key?session_id=cs_x'), env);
-  assert.equal(response.status, 200);
-  assert.match(await response.text(), /<pre>[A-Za-z0-9_-]{86}<\/pre>/);
-});
-
 test('/key with paid session shows the key', async () => {
   stubStripe(200, { payment_status: 'paid', customer_details: { email: 'Buyer@Example.com' } });
   const response = await worker.fetch(new Request('https://w.test/key?session_id=cs_x'), await generateEnv());
