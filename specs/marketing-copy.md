@@ -29,12 +29,12 @@
 ### How it works
 1. **Plug in your iPad** over USB. SharePad opens a clean, aspect-locked window automatically.
 2. **Pick it in your call** — it appears in Zoom, Meet, or Teams' "Share window" list, clearly named.
-3. **Draw.** Your favourite whiteboard app fills the shared window — full-size, not a tiny webcam tile.
+3. **Draw.** Your favourite whiteboard app fills the shared window, full-size.
 
 ### Why it's different
-- **A window, not a webcam.** Screen-sharing a drawing app means hunting for the
-  right window mid-call; a virtual camera shrinks your work to a corner tile.
-  SharePad gives the iPad its own clean, full-size shared window.
+- **A clean, dedicated window.** Your iPad gets its own tidy, aspect-locked
+  window you pick straight from the share menu — no hunting for the right thing
+  to share, no fiddling each call.
 - **Always ready.** Plug in once; it reconnects through sleep, wake, and
   unplug/replug on its own. No per-call QuickTime ritual.
 - **Yours, privately.** No account, no cloud, no telemetry. The feed goes over
