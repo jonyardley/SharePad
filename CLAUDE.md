@@ -3,12 +3,13 @@
 > Last reviewed: 2026-06-04.
 >
 > **Status: Phases 0–4 landed, plus #7 (window-frame persistence) and #10 (popover
-> live thumbnail + device picker).** The full pipeline exists — CMIO opt-in,
-> `.muxed` capture, borderless aspect-locked share window, popover, and automatic
-> connect/disconnect/wake lifecycle. Only **Phase 5 (polish)** remains. The module
-> map below is the *actual* layout. The design spec is the source of truth for
-> *what* we're building and *why*; this file is *how* we build it. Read
-> `DESIGN.md` first.
+> live thumbnail + device picker), and the 7-day trial + Ed25519 licence-key gate
+> (app + worker landed; deployment pending).** The full pipeline exists — CMIO
+> opt-in, `.muxed` capture, borderless aspect-locked share window, popover, automatic
+> connect/disconnect/wake lifecycle, and the trial-gated in-app purchase flow. Only
+> **Phase 5 (polish)** remains. The module map below is the *actual* layout. The
+> design spec is the source of truth for *what* we're building and *why*; this file
+> is *how* we build it. Read `DESIGN.md` first.
 
 ## Project Overview
 
@@ -35,6 +36,7 @@ CLAUDE.md                   # this file
 specs/                      # per-feature specs, Tier 3 only (see Workflow)
 Sources/SharePad/         # app code (see DESIGN.md §8 for the module map)
 Tests/SharePadTests/      # pure-logic tests (reducer, preferences)
+worker/                     # Cloudflare Worker: licence key issuance (Stripe, trial gate)
 ```
 
 ## Tech Stack
@@ -233,6 +235,15 @@ before touching capture.
   popover / Sparkle dialogs can't be picked in a call instead of the iPad. The guard
   re-sweeps on `NSWindow.didBecomeKeyNotification`, so a new window type that becomes
   shareable *without ever becoming key* would slip through — sweep it explicitly.
+- **Licence keys are Ed25519 signatures** of the normalized buyer email (base64url);
+  the app validates fully offline against the public key embedded in
+  `Licensing/License.swift` — `LicenseValidatorTests.testProductionKeyIsConfigured`
+  guards the embedded key. The signing private key lives only in the Cloudflare
+  Worker (and Jon's password manager), never in the repo.
+- **The trial overlay is a foreign `NSHostingView` subview** inside the share
+  window's content view — stable only because the window's root SwiftUI hierarchy is
+  static. If the share window's content becomes dynamic, revisit (ZStack-in-root is
+  the safer shape).
 
 ## Workflow
 

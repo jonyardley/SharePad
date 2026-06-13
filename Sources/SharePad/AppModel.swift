@@ -22,8 +22,15 @@ final class AppModel {
     private(set) var launchAtLogin: Bool
     private(set) var launchAtLoginFailed = false
 
+    private(set) var entitlement: Entitlement = .trial(daysLeft: EntitlementClock.trialDays)
+    private(set) var isTrialOverlayShown = false
+
     var isConnected: Bool {
         currentDeviceName != nil
+    }
+
+    var sessionLimitMinutes: Int {
+        Int(sessionLimit / 60)
     }
 
     var isWindowHotkeyActive: Bool {
@@ -50,6 +57,10 @@ final class AppModel {
     private let window: ShareWindowControlling
     private let preferences: Preferences
     private let sleep: @Sendable (Duration) async -> Void
+    private let validator: LicenseValidator
+    private let now: () -> Date
+    private let sessionLimit: TimeInterval
+    private var sessionTimer: Task<Void, Never>?
     private(set) var currentDeviceID: String?
     private var isReconfiguring = false
     private var windowHotkey: GlobalHotkey?
@@ -87,17 +98,27 @@ final class AppModel {
         capture: CaptureControlling,
         window: ShareWindowControlling,
         thumbnailLayer: AVSampleBufferDisplayLayer,
-        sleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) }
+        sleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
+        validator: LicenseValidator = .production,
+        now: @escaping () -> Date = Date.init,
+        sessionLimit: TimeInterval = 5 * 60
     ) {
         self.preferences = preferences
         self.capture = capture
         self.window = window
         self.thumbnailLayer = thumbnailLayer
         self.sleep = sleep
+        self.validator = validator
+        self.now = now
+        self.sessionLimit = sessionLimit
         monitor = DeviceMonitor()
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
         launchAtLogin = LaunchAtLogin.isEnabled
+        if preferences.firstLaunchDate == nil {
+            preferences.firstLaunchDate = now()
+        }
+        refreshEntitlement()
     }
 
     func start() {
@@ -119,6 +140,7 @@ final class AppModel {
         if isWindowVisible {
             window.hide()
             isWindowVisible = false
+            endTrialSession()
         } else if isConnected {
             presentWindow()
         }
@@ -162,6 +184,7 @@ final class AppModel {
     }
 
     func popoverDidAppear() {
+        refreshEntitlement()
         capture.setThumbnailActive(true)
     }
 
@@ -191,6 +214,7 @@ final class AppModel {
     private func presentWindow() {
         window.show(size: videoSize ?? Self.defaultSize)
         isWindowVisible = true
+        startTrialSessionIfNeeded()
     }
 
     private func observeVideoSize() async {
@@ -275,6 +299,7 @@ extension AppModel {
         } else {
             window.hide()
             isWindowVisible = false
+            endTrialSession()
         }
         isReconfiguring = false
     }
@@ -298,6 +323,7 @@ extension AppModel {
             videoSize = nil
             window.hide()
             isWindowVisible = false
+            endTrialSession()
             await capture.stop()
             if wasSharing { raiseShareLost() }
         case let .keep(device):
@@ -349,6 +375,7 @@ extension AppModel {
         failed = true
         window.hide()
         isWindowVisible = false
+        endTrialSession()
     }
 
     private func connectOnce(deviceID: String, generation: Int) async -> ConnectOutcome {
@@ -371,5 +398,67 @@ extension AppModel {
         }
         isLive = false
         return .notLive
+    }
+}
+
+/// ── Licensing: trial entitlement, licence entry, expired-session gate ──
+extension AppModel {
+    @discardableResult
+    func enterLicense(email: String, key: String) -> Bool {
+        guard validator.isValid(key: key, email: email) else { return false }
+        preferences.licenseEmail = LicenseValidator.normalize(email)
+        preferences.licenseKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        refreshEntitlement()
+        endTrialSession()
+        return true
+    }
+
+    func openBuyPage() {
+        guard let url = License.buyURL else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    func openRecoverPage() {
+        guard let url = License.recoverURL else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    func refreshEntitlement() {
+        entitlement = EntitlementClock.entitlement(
+            firstLaunch: preferences.firstLaunchDate ?? now(),
+            now: now(),
+            isLicensed: isStoredLicenseValid
+        )
+    }
+
+    private var isStoredLicenseValid: Bool {
+        guard let email = preferences.licenseEmail,
+              let key = preferences.licenseKey else { return false }
+        return validator.isValid(key: key, email: email)
+    }
+
+    private func startTrialSessionIfNeeded() {
+        refreshEntitlement()
+        guard entitlement == .trialExpired, sessionTimer == nil else { return }
+        sessionTimer = Task { [weak self] in
+            guard let self else { return }
+            do {
+                try await Task.sleep(for: .seconds(sessionLimit))
+            } catch {
+                return
+            }
+            guard isWindowVisible, entitlement == .trialExpired else { return }
+            isTrialOverlayShown = true
+            window.setTrialOverlay(true)
+        }
+    }
+
+    private func endTrialSession() {
+        sessionTimer?.cancel()
+        sessionTimer = nil
+        if isTrialOverlayShown {
+            isTrialOverlayShown = false
+            window.setTrialOverlay(false)
+        }
     }
 }

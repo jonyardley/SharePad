@@ -65,4 +65,10 @@ final class FakeShareWindow: ShareWindowControlling {
     func setKeepOnTop(_ enabled: Bool) {
         keepOnTop = enabled
     }
+
+    private(set) var trialOverlayStates: [Bool] = []
+
+    func setTrialOverlay(_ visible: Bool) {
+        trialOverlayStates.append(visible)
+    }
 }

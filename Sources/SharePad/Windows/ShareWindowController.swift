@@ -9,6 +9,7 @@ final class ShareWindowController: ShareWindowControlling {
     private let preferences: Preferences
     private var keepOnTop = false
     private var isObserving = false
+    private var overlayHost: NSView?
 
     /// The frame as we last set it ourselves. The move/resize observers persist only
     /// when the live frame differs from this, so a programmatic restore/resize never
@@ -58,6 +59,20 @@ final class ShareWindowController: ShareWindowControlling {
 
     func hide() {
         window?.orderOut(nil)
+    }
+
+    func setTrialOverlay(_ visible: Bool) {
+        guard visible else {
+            overlayHost?.removeFromSuperview()
+            overlayHost = nil
+            return
+        }
+        guard overlayHost == nil, let contentView = window?.contentView else { return }
+        let host = NSHostingView(rootView: TrialOverlayView())
+        host.frame = contentView.bounds
+        host.autoresizingMask = [.width, .height]
+        contentView.addSubview(host)
+        overlayHost = host
     }
 
     private func apply(size videoSize: CGSize, to window: NSWindow) {
