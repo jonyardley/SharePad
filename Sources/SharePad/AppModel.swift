@@ -343,6 +343,10 @@ extension AppModel {
 
     private func beginAutoConnect(device: CaptureDevice) async {
         cancelAutoConnect()
+        // A new device's session starts fresh: clear any prior device's expired-trial
+        // overlay/timer. The hot-swap path (.switchTo) reuses the visible window without
+        // a hide cycle, so this is the only place that resets the gate for the new device.
+        endTrialSession()
         currentDeviceID = device.id
         currentDeviceName = device.name
         isLive = false
@@ -393,6 +397,10 @@ extension AppModel {
             preferences.lastDeviceID = deviceID
             if autoShowOnConnect, !isWindowVisible {
                 presentWindow()
+            } else if isWindowVisible {
+                // Hot-swap: window stayed up, so presentWindow() is skipped — re-arm the
+                // expired-trial gate for the new device's session explicitly.
+                startTrialSessionIfNeeded()
             }
             return .live
         }

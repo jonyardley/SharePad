@@ -238,8 +238,10 @@ before touching capture.
 - **Licence keys are Ed25519 signatures** of the normalized buyer email (base64url);
   the app validates fully offline against the public key embedded in
   `Licensing/License.swift` — `LicenseValidatorTests.testProductionKeyIsConfigured`
-  guards the embedded key. The signing private key lives only in the Cloudflare
-  Worker (and Jon's password manager), never in the repo.
+  guards against shipping a *malformed/empty* embedded key (it can't catch a
+  well-formed key that doesn't pair with the worker's private key — only the
+  deploy-time E2E proves the pairing). The signing private key lives only in the
+  Cloudflare Worker (and Jon's password manager), never in the repo.
 - **The trial overlay is a foreign `NSHostingView` subview** inside the share
   window's content view — stable only because the window's root SwiftUI hierarchy is
   static. If the share window's content becomes dynamic, revisit (ZStack-in-root is

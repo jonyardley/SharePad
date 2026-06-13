@@ -30,7 +30,7 @@ final class LicenseGateTests: XCTestCase {
         capture: FakeCaptureController = FakeCaptureController(),
         window: FakeShareWindow = FakeShareWindow(),
         now: @escaping () -> Date = Date.init,
-        sessionLimit: TimeInterval = 1200
+        sessionLimit: TimeInterval = 5 * 60
     ) -> AppModel {
         AppModel(
             preferences: preferences,
@@ -171,5 +171,28 @@ final class LicenseGateTests: XCTestCase {
         await model.switchTo(deviceID: "b")
         XCTAssertFalse(model.isTrialOverlayShown)
         XCTAssertEqual(window.trialOverlayStates, [true, false])
+    }
+
+    // A direct hot-swap (.switchTo, no intervening teardown) must clear the prior
+    // device's overlay AND re-arm the gate for the new device — the auto-connect path
+    // reuses the visible window without a hide cycle.
+    func testHotSwapClearsAndRearmsTrialGate() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+        try await Task.sleep(for: .seconds(0.5))
+        XCTAssertEqual(window.trialOverlayStates, [true]) // device A's overlay fired
+
+        await model.reconcile(devices: [CaptureDevice(id: "b", name: "iPad 2")]) // hot-swap A→B
+        XCTAssertFalse(model.isTrialOverlayShown) // A's overlay cleared on swap
+        try await Task.sleep(for: .seconds(0.5))
+        XCTAssertEqual(window.trialOverlayStates, [
+            true,
+            false,
+            true,
+        ]) // B's session re-armed + fired
+        XCTAssertTrue(model.isTrialOverlayShown)
     }
 }
