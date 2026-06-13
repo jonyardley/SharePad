@@ -69,4 +69,15 @@ final class LicenseValidatorTests: XCTestCase {
     func testProductionKeyIsConfigured() {
         XCTAssertTrue(LicenseValidator.production.isConfigured)
     }
+
+    // Pins the embedded public key to a real key minted by the live worker's
+    // private signing key. testProductionKeyIsConfigured only proves the embedded
+    // key is well-formed, not that it PAIRS with the worker — a mismatch shipped
+    // once and rejected every real licence. This catches that class of bug offline.
+    func testProductionKeyMatchesWorkerSignature() {
+        let email = "pairing-check@sharepad.co"
+        let workerKey = "YahgYgZ6fYgl4MsWJpRwtJWdcL6fmEzbk9yFoCmxJpe2DFae-VvsGcq0OLPS5_"
+            + "Pfbzcm-VHR7oS1z-kdQ70XCA"
+        XCTAssertTrue(LicenseValidator.production.isValid(key: workerKey, email: email))
+    }
 }
