@@ -84,6 +84,12 @@ verify-release:
 scan:
     gitleaks git --config .gitleaks.toml --redact --no-banner --verbose .
 
+# verify the Ed25519 signing key pairs with the app's embedded public key.
+# Same check CI runs pre-deploy. Reads the key from the file Jon stores locally;
+# only the derived public key is printed, never the private key.
+check-pairing:
+    ED25519_PRIVATE_KEY="$(cat ~/.sharepad-ed25519-private-key.txt)" node scripts/check-key-pairing.mjs
+
 # install the repo git hooks (pre-commit secret scan). Run once per clone/worktree.
 install-hooks:
     git config core.hooksPath .githooks
