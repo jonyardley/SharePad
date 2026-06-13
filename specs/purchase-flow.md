@@ -1,6 +1,6 @@
 # SharePad — Purchase & Trial Flow
 
-> How the trial → purchase → activation journey works end to end, the unhappy
+> How the trial -> purchase -> activation journey works end to end, the unhappy
 > paths, the "buy again" decision, and the Stripe configuration it needs. Sits
 > alongside `specs/licensing.md` (the design) and `specs/marketing-copy.md` (the
 > words). No emojis.
