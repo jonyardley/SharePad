@@ -107,7 +107,8 @@ function keyHtml(email, key) {
 
 function recoverFormHtml() {
   return page('Recover your licence', `
-    <p>Enter the email you used at checkout and we'll re-derive your key.</p>
+    <p>Already bought SharePad? You don't need to buy again. Enter the email you
+    used at checkout and we'll send your key straight back.</p>
     <form method="get" action="/recover">
       <input type="email" name="email" placeholder="you@example.com" required>
       <button type="submit">Recover key</button>

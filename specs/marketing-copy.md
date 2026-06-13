@@ -95,8 +95,13 @@ one-time payment with automatic updates for life, and no subscription.
 - **Body:** Your licence is on its way to your email. To switch it on: open
   SharePad from the menu bar, choose "Enter licence...", and paste the email you
   used here along with your key. It takes effect straight away and works offline.
-  Lost your key later? You can get it again anytime — no account needed.
+  Lost your key later? You can get it again anytime — no account needed, and no
+  need to buy again.
 - **CTA:** Download SharePad (for anyone who hasn't already)
+
+### Recover page (`/recover`)
+- Already bought SharePad? You don't need to buy again. Enter the email you used at
+  checkout and we'll send your key straight back. (No account, no sign-in.)
 
 ---
 
