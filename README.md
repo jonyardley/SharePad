@@ -1,7 +1,7 @@
 # SharePad
 
 [![CI](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml/badge.svg)](https://github.com/jonyardley/SharePad/actions/workflows/ci.yml)
-[![Buy SharePad — £6.99](https://img.shields.io/badge/Buy%20SharePad-%C2%A36.99-5B6BE8)](https://buy.sharepad.co)
+[![Free 7-day trial, then £6.99](https://img.shields.io/badge/Free%207--day%20trial-then%20%C2%A36.99-5B6BE8)](https://sharepad.co)
 
 <p align="center">
   <img src="docs/assets/demo.jpg" alt="SharePad sharing a connected iPad into a Google Meet call at full size" width="820">
@@ -24,11 +24,13 @@ window.
   <em>The whole app — a menu-bar popover with a live preview and the controls a click away.</em>
 </p>
 
-> **Status: v1.0 shipped.** Signed, notarised, and auto-updating.
-> Get the ready-to-run build for **£6.99 — a one-time payment with automatic
-> updates for life, no subscription** at [buy.sharepad.co](https://buy.sharepad.co),
-> or build it yourself (GPLv3, instructions below). App Store is ruled out — its
-> sandbox breaks the CMIO opt-in the capture depends on.
+> **Status: shipping — 7-day free trial + one-time licence.** Signed, notarised,
+> and auto-updating. Download free from [sharepad.co](https://sharepad.co) and try
+> it for 7 days; after that a one-time **£6.99 licence** (works offline, no account,
+> no subscription, updates for life) keeps it running. Already bought? Recover your
+> key in the app — you won't be charged again. Or build it yourself (GPLv3,
+> instructions below). App Store is ruled out — its sandbox breaks the CMIO opt-in
+> the capture depends on.
 
 ## Docs
 
@@ -66,7 +68,8 @@ beats a small webcam tile. See
 ## License
 
 SharePad is free and open source under the [GNU GPLv3](LICENSE). You're welcome to
-build it yourself from source. If you'd rather not, you can
-**[buy a ready-to-run, signed, notarised build for £6.99](https://buy.sharepad.co)**
-— a one-time payment with automatic updates for life and no subscription. It's the
-easiest way to get SharePad and the best way to support its development.
+build it yourself from source. Or download the signed, notarised, auto-updating
+build and **[try it free for 7 days](https://sharepad.co)**; after that a one-time
+**£6.99 licence** (works offline, no account, no subscription, updates for life)
+keeps it going — the easiest way to get SharePad and the best way to support its
+development.
