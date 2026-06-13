@@ -5,6 +5,14 @@ update dialog** (Sparkle shows it to people when they update), so write each ent
 for users, not developers. Add a new `## <version>` section at the top before you
 tag a release.
 
+## 1.1.0
+- SharePad now has a 7-day free trial. After it ends, sharing pauses briefly each
+  session until you add a licence — a one-time £6.99 purchase that works offline,
+  with no account.
+- Already bought SharePad? You won't be charged again. In the menu bar choose
+  "Enter licence…", then "Lost your key?" to fetch your key with your purchase
+  email, and paste it in — the pause is gone for good.
+
 ## 1.0.6
 - The in-app About panel now links to sharepad.co for buying and support, with
   quick "View Source" and "View Licence" links.
