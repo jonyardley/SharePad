@@ -22,8 +22,18 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
-      # Deploy + sync the always-present Resend key. (RESEND_API_KEY is required;
-      # if it's unset the deploy fails loudly, which is correct.)
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Test
+        working-directory: workers/purchase-email
+        run: npm test
+
+      # Deploy + sync the required secrets. RESEND_API_KEY (Resend send) and
+      # ED25519_PRIVATE_KEY (signs the licence key carried in the email — same value
+      # as the sharepad-licenses Worker, pairs with the app's embedded public key)
+      # are both required; if either is unset the deploy fails loudly, which is correct.
       - name: Deploy with Wrangler
         uses: cloudflare/wrangler-action@v3
         with:
@@ -32,8 +42,10 @@ jobs:
           workingDirectory: workers/purchase-email
           secrets: |
             RESEND_API_KEY
+            ED25519_PRIVATE_KEY
         env:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          ED25519_PRIVATE_KEY: ${{ secrets.ED25519_PRIVATE_KEY }}
 
       # STRIPE_WEBHOOK_SECRET is created only AFTER the Worker first exists (its URL
       # is needed to register the Stripe webhook), so it's absent on the first
