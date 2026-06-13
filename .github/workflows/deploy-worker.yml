@@ -30,6 +30,15 @@ jobs:
         working-directory: workers/purchase-email
         run: npm test
 
+      # Block the deploy if the signing key doesn't pair with the app's embedded
+      # public key — the bug from #108, where the worker minted keys every shipped
+      # build rejected. Catches a stale embedded key, a wrong/rotated secret, or a
+      # newline-corrupted secret. Only the derived public key is printed.
+      - name: Verify signing key pairs with the app
+        env:
+          ED25519_PRIVATE_KEY: ${{ secrets.ED25519_PRIVATE_KEY }}
+        run: node scripts/check-key-pairing.mjs
+
       # Deploy + sync the required secrets. RESEND_API_KEY (Resend send) and
       # ED25519_PRIVATE_KEY (signs the licence key carried in the email — same value
       # as the sharepad-licenses Worker, pairs with the app's embedded public key)
