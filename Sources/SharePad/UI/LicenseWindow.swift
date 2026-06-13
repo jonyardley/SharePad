@@ -11,8 +11,8 @@ enum LicenseWindow {
 
     static func present(model: AppModel) {
         let win = window ?? makeWindow()
-        // Reset to a fresh form every time, so a reused window never reopens on a
-        // stale success screen (or a pending auto-close task) from a prior visit.
+        // A reused window must never reopen on a stale success screen or a
+        // still-pending auto-close task left over from a prior visit.
         win.contentViewController = NSHostingController(
             rootView: LicenseEntryView(model: model, onClose: { win.close() })
         )
@@ -105,7 +105,7 @@ struct LicenseEntryView: View {
             }
         }
         .task {
-            try? await Task.sleep(for: .seconds(3))
+            try? await Task.sleep(for: .seconds(4))
             onClose()
         }
     }
