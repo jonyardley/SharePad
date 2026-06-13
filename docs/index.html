@@ -332,6 +332,7 @@
   .final-card img { width: 92px; height: 92px; border-radius: 22px; box-shadow: 0 20px 40px rgba(20,26,80,0.5); margin-bottom: 26px; }
   .final-card h2 { color: #fff; margin-bottom: 14px; }
   .final-card p { color: rgba(255,255,255,0.82); max-width: 44ch; margin: 0 auto 30px; }
+  .final-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; }
   .final-card .btn-primary { background: #fff; color: var(--indigo); box-shadow: 0 14px 30px rgba(20,26,80,0.4); }
   .final-card .btn-primary:hover { filter: brightness(0.98); }
   .final-card .sub { font-size: 0.86rem; color: rgba(255,255,255,0.82); margin-top: 18px; }
@@ -351,6 +352,9 @@
     .nav-links .muted { display: none; }
     header.hero { padding: 60px 0 20px; }
     .float-chip.tl { left: 2%; } .float-chip.br { right: 2%; }
+    .final-card { padding: 56px 22px; }
+    .final-actions { flex-direction: column; align-items: stretch; }
+    .final-card .btn { width: 100%; justify-content: center; }
   }
 </style>
 
@@ -749,13 +753,15 @@
       <img src="assets/icon-256.png" alt="SharePad icon" />
       <h2>Make every call more visual.</h2>
       <p>Plug in, pick the window, and draw.</p>
-      <a class="btn btn-primary" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.6 8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg>
-        Download — free for 7 days
-      </a>
-      <a class="btn btn-ghost" href="https://buy.sharepad.co/final" style="color:#fff;background:rgba(255,255,255,0.14);margin-left:12px">
-        Buy a licence — £6.99
-      </a>
+      <div class="final-actions">
+        <a class="btn btn-primary" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.6 8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg>
+          Download — free for 7 days
+        </a>
+        <a class="btn btn-ghost" href="https://buy.sharepad.co/final" style="color:#fff;background:rgba(255,255,255,0.14)">
+          Buy a licence — £6.99
+        </a>
+      </div>
       <p class="sub">Free for 7 days, then £6.99 · one-time · updates for life · no subscription</p>
     </div>
   </div>
