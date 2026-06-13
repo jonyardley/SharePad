@@ -242,10 +242,12 @@ before touching capture.
   well-formed key that doesn't pair with the worker's private key — only the
   deploy-time E2E proves the pairing). The signing private key lives only in the
   Cloudflare Worker (and Jon's password manager), never in the repo.
-- **The trial overlay is a foreign `NSHostingView` subview** inside the share
-  window's content view — stable only because the window's root SwiftUI hierarchy is
-  static. If the share window's content becomes dynamic, revisit (ZStack-in-root is
-  the safer shape).
+- **The trial overlay is part of the share window's SwiftUI root** — a `ZStack`
+  over `PreviewView`, toggled by an `@Observable ShareOverlayModel` flag
+  (`ShareWindowController`). It is deliberately *not* a foreign `NSHostingView`
+  subview added on top of the hosting view: that does **not** reliably composite
+  above the layer-backed preview (the overlay silently never renders). Keep new
+  share-window chrome inside this root, not as added subviews.
 
 ## Workflow
 

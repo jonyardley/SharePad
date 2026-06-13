@@ -329,7 +329,9 @@ ipad-share/
 
 The 7-day trial gate is owned by `AppModel` (per-session timer + entitlement
 state); once the trial expires the share window pauses behind a `TrialOverlayView`,
-a foreign `NSHostingView` added as a subview of the share window's `contentView`.
+rendered as a `ZStack` layer over the preview in the window's SwiftUI root (toggled
+by an `@Observable` flag) — so it composites over the live feed and into the
+shared pixels.
 The `worker/` directory holds the Cloudflare Worker that issues offline Ed25519
 licence keys after Stripe checkout — see §12 and `specs/licensing.md` v2.
 
