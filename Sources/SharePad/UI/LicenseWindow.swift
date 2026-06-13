@@ -1,8 +1,41 @@
+import AppKit
 import SwiftUI
 
-struct LicenseSheet: View {
-    @Environment(AppModel.self) private var model
-    @Environment(\.dismiss) private var dismiss
+// A MenuBarExtra (.window) popover dismisses the moment focus leaves it, so a
+// `.sheet` presented from it can't hold keyboard focus — text fields can't be
+// edited and the form vanishes. Licence entry therefore lives in a real, focusable
+// window (same approach as the About panel), independent of the popover.
+@MainActor
+enum LicenseWindow {
+    private static var window: NSWindow?
+
+    static func present(model: AppModel) {
+        if let window {
+            NSApp.activate(ignoringOtherApps: true)
+            window.makeKeyAndOrderFront(nil)
+            return
+        }
+        let win = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 360, height: 200),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        win.title = "Enter your SharePad licence"
+        win.isReleasedWhenClosed = false
+        win.contentViewController = NSHostingController(
+            rootView: LicenseEntryView(model: model, onClose: { win.close() })
+        )
+        win.center()
+        window = win
+        NSApp.activate(ignoringOtherApps: true)
+        win.makeKeyAndOrderFront(nil)
+    }
+}
+
+struct LicenseEntryView: View {
+    let model: AppModel
+    let onClose: () -> Void
     @State private var email = ""
     @State private var key = ""
     @State private var failed = false
@@ -27,10 +60,10 @@ struct LicenseSheet: View {
                         .buttonStyle(.link)
                 }
                 Spacer()
-                Button("Cancel") { dismiss() }
+                Button("Cancel") { onClose() }
                 Button("Activate") {
                     if model.enterLicense(email: email, key: key) {
-                        dismiss()
+                        onClose()
                     } else {
                         failed = true
                     }

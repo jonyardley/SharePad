@@ -4,7 +4,6 @@ import SwiftUI
 struct PopoverView: View {
     @Environment(AppModel.self) private var model
     let updater: SoftwareUpdating
-    @State private var showingLicenseSheet = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
@@ -65,9 +64,6 @@ struct PopoverView: View {
         }
         .padding()
         .frame(width: 260)
-        .sheet(isPresented: $showingLicenseSheet) {
-            LicenseSheet().environment(model)
-        }
         .onAppear { model.popoverDidAppear() }
         .onDisappear { model.popoverDidDisappear() }
     }
@@ -94,7 +90,7 @@ struct PopoverView: View {
                 if License.buyURL != nil {
                     Button("Buy a licence") { model.openBuyPage() }
                 }
-                Button("Enter licence…") { showingLicenseSheet = true }
+                Button("Enter licence…") { LicenseWindow.present(model: model) }
             }
             Divider()
         }
