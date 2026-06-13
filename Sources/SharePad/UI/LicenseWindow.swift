@@ -10,11 +10,19 @@ enum LicenseWindow {
     private static var window: NSWindow?
 
     static func present(model: AppModel) {
-        if let window {
-            NSApp.activate(ignoringOtherApps: true)
-            window.makeKeyAndOrderFront(nil)
-            return
-        }
+        let win = window ?? makeWindow()
+        // A reused window must never reopen on a stale success screen or a
+        // still-pending auto-close task left over from a prior visit.
+        win.contentViewController = NSHostingController(
+            rootView: LicenseEntryView(model: model, onClose: { win.close() })
+        )
+        win.center()
+        window = win
+        NSApp.activate(ignoringOtherApps: true)
+        win.makeKeyAndOrderFront(nil)
+    }
+
+    private static func makeWindow() -> NSWindow {
         let win = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 360, height: 200),
             styleMask: [.titled, .closable],
@@ -23,13 +31,7 @@ enum LicenseWindow {
         )
         win.title = "Enter your SharePad licence"
         win.isReleasedWhenClosed = false
-        win.contentViewController = NSHostingController(
-            rootView: LicenseEntryView(model: model, onClose: { win.close() })
-        )
-        win.center()
-        window = win
-        NSApp.activate(ignoringOtherApps: true)
-        win.makeKeyAndOrderFront(nil)
+        return win
     }
 }
 
@@ -39,8 +41,21 @@ struct LicenseEntryView: View {
     @State private var email = ""
     @State private var key = ""
     @State private var failed = false
+    @State private var activated = false
 
     var body: some View {
+        Group {
+            if activated {
+                activatedView
+            } else {
+                form
+            }
+        }
+        .padding()
+        .frame(width: 340)
+    }
+
+    private var form: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
             Text("A one-time licence. Works offline — no account, no sign-in.")
                 .font(.caption)
@@ -62,7 +77,7 @@ struct LicenseEntryView: View {
                     .keyboardShortcut(.cancelAction)
                 Button("Activate") {
                     if model.enterLicense(email: email, key: key) {
-                        onClose()
+                        activated = true
                     } else {
                         failed = true
                     }
@@ -73,7 +88,25 @@ struct LicenseEntryView: View {
         }
         .onChange(of: email) { failed = false }
         .onChange(of: key) { failed = false }
-        .padding()
-        .frame(width: 340)
+    }
+
+    private var activatedView: some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.row) {
+            Label("Licence activated", systemImage: "checkmark.circle.fill")
+                .font(.headline)
+                .foregroundStyle(.green)
+            Text("Thanks for buying SharePad — the pause is gone for good.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            HStack {
+                Spacer()
+                Button("Done") { onClose() }
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .task {
+            try? await Task.sleep(for: .seconds(4))
+            onClose()
+        }
     }
 }
