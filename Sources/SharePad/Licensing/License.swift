@@ -5,14 +5,13 @@ enum License {
     static let publicKeyBase64 = "H5WnE78kLWBzUUh9akQ9tTD3/EPZwJLFl7HkxhDDrvQ="
 
     // Buy points at the live first-party storefront (storefront-agnostic, so swapping
-    // processor needs no app release). recoverURL stays a placeholder until the
-    // licence-key worker is deployed — FIXME(specs/licensing.md §8).
+    // processor needs no app release); recover points at the deployed licence-key worker.
     static var buyURL: URL? {
         configuredURL("https://buy.sharepad.co")
     }
 
     static var recoverURL: URL? {
-        configuredURL("https://example.invalid/recover")
+        configuredURL("https://sharepad-licenses.jonyardley.workers.dev/recover")
     }
 
     private static func configuredURL(_ string: String) -> URL? {
