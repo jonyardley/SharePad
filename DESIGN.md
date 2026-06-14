@@ -324,7 +324,8 @@ ipad-share/
   Tests/SharePadTests/
     AppStateReducerTests.swift
     PreferencesTests.swift
-  worker/                       # Cloudflare Worker: Stripe licence-key issuance
+  workers/licenses/             # Cloudflare Worker: Stripe licence-key issuance
+  workers/purchase-email/       # Cloudflare Worker: post-purchase email (Resend)
 ```
 
 The 7-day trial gate is owned by `AppModel` (per-session timer + entitlement
@@ -332,8 +333,8 @@ state); once the trial expires the share window pauses behind a `TrialOverlayVie
 rendered as a `ZStack` layer over the preview in the window's SwiftUI root (toggled
 by an `@Observable` flag) — so it composites over the live feed and into the
 shared pixels.
-The `worker/` directory holds the Cloudflare Worker that issues offline Ed25519
-licence keys after Stripe checkout — see §12 and `specs/licensing.md` v2.
+The `workers/licenses/` directory holds the Cloudflare Worker that issues offline
+Ed25519 licence keys after Stripe checkout — see §12 and `specs/licensing.md` v2.
 
 ---
 
@@ -429,7 +430,7 @@ hardware, so we **isolate the pure logic** and **manually verify the pipeline**.
    live Stripe Managed Payments storefront (the live-storefront decision above
    stands; this evolves it). After the trial the share window pauses after 5
    minutes/session behind a trial overlay until a key is entered. Keys are offline
-   Ed25519 signatures of the buyer email, issued by a Cloudflare Worker (`worker/`)
+   Ed25519 signatures of the buyer email, issued by a Cloudflare Worker (`workers/licenses/`)
    and validated against an embedded public key. App + worker have landed;
    deployment is pending. See `specs/licensing.md` v2.
 

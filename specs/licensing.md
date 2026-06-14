@@ -10,7 +10,7 @@
 > **honor-system soft gate** (source builders can still compile it out), trading
 > the "byte-for-byte identical build" property for conversion. The existing
 > `buy.sharepad.co` storefront is reused as the Buy destination; wiring checkout
-> to licence-key issuance (the `worker/` route) is the pending deployment step.
+> to licence-key issuance (the `workers/licenses/` route) is the pending deployment step.
 > Sibling: `specs/distribution.md` (release pipeline this builds on).
 
 ## 1. Problem & goal
@@ -52,7 +52,7 @@ key = base64url( Ed25519-sign(privateKey, lowercase(trim(email))) )
 - Deterministic signatures ⇒ lost keys are recovered by **regenerating**, not
   looking up — no key database anywhere.
 - Existing `buy.sharepad.co` buyers (from the no-gate era): mint keys manually
-  with a one-off script (`worker/scripts/mint-key.mjs`) using the same signing key.
+  with a one-off script (`workers/licenses/scripts/mint-key.mjs`) using the same signing key.
 
 ## 4. Checkout backend (Cloudflare Worker)
 

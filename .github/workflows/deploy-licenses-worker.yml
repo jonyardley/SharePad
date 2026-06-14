@@ -8,7 +8,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "worker/**"
+      - "workers/licenses/**"
       - ".github/workflows/deploy-licenses-worker.yml"
   workflow_dispatch:
 
@@ -28,7 +28,7 @@ jobs:
           node-version: 20
 
       - name: Test
-        working-directory: worker
+        working-directory: workers/licenses
         run: npm test
 
       # Block the deploy if the signing key doesn't pair with the app's embedded
@@ -49,7 +49,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          workingDirectory: worker
+          workingDirectory: workers/licenses
           secrets: |
             ED25519_PRIVATE_KEY
             STRIPE_API_KEY
