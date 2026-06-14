@@ -20,15 +20,13 @@ private struct StatusItemLabel: View {
 
     var body: some View {
         // Menu-bar items render monochrome (template), so signal state with a glyph swap,
-        // not a colour the menu bar strips. The transient lost-share glyph takes precedence
-        // so a closed-popover user still sees the drop, but stays neutral — a disconnect is
-        // routine, not an error.
+        // not a colour the menu bar strips. A lost share shows no alarm glyph here — the
+        // iPad is simply gone, so the idle mark is honest; the popover banner is the notice.
         icon
     }
 
     private var icon: Image {
-        if model.shareLostSignal { return Image(systemName: "cable.connector.slash") }
-        return Image(model.isLive ? "MenuBarIconLive" : "MenuBarIcon")
+        Image(model.isLive ? "MenuBarIconLive" : "MenuBarIcon")
     }
 }
 
