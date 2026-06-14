@@ -19,11 +19,10 @@ private struct StatusItemLabel: View {
     var model: AppModel
 
     var body: some View {
-        // Menu-bar items render monochrome (template), so signal state with a glyph
-        // swap, not a colour the menu bar strips. The custom MenuBarIcon assets are the
-        // app-icon mark (a framed screen); live adds a play badge. The transient
-        // lost-share glyph takes precedence so a closed-popover user still sees the drop,
-        // but stays neutral (a disconnect is routine, not an error).
+        // Menu-bar items render monochrome (template), so signal state with a glyph swap,
+        // not a colour the menu bar strips. The transient lost-share glyph takes precedence
+        // so a closed-popover user still sees the drop, but stays neutral — a disconnect is
+        // routine, not an error.
         icon
     }
 
