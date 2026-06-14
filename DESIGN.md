@@ -31,8 +31,10 @@ displayed as full shared content (not a webcam tile).
 - ~~**No** distribution / App Store / notarization — personal local build.~~
   **Superseded (2026-06-05):** 1.0 ships as a notarized **direct download**
   (Developer ID, not App Store — the sandbox breaks the CMIO opt-in). The app is
-  **open source (GPLv3)**; the notarized build is sold as a paid convenience, not
-  enforced by a licence key. See `specs/distribution.md` and `specs/licensing.md`.
+  **open source (GPLv3)**; the notarized build is the paid convenience.
+  **Extended (2026-06-13):** a GPLv3 honor-system 7-day trial + one-time Ed25519
+  licence-key gate now layers on top (see [§12](#12-open-questions) item 5). See
+  `specs/distribution.md` and `specs/licensing.md` v2.
 
 ---
 
@@ -421,8 +423,8 @@ hardware, so we **isolate the pure logic** and **manually verify the pipeline**.
    `com.apple.security.device.camera` entitlement; **no** sandbox, since it breaks
    the CMIO opt-in — so App Store is out), auto-updating via Sparkle. The app is
    **open source under GPLv3**: anyone may build it; the prebuilt signed build is
-   **sold as a paid convenience** (no trial, no licence keys — open source makes
-   enforcement moot). Full plan in `specs/distribution.md` (release pipeline) and
+   **sold as a paid convenience** (originally no trial and no licence keys —
+   **reopened below**). Full plan in `specs/distribution.md` (release pipeline) and
    `specs/licensing.md` (the sell-the-build model).
 
    **Extended (2026-06-13):** the "no-gate" stance is reopened — the model now
@@ -431,8 +433,9 @@ hardware, so we **isolate the pure logic** and **manually verify the pipeline**.
    stands; this evolves it). After the trial the share window pauses after 5
    minutes/session behind a trial overlay until a key is entered. Keys are offline
    Ed25519 signatures of the buyer email, issued by a Cloudflare Worker (`workers/licenses/`)
-   and validated against an embedded public key. App + worker have landed;
-   deployment is pending. See `specs/licensing.md` v2.
+   and validated against an embedded public key. App, worker, and Stripe/Cloudflare
+   deployment have shipped (live 2026-06-14; see `CHANGELOG.md` 1.1.0). See
+   `specs/licensing.md` v2.
 
 ---
 
