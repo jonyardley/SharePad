@@ -233,7 +233,7 @@ final class LicenseGateTests: GateTestCase {
             sessionLimit: 100
         )
         await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
-        // No expiry → no pause timer arms; drain any scheduled work, then confirm it stayed clear.
+        // Drain any scheduled work, then confirm the overlay never fired.
         for _ in 0 ..< 100 {
             await Task.yield()
         }
