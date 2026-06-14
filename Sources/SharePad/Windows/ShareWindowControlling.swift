@@ -1,4 +1,5 @@
 import CoreGraphics
+import Foundation
 
 @MainActor
 protocol ShareWindowControlling {
@@ -7,4 +8,5 @@ protocol ShareWindowControlling {
     func updateSize(_ size: CGSize)
     func setKeepOnTop(_ enabled: Bool)
     func setTrialOverlay(_ visible: Bool)
+    func setTrialCountdown(endsAt: Date?)
 }

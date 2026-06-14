@@ -24,6 +24,9 @@ final class AppModel {
 
     private(set) var entitlement: Entitlement = .trial(daysLeft: EntitlementClock.trialDays)
     private(set) var isTrialOverlayShown = false
+    // When set, a post-trial session is counting down to the pause; the watermark
+    // and popover render it live. Nil once paused, licensed, or not sharing.
+    private(set) var sessionEndsAt: Date?
 
     var isConnected: Bool {
         currentDeviceName != nil
@@ -61,6 +64,11 @@ final class AppModel {
     private let now: () -> Date
     private let sessionLimit: TimeInterval
     private var sessionTimer: Task<Void, Never>?
+    // The post-trial pause meters actual sharing: `sessionRemaining` is the budget
+    // left for `sessionDeviceID`. The same iPad resumes its remaining time on
+    // reconnect (unplug/replug can't reset the gate); a different iPad starts fresh.
+    private var sessionRemaining: TimeInterval = 0
+    private var sessionDeviceID: String?
     private(set) var currentDeviceID: String?
     private var isReconfiguring = false
     private var windowHotkey: GlobalHotkey?
@@ -111,6 +119,7 @@ final class AppModel {
         self.validator = validator
         self.now = now
         self.sessionLimit = sessionLimit
+        sessionRemaining = sessionLimit
         monitor = DeviceMonitor()
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
@@ -140,7 +149,7 @@ final class AppModel {
         if isWindowVisible {
             window.hide()
             isWindowVisible = false
-            endTrialSession()
+            suspendTrialSession()
         } else if isConnected {
             presentWindow()
         }
@@ -214,7 +223,7 @@ final class AppModel {
     private func presentWindow() {
         window.show(size: videoSize ?? Self.defaultSize)
         isWindowVisible = true
-        startTrialSessionIfNeeded()
+        armOrResumeTrialSession()
     }
 
     private func observeVideoSize() async {
@@ -296,10 +305,14 @@ extension AppModel {
         failed = !running
         if running {
             preferences.lastDeviceID = device.id
+            // A manual switch is a different iPad: suspend the old device's countdown
+            // and re-arm so the gate re-buckets to a fresh budget for the new one.
+            suspendTrialSession()
+            armOrResumeTrialSession()
         } else {
             window.hide()
             isWindowVisible = false
-            endTrialSession()
+            suspendTrialSession()
         }
         isReconfiguring = false
     }
@@ -323,7 +336,7 @@ extension AppModel {
             videoSize = nil
             window.hide()
             isWindowVisible = false
-            endTrialSession()
+            suspendTrialSession()
             await capture.stop()
             if wasSharing { raiseShareLost() }
         case let .keep(device):
@@ -343,10 +356,10 @@ extension AppModel {
 
     private func beginAutoConnect(device: CaptureDevice) async {
         cancelAutoConnect()
-        // A new device's session starts fresh: clear any prior device's expired-trial
-        // overlay/timer. The hot-swap path (.switchTo) reuses the visible window without
-        // a hide cycle, so this is the only place that resets the gate for the new device.
-        endTrialSession()
+        // Suspend the prior device's countdown/overlay before connecting. The new
+        // device's budget is decided in armOrResumeTrialSession: a different iPad
+        // starts fresh, the same one resumes — so this must not reset it here.
+        suspendTrialSession()
         currentDeviceID = device.id
         currentDeviceName = device.name
         isLive = false
@@ -379,7 +392,7 @@ extension AppModel {
         failed = true
         window.hide()
         isWindowVisible = false
-        endTrialSession()
+        suspendTrialSession()
     }
 
     private func connectOnce(deviceID: String, generation: Int) async -> ConnectOutcome {
@@ -400,7 +413,7 @@ extension AppModel {
             } else if isWindowVisible {
                 // Hot-swap: window stayed up, so presentWindow() is skipped — re-arm the
                 // expired-trial gate for the new device's session explicitly.
-                startTrialSessionIfNeeded()
+                armOrResumeTrialSession()
             }
             return .live
         }
@@ -417,7 +430,7 @@ extension AppModel {
         preferences.licenseEmail = LicenseValidator.normalize(email)
         preferences.licenseKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshEntitlement()
-        endTrialSession()
+        resetTrialSession()
         return true
     }
 
@@ -445,28 +458,63 @@ extension AppModel {
         return validator.isValid(key: key, email: email)
     }
 
-    private func startTrialSessionIfNeeded() {
+    private func armOrResumeTrialSession() {
         refreshEntitlement()
-        guard entitlement == .trialExpired, sessionTimer == nil else { return }
+        guard entitlement == .trialExpired, isWindowVisible,
+              sessionTimer == nil, !isTrialOverlayShown else { return }
+        if currentDeviceID != sessionDeviceID {
+            sessionDeviceID = currentDeviceID
+            sessionRemaining = sessionLimit
+        }
+        guard sessionRemaining > 0 else {
+            showTrialPause()
+            return
+        }
+        let remaining = sessionRemaining
+        let deadline = now().addingTimeInterval(remaining)
+        sessionEndsAt = deadline
+        window.setTrialCountdown(endsAt: deadline)
         sessionTimer = Task { [weak self] in
             guard let self else { return }
             do {
-                try await Task.sleep(for: .seconds(sessionLimit))
+                try await Task.sleep(for: .seconds(remaining))
             } catch {
                 return
             }
             guard isWindowVisible, entitlement == .trialExpired else { return }
-            isTrialOverlayShown = true
-            window.setTrialOverlay(true)
+            sessionRemaining = 0
+            showTrialPause()
         }
     }
 
-    private func endTrialSession() {
+    private func showTrialPause() {
+        sessionTimer = nil
+        sessionEndsAt = nil
+        window.setTrialCountdown(endsAt: nil)
+        isTrialOverlayShown = true
+        window.setTrialOverlay(true)
+    }
+
+    // Stops the countdown and overlay display but keeps the remaining budget and the
+    // device it belongs to, so the same iPad resumes on reconnect (Model A).
+    private func suspendTrialSession() {
         sessionTimer?.cancel()
         sessionTimer = nil
+        if let deadline = sessionEndsAt {
+            sessionRemaining = max(0, deadline.timeIntervalSince(now()))
+            sessionEndsAt = nil
+            window.setTrialCountdown(endsAt: nil)
+        }
         if isTrialOverlayShown {
             isTrialOverlayShown = false
             window.setTrialOverlay(false)
         }
+    }
+
+    // A licence makes the gate moot: clear the display and forget the budget entirely.
+    private func resetTrialSession() {
+        suspendTrialSession()
+        sessionRemaining = sessionLimit
+        sessionDeviceID = nil
     }
 }

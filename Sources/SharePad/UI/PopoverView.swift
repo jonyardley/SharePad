@@ -81,6 +81,19 @@ struct PopoverView: View {
         case let .trial(daysLeft):
             licenseRow(status: "Free trial — \(daysLeft) day\(daysLeft == 1 ? "" : "s") left")
         case .trialExpired:
+            trialExpiredRow
+        }
+    }
+
+    @ViewBuilder private var trialExpiredRow: some View {
+        if model.isTrialOverlayShown {
+            licenseRow(status: "Sharing paused — enter your licence to resume")
+        } else if let endsAt = model.sessionEndsAt {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                licenseRow(status: "Free trial ended — sharing pauses in "
+                    + SessionCountdown.remainingText(until: endsAt, now: context.date))
+            }
+        } else {
             licenseRow(
                 status: "Free trial ended — sharing pauses after \(model.sessionLimitMinutes) min"
             )
