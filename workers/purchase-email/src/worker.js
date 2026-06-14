@@ -147,6 +147,7 @@ async function sendPurchaseEmail(env, to, key) {
       to,
       subject: "Your SharePad licence and download",
       html: purchaseEmailHtml(downloadUrl, to, key, recoverUrl),
+      text: purchaseEmailText(downloadUrl, to, key, recoverUrl),
     }),
   });
 
@@ -155,51 +156,111 @@ async function sendPurchaseEmail(env, to, key) {
   }
 }
 
+// Email-safe by construction: Spark/Outlook drop rgba(), styled <a> buttons,
+// <pre>, and div cards that Gmail tolerates — hence tables, a bgcolor button, and hex.
 export function purchaseEmailHtml(downloadUrl, email, key, recoverUrl) {
   const address = escapeHtml(normalizeEmail(email));
+  const href = escapeHtml(downloadUrl);
+  const recover = escapeHtml(recoverUrl);
+  const font = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+  const mono = "'SF Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace";
   return `<!doctype html>
 <html lang="en">
-<body style="margin:0;background:#F3F4FB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#181C44;">
-  <div style="max-width:520px;margin:0 auto;padding:32px 24px;">
-    <div style="background:#FFFFFF;border:1px solid rgba(46,56,144,0.12);border-radius:24px;padding:36px 32px;">
-      <h1 style="font-size:22px;line-height:1.25;margin:0 0 12px;">Thanks for buying SharePad</h1>
-      <p style="font-size:15px;line-height:1.6;color:#4A4F78;margin:0 0 24px;">
-        Your download is ready whenever you need it, including if you ever switch Macs.
-        Keep this email; the link below always points at the latest version.
-      </p>
-      <a href="${downloadUrl}"
-         style="display:inline-block;background:#3E4CB3;color:#ffffff;text-decoration:none;font-weight:600;font-size:15px;padding:14px 26px;border-radius:999px;">
-        Download SharePad
-      </a>
-      <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:24px 0 0;">
-        Signed &amp; notarised by Apple. Open the DMG, drag SharePad to Applications,
-        and it lives in your menu bar. Plug in your iPad over USB and the share window
-        appears automatically.
-      </p>
-      <div style="margin-top:28px;padding-top:24px;border-top:1px solid rgba(46,56,144,0.12);">
-        <p style="font-size:15px;line-height:1.6;color:#181C44;margin:0 0 12px;font-weight:600;">Your licence</p>
-        <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 4px;">Email: <code>${address}</code></p>
-        <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 6px;">Key:</p>
-        <pre style="font-size:12px;background:#F3F4FB;border-radius:10px;padding:12px 14px;overflow-x:auto;margin:0 0 16px;color:#181C44;">${escapeHtml(key)}</pre>
-        <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 12px;">
-          In SharePad's menu bar, choose "Enter licence..." and paste both. It takes
-          effect straight away and works offline &mdash; SharePad never checks in with a server.
-        </p>
-        <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0;">
-          Lost your key later? Get it again anytime at
-          <a href="${escapeHtml(recoverUrl)}" style="color:#3E4CB3;">recover your licence</a>
-          with the email above &mdash; no account, no sign-in.
-        </p>
-      </div>
-      <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:24px 0 0;">
-        SharePad is open source (GPLv3) with automatic updates for life. Need a hand?
-        Just reply to this email.
-      </p>
-    </div>
-    <p style="text-align:center;font-size:12px;color:#4A4F78;margin:20px 0 0;">
-      <a href="https://sharepad.co" style="color:#3E4CB3;text-decoration:none;">sharepad.co</a>
-    </p>
-  </div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light only">
+  <meta name="supported-color-schemes" content="light">
+</head>
+<body style="margin:0;padding:0;background:#F3F4FB;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#F3F4FB;">
+    <tr>
+      <td align="center" style="padding:32px 16px;">
+        <table role="presentation" width="520" cellpadding="0" cellspacing="0" border="0" style="width:520px;max-width:100%;">
+          <tr>
+            <td style="background:#FFFFFF;border:1px solid #E6E7F2;border-radius:24px;padding:36px 32px;font-family:${font};color:#181C44;">
+              <h1 style="font-size:22px;line-height:1.25;margin:0 0 12px;color:#181C44;">Thanks for buying SharePad</h1>
+              <p style="font-size:15px;line-height:1.6;color:#4A4F78;margin:0 0 24px;">
+                Your download is ready whenever you need it, including if you ever switch Macs.
+                Keep this email; the link below always points at the latest version.
+              </p>
+              <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" bgcolor="#3E4CB3" style="border-radius:999px;">
+                    <a href="${href}" style="display:inline-block;color:#FFFFFF;text-decoration:none;font-family:${font};font-weight:600;font-size:15px;line-height:1;padding:15px 28px;border-radius:999px;">Download SharePad</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:24px 0 0;">
+                Signed &amp; notarised by Apple. Open the DMG, drag SharePad to Applications,
+                and it lives in your menu bar. Plug in your iPad over USB and the share window
+                appears automatically.
+              </p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px;">
+                <tr><td style="border-top:1px solid #E6E7F2;font-size:0;line-height:0;height:1px;">&nbsp;</td></tr>
+              </table>
+              <p style="font-size:15px;line-height:1.6;color:#181C44;margin:24px 0 12px;font-weight:600;">Your licence</p>
+              <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 4px;">Email: <span style="font-family:${mono};color:#181C44;">${address}</span></p>
+              <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 6px;">Key:</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 16px;">
+                <tr>
+                  <td style="background:#F3F4FB;border-radius:10px;padding:12px 14px;font-family:${mono};font-size:12px;line-height:1.5;color:#181C44;word-break:break-all;">${escapeHtml(key)}</td>
+                </tr>
+              </table>
+              <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 12px;">
+                In SharePad's menu bar, choose "Enter licence..." and paste both. It takes
+                effect straight away and works offline &mdash; SharePad never checks in with a server.
+              </p>
+              <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0;">
+                Lost your key later? Get it again anytime at
+                <a href="${recover}" style="color:#3E4CB3;">recover your licence</a>
+                with the email above &mdash; no account, no sign-in.
+              </p>
+              <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:24px 0 0;">
+                SharePad is open source (GPLv3) with automatic updates for life. Need a hand?
+                Just reply to this email.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td align="center" style="padding:20px 0 0;font-family:${font};font-size:12px;color:#4A4F78;">
+              <a href="https://sharepad.co" style="color:#3E4CB3;text-decoration:none;">sharepad.co</a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>`;
+}
+
+export function purchaseEmailText(downloadUrl, email, key, recoverUrl) {
+  const address = normalizeEmail(email);
+  return `Thanks for buying SharePad
+
+Your download is ready whenever you need it, including if you ever switch Macs.
+Keep this email; the link below always points at the latest version.
+
+Download SharePad: ${downloadUrl}
+
+Signed & notarised by Apple. Open the DMG, drag SharePad to Applications, and it
+lives in your menu bar. Plug in your iPad over USB and the share window appears
+automatically.
+
+Your licence
+Email: ${address}
+Key:
+${key}
+
+In SharePad's menu bar, choose "Enter licence..." and paste both. It takes effect
+straight away and works offline -- SharePad never checks in with a server.
+
+Lost your key later? Get it again anytime at ${recoverUrl} with the email above
+-- no account, no sign-in.
+
+SharePad is open source (GPLv3) with automatic updates for life. Need a hand?
+Just reply to this email.
+
+sharepad.co`;
 }

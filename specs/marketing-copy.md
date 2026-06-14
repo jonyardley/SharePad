@@ -132,5 +132,5 @@ the **download link + the licence key**. The HTML lives in `purchaseEmailHtml`.
   gated app release — until then, a no-gate buyer would get a key they can't yet use.
 - **`sharepad-licenses`** worker: `/recover` (self-service re-derivation) and an
   optional `/key` page. It does not send email.
-- **Existing buyers** (from the no-gate era): mint with `worker/scripts/mint-key.mjs`
+- **Existing buyers** (from the no-gate era): mint with `workers/licenses/scripts/mint-key.mjs`
   and send by hand using the §3 shape.

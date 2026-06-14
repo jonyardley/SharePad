@@ -36,7 +36,8 @@ CLAUDE.md                   # this file
 specs/                      # per-feature specs, Tier 3 only (see Workflow)
 Sources/SharePad/         # app code (see DESIGN.md §8 for the module map)
 Tests/SharePadTests/      # pure-logic tests (reducer, preferences)
-worker/                     # Cloudflare Worker: licence key issuance (Stripe, trial gate)
+workers/licenses/           # Cloudflare Worker: licence key issuance (Stripe, trial gate)
+workers/purchase-email/     # Cloudflare Worker: post-purchase licence + download email (Resend)
 ```
 
 ## Tech Stack

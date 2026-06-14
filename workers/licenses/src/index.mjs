@@ -101,7 +101,7 @@ function recoverFormHtml() {
     <p>Already bought SharePad? You don't need to buy again. Enter the email you
     used at checkout and we'll send your key straight back.</p>
     <form method="get" action="/recover">
-      <input type="email" name="email" placeholder="you@example.com" required>
+      <input type="email" name="email" placeholder="you@example.com" autocomplete="email" required>
       <button type="submit">Recover key</button>
     </form>`);
 }
@@ -114,14 +114,45 @@ function page(title, body) {
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light only">
 <title>${escapeHtml(title)} — SharePad</title>
 <style>
-  body { font: 16px/1.6 -apple-system, system-ui, sans-serif; max-width: 560px;
-         margin: 12vh auto; padding: 0 24px; color: #1d1d1f; }
-  pre { background: #f5f5f7; padding: 12px 16px; border-radius: 8px;
-        overflow-x: auto; user-select: all; }
-  input { font: inherit; padding: 8px 12px; }
-  button { font: inherit; padding: 8px 16px; }
+  :root {
+    --bg: #F3F4FB; --card: #FFFFFF; --border: #E6E7F2;
+    --ink: #181C44; --muted: #4A4F78; --accent: #3E4CB3;
+    --mono: 'SF Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { font: 16px/1.6 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+         Helvetica, Arial, sans-serif; background: var(--bg); color: var(--ink);
+         margin: 0; padding: 32px 16px; min-height: 100vh;
+         display: flex; flex-direction: column; align-items: center;
+         justify-content: center; }
+  main { width: 520px; max-width: 100%; }
+  .card { background: var(--card); border: 1px solid var(--border);
+          border-radius: 24px; padding: 36px 32px; }
+  h1 { font-size: 22px; line-height: 1.25; margin: 0 0 12px; }
+  p { color: var(--muted); margin: 0 0 16px; }
+  p:last-child { margin-bottom: 0; }
+  strong { color: var(--ink); }
+  a { color: var(--accent); }
+  code { font-family: var(--mono); color: var(--ink); }
+  pre { font-family: var(--mono); font-size: 13px; background: var(--bg);
+        color: var(--ink); padding: 12px 14px; border-radius: 10px;
+        white-space: pre-wrap; word-break: break-all; user-select: all;
+        margin: 0 0 16px; }
+  form { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0 0; }
+  input { flex: 1 1 220px; font: inherit; padding: 12px 14px; color: var(--ink);
+          background: #fff; border: 1px solid var(--border); border-radius: 12px; }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 1px;
+                border-color: var(--accent); }
+  button { font: inherit; font-weight: 600; color: #fff; background: var(--accent);
+           border: 0; border-radius: 999px; padding: 12px 26px; cursor: pointer; }
+  button:hover { filter: brightness(1.06); }
+  footer { text-align: center; font-size: 12px; color: var(--muted);
+           margin: 20px 0 0; }
+  footer a { text-decoration: none; }
 </style></head>
-<body><h1>${escapeHtml(title)}</h1>${body}</body></html>`;
+<body><main><div class="card"><h1>${escapeHtml(title)}</h1>${body}</div>
+<footer><a href="https://sharepad.co">sharepad.co</a></footer></main></body></html>`;
 }

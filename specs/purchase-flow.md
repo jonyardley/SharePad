@@ -84,8 +84,8 @@ Instead, make a duplicate unnecessary and detectable:
   "lost my key" path; `/key` optionally shows the key instantly if the Payment
   Link redirects there. No email is sent from here (the webhook owns email).
 
-Both Workers deploy via GitHub Actions on push to `main` (paths `worker/**` and
-`workers/purchase-email/**`), running their `npm test` first. Secrets are synced
+Both Workers deploy via GitHub Actions on push to `main` (paths `workers/licenses/**`
+and `workers/purchase-email/**`), running their `npm test` first. Secrets are synced
 from GitHub Actions secrets — GitHub is the source of truth, not manual `wrangler
 secret put`. Required repo secrets: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`,
 `ED25519_PRIVATE_KEY` (both Workers), `STRIPE_API_KEY` (licences), `RESEND_API_KEY`
