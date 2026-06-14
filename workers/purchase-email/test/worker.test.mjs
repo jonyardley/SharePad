@@ -151,6 +151,15 @@ test("completed-but-unpaid session does not send and returns 200", async () => {
   assert.equal(called, 0);
 });
 
+test("paid checkout with no customer email returns 200 and does not send", async () => {
+  let called = 0;
+  globalThis.fetch = async (url) => { if (String(url).includes("resend.com")) called++; return new Response("{}", { status: 200 }); };
+  const body = JSON.stringify({ type: "checkout.session.completed", data: { object: { payment_status: "paid", customer_details: {} } } });
+  const res = await worker.fetch(post(body, await signedHeader(body)), await env());
+  assert.equal(res.status, 200);
+  assert.equal(called, 0);
+});
+
 test("non-checkout event is ignored with 200", async () => {
   const body = JSON.stringify({ type: "payment_intent.succeeded", data: { object: {} } });
   const res = await worker.fetch(post(body, await signedHeader(body)), await env());
