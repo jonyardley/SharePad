@@ -153,3 +153,8 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
    their minted keys (Stripe customer export).
 5. **/recover rate limit** — add a Cloudflare rate-limiting rule (e.g. 5 req/min/IP)
    at deployment; it's a purchase oracle and each probe costs a Stripe API call.
+6. **Pause timer vs. system sleep** — the post-trial session timer uses `Task.sleep`, whose
+   clock does not advance while the Mac is asleep, so a device's session budget can over-grant
+   time after a laptop sleep (the displayed `sessionEndsAt` countdown and the actual pause can
+   diverge). Accepted for v1; revisit by re-arming the session from `sessionEndsAt` on wake.
+   Needs on-device verification first. (CORRECTNESS-01)

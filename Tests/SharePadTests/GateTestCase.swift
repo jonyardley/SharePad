@@ -30,6 +30,7 @@ class GateTestCase: XCTestCase {
         capture: FakeCaptureController = FakeCaptureController(),
         window: FakeShareWindow = FakeShareWindow(),
         now: @escaping () -> Date = Date.init,
+        sleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
         sessionLimit: TimeInterval = 5 * 60
     ) -> AppModel {
         AppModel(
@@ -37,6 +38,7 @@ class GateTestCase: XCTestCase {
             capture: capture,
             window: window,
             thumbnailLayer: AVSampleBufferDisplayLayer(),
+            sleep: sleep,
             validator: validator(),
             now: now,
             sessionLimit: sessionLimit
