@@ -19,15 +19,17 @@ private struct StatusItemLabel: View {
     var model: AppModel
 
     var body: some View {
-        // Menu-bar items render monochrome (template), so signal state with a symbol
-        // swap, not a colour the menu bar strips. The transient lost-share alert takes
-        // precedence so a closed-popover user still sees the share dropped.
-        Image(systemName: symbolName)
+        // Menu-bar items render monochrome (template), so signal state with a glyph
+        // swap, not a colour the menu bar strips. The custom MenuBarIcon assets are the
+        // app-icon mark (a framed screen); live adds a play badge. The transient
+        // lost-share glyph takes precedence so a closed-popover user still sees the drop,
+        // but stays neutral (a disconnect is routine, not an error).
+        icon
     }
 
-    private var symbolName: String {
-        if model.shareLostSignal { return "exclamationmark.triangle.fill" }
-        return model.isLive ? "ipad.landscape.badge.play" : "ipad.landscape"
+    private var icon: Image {
+        if model.shareLostSignal { return Image(systemName: "cable.connector.slash") }
+        return Image(model.isLive ? "MenuBarIconLive" : "MenuBarIcon")
     }
 }
 
