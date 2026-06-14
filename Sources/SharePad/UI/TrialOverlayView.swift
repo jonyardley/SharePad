@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct TrialOverlayView: View {
-    var buyURL: URL? = License.buyURL
+    var onBuy: (() -> Void)?
+    var onEnterLicense: () -> Void
 
     var body: some View {
         VStack(spacing: Theme.Spacing.section) {
@@ -10,17 +11,16 @@ struct TrialOverlayView: View {
                 .foregroundStyle(.secondary)
             Text("Your free trial has ended")
                 .font(.title2.bold())
-            Text("Buy a licence to keep sharing your iPad, interruption-free.")
+            Text("Add your licence to resume sharing. Works offline, no account, no more pauses.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
-            if let buyURL {
-                Link("Buy a licence", destination: buyURL)
+            HStack(spacing: Theme.Spacing.section) {
+                if let onBuy {
+                    Button("Buy a licence", action: onBuy)
+                }
+                Button("Enter licence", action: onEnterLicense)
                     .buttonStyle(.borderedProminent)
             }
-            Text("Already purchased? Open SharePad in the menu bar to enter your licence.")
-                .font(.caption)
-                .multilineTextAlignment(.center)
-                .foregroundStyle(.tertiary)
         }
         .padding(Theme.Spacing.overlayInset)
         .frame(maxWidth: .infinity, maxHeight: .infinity)

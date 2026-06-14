@@ -98,10 +98,17 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
     Only a *different* iPad or an app relaunch starts a fresh 5 minutes. A live
     "pauses in M:SS" countdown shows on the share window (watermark) and popover.
 - **Gate overlay**: at the limit, an opaque full-window overlay renders *in* the
-  share window ("Your free trial has ended — buy a licence to keep sharing your
-  iPad" + Buy button). Copy never mentions the relaunch reset (honor-system, but
-  don't advertise the bypass). The capture session keeps running underneath; a
-  different iPad or an app relaunch resets the session, the same iPad resumes.
+  share window ("Your free trial has ended" + **Buy a licence** and **Enter
+  licence** buttons). The Enter-licence button opens the same focusable
+  `LicenseWindow` the popover uses, so a buyer can activate without hunting for the
+  menu bar; activation (`enterLicense` → `resetTrialSession`) clears the overlay and
+  resumes the feed in place. The action is injected into the share window's
+  `ShareOverlayModel` via `setTrialActions`, with the `LicenseWindow` reference wired
+  from App.swift so the model layer stays UI-free. Copy never mentions the relaunch
+  reset (honor-system, but don't advertise the bypass). The capture session keeps
+  running underneath; a different iPad or an app relaunch resets the session, the
+  same iPad resumes. (`LicenseWindow` floats so it isn't hidden behind a
+  kept-on-top share window.)
 - **Popover**: a status row — "Free trial — N days left" / "Free trial ended — sharing
   pauses after 5 min" — with **Buy** (opens `buy.sharepad.co`) and **Enter
   licence…** (sheet: email + key). Licensed state stays quiet.

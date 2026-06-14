@@ -38,6 +38,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // of the shipping binary's class lookups.
         guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil
         else { return }
+        model.onEnterLicenseRequested = { [weak model] in
+            guard let model else { return }
+            LicenseWindow.present(model: model)
+        }
         model.start()
         updater.start()
         WindowSharing.startGuarding()
