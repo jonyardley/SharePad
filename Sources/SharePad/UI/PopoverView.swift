@@ -16,6 +16,12 @@ struct PopoverView: View {
             statusText
                 .foregroundStyle(.secondary)
 
+            if let hint = statusHint {
+                Text(hint)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             devicePicker
 
             stateAction
@@ -179,6 +185,18 @@ struct PopoverView: View {
         case .starting: Text("Connecting…")
         case .live: Text(model.currentDeviceName ?? "iPad")
         case .failed: Text("Couldn't start the iPad feed.")
+        }
+    }
+
+    // A connected-but-locked or not-yet-trusted iPad shows up to discovery but never
+    // starts a session, so it sits in .starting looking stuck (the hint also flashes
+    // briefly on a healthy connect). The app can't tell "locked" from "still trusting".
+    private var statusHint: String? {
+        switch model.state {
+        case .noDevice: "Plug your iPad in with its cable to begin."
+        case .starting: "Unlock your iPad and tap Trust if it asks."
+        case .failed: "Check your iPad is unlocked and connected, then Retry."
+        default: nil
         }
     }
 }
