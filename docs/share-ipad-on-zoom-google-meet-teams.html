@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>How to share your iPad on Zoom, Google Meet and Teams</title>
+<meta name="description" content="A short, practical guide to sharing your iPad's screen on a video call as a full-size window, ideal for live drawing and whiteboarding. Covers the manual QuickTime route and the one-step way with SharePad, plus fixes for the common black-window problem." />
+<link rel="canonical" href="https://sharepad.co/share-ipad-on-zoom-google-meet-teams.html" />
+
+<meta property="og:title" content="How to share your iPad on Zoom, Google Meet and Teams" />
+<meta property="og:description" content="Share your iPad's screen on a call as a full-size window, not a small webcam tile. The manual way, the one-step way, and how to fix a black shared window." />
+<meta property="og:type" content="article" />
+<meta property="og:site_name" content="SharePad" />
+<meta property="og:image" content="https://sharepad.co/assets/demo.jpg" />
+<meta property="og:image:alt" content="The SharePad window sharing a connected iPad into a Google Meet call at full size." />
+<meta property="og:url" content="https://sharepad.co/share-ipad-on-zoom-google-meet-teams.html" />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="How to share your iPad on Zoom, Google Meet and Teams" />
+<meta name="twitter:description" content="Share your iPad's screen on a call as a full-size window, not a small webcam tile. The manual way, the one-step way, and how to fix a black shared window." />
+<meta name="twitter:image" content="https://sharepad.co/assets/demo.jpg" />
+<meta name="twitter:image:alt" content="The SharePad window sharing a connected iPad into a Google Meet call at full size." />
+
+<link rel="icon" type="image/png" href="assets/icon-256.png" />
+<link rel="apple-touch-icon" href="assets/icon-256.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'" />
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" /></noscript>
+
+<style>
+  :root {
+    --indigo-deep:  #2C3690;
+    --indigo:       #3E4CB3;
+    --periwinkle:   #5B6BE8;
+    --periwinkle-2: #6678E9;
+    --sky:          #89B0E8;
+    --sky-pale:     #BBD3F4;
+    --ink:        #181C44;
+    --ink-soft:   #4A4F78;
+    --paper:      #F3F4FB;
+    --card:       #FFFFFF;
+    --line:       rgba(46, 56, 144, 0.12);
+    --radius-xl: 32px;
+    --radius-lg: 22px;
+    --radius-md: 16px;
+    --maxw: 820px;
+    --font-display: "Bricolage Grotesque", ui-serif, Georgia, serif;
+    --font-body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+  :focus-visible { outline: 2px solid var(--periwinkle); outline-offset: 3px; border-radius: 4px; }
+  a { -webkit-tap-highlight-color: transparent; }
+  h1, h2, h3 { text-wrap: balance; }
+  p, li { text-wrap: pretty; }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 700px at 85% -10%, rgba(91,107,232,0.18), transparent 60%),
+      radial-gradient(900px 600px at -10% 10%, rgba(137,176,232,0.20), transparent 55%),
+      var(--paper);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  a { color: var(--indigo); text-decoration: none; font-weight: 600; }
+  a:hover { text-decoration: underline; }
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: saturate(140%) blur(14px);
+    -webkit-backdrop-filter: saturate(140%) blur(14px);
+    background: rgba(243,244,251,0.72);
+    border-bottom: 1px solid var(--line);
+  }
+  nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 70px; max-width: 1080px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 700; font-size: 1.22rem; letter-spacing: -0.02em; color: var(--ink); }
+  .brand img { width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 4px 12px rgba(46,56,144,0.28); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--font-body); font-weight: 600; font-size: 0.98rem;
+    padding: 12px 20px; border-radius: 999px; border: 0; cursor: pointer;
+    color: #fff; text-decoration: none;
+    background: linear-gradient(135deg, var(--periwinkle-2), var(--indigo) 70%, var(--indigo-deep));
+    box-shadow: 0 10px 24px rgba(62,76,179,0.40), inset 0 1px 0 rgba(255,255,255,0.22);
+    transition: transform .18s cubic-bezier(.2,.8,.2,1), box-shadow .18s;
+    white-space: nowrap;
+  }
+  .btn:hover { transform: translateY(-2px); text-decoration: none; box-shadow: 0 16px 32px rgba(62,76,179,0.48); }
+  .btn svg { width: 17px; height: 17px; }
+
+  article { padding: 56px 0 40px; }
+  .eyebrow { font-size: 0.82rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--periwinkle); margin-bottom: 14px; }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 5vw, 3rem); letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 18px; }
+  .lede { font-size: 1.14rem; color: var(--ink-soft); margin-bottom: 8px; }
+
+  article h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.5rem, 3vw, 2rem); letter-spacing: -0.02em; margin: 48px 0 14px; }
+  article h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; margin: 28px 0 8px; }
+  article p { color: var(--ink-soft); margin-bottom: 16px; }
+  article p b, article li b { color: var(--ink); font-weight: 600; }
+
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 28px 30px; margin: 24px 0; }
+  .card.tip { background: linear-gradient(165deg, #fff, #f4f6ff); }
+
+  ol.steps { list-style: none; counter-reset: step; display: grid; gap: 18px; margin: 8px 0 8px; }
+  ol.steps > li { counter-increment: step; position: relative; padding-left: 48px; color: var(--ink-soft); }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: -2px;
+    width: 32px; height: 32px; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--font-display); font-weight: 700; font-size: 0.95rem;
+    color: var(--indigo); background: rgba(91,107,232,0.12); border: 1px solid var(--line);
+  }
+  ol.steps > li strong { color: var(--ink); font-weight: 600; }
+
+  ul.plain { list-style: none; display: grid; gap: 12px; margin: 8px 0; }
+  ul.plain li { display: flex; gap: 12px; color: var(--ink-soft); }
+  ul.plain li svg { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 4px; color: var(--periwinkle); }
+
+  .cta-band { text-align: center; background: linear-gradient(150deg, var(--periwinkle-2), var(--indigo) 65%, var(--indigo-deep)); color: #fff; border-radius: var(--radius-xl); padding: 48px 28px; margin: 48px 0 8px; }
+  .cta-band h2 { color: #fff; margin: 0 0 10px; }
+  .cta-band p { color: rgba(255,255,255,0.84); margin: 0 auto 22px; max-width: 44ch; }
+  .cta-band .btn { background: #fff; color: var(--indigo); box-shadow: 0 14px 30px rgba(20,26,80,0.4); }
+  .cta-band .sub { font-size: 0.86rem; color: rgba(255,255,255,0.82); margin-top: 16px; }
+
+  details.faq { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-md); margin: 12px 0; overflow: hidden; }
+  details.faq summary { cursor: pointer; list-style: none; padding: 18px 22px; font-family: var(--font-display); font-weight: 700; font-size: 1.02rem; }
+  details.faq summary::-webkit-details-marker { display: none; }
+  details.faq .body { padding: 0 22px 20px; color: var(--ink-soft); }
+
+  footer { padding: 40px 0 64px; border-top: 1px solid var(--line); margin-top: 40px; color: var(--ink-soft); font-size: 0.9rem; text-align: center; }
+  footer a { color: var(--indigo); }
+</style>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "HowTo",
+  "name": "How to share your iPad on Zoom, Google Meet and Teams",
+  "description": "Share your iPad's screen on a video call as a full-size window using SharePad on macOS.",
+  "totalTime": "PT1M",
+  "tool": [{ "@type": "HowToTool", "name": "SharePad for macOS" }],
+  "supply": [
+    { "@type": "HowToSupply", "name": "A Mac running macOS 14 or later" },
+    { "@type": "HowToSupply", "name": "An iPad and a USB cable" }
+  ],
+  "step": [
+    { "@type": "HowToStep", "name": "Plug in the iPad", "text": "Connect the iPad to your Mac over USB and tap Trust on the iPad if asked. There is nothing to install on the iPad." },
+    { "@type": "HowToStep", "name": "The window appears", "text": "SharePad opens a clean, aspect-locked window showing the iPad's screen automatically." },
+    { "@type": "HowToStep", "name": "Share it in the call", "text": "In Zoom, Google Meet or Microsoft Teams choose Share window and pick SharePad from the list." },
+    { "@type": "HowToStep", "name": "Draw", "text": "Open your favourite drawing or notes app on the iPad. Your strokes appear live in the call at full size." }
+  ]
+}
+</script>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="/">
+      <img src="assets/icon-256.png" alt="SharePad icon" />
+      SharePad
+    </a>
+    <a class="btn" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+      Download free
+    </a>
+  </div>
+</nav>
+
+<article>
+  <div class="wrap">
+    <div class="eyebrow">Guide</div>
+    <h1>How to share your iPad on Zoom, Google Meet and Teams</h1>
+    <p class="lede">If you want to draw or write live on a call, you want your iPad shown as a full-size window, not a small webcam tile. Here's the manual way, and the one-step way.</p>
+
+    <h2>Why a window, not a virtual camera</h2>
+    <p>Most "iPad as a camera" tricks pipe the iPad in as a virtual webcam, which shows up as a small tile in the call. That's fine for your face, but wrong for a whiteboard: a diagram or a page of working needs to be shared as <b>content</b>, at full size. The reliable way to do that is to put the iPad's screen in a window on your Mac and share <b>that window</b> the same way you'd share any app.</p>
+
+    <h2>The manual way (QuickTime)</h2>
+    <p>macOS can already show a wired iPad as a camera source. You don't need anything extra to try it once:</p>
+    <ol class="steps">
+      <li><strong>Connect the iPad</strong> to your Mac with a USB cable and tap <b>Trust This Computer</b> on the iPad.</li>
+      <li><strong>Open QuickTime Player</strong>, choose <b>File &rsaquo; New Movie Recording</b>.</li>
+      <li><strong>Pick the iPad</strong> as the camera source from the little arrow next to the record button.</li>
+      <li><strong>Share the QuickTime window</strong> in your call's <b>Share window</b> list.</li>
+    </ol>
+    <p>It works, but you repeat the whole ritual every call, the window isn't sized to the iPad, and it's easy to share the wrong thing. That repetition is exactly what SharePad removes.</p>
+
+    <h2>The one-step way (SharePad)</h2>
+    <p>SharePad is a small macOS menu-bar app. It watches for a connected iPad and opens a clean, aspect-locked window the moment you plug in, so the window is already waiting in the <b>Share window</b> list before the call even starts.</p>
+    <ol class="steps">
+      <li><strong>Plug in the iPad</strong> over USB. There's nothing to install on the iPad. Tap <b>Trust</b> if it asks.</li>
+      <li><strong>The window appears</strong> automatically, matched to your iPad's shape so nothing looks squished.</li>
+      <li><strong>Choose "Share window"</strong> in Zoom, Google Meet or Microsoft Teams and pick <b>SharePad</b> from the list.</li>
+      <li><strong>Open your app and draw.</strong> Procreate, Freeform, GoodNotes, Apple Notes, whatever you like. Your Apple Pencil strokes appear live at full size.</li>
+    </ol>
+    <div class="card tip">
+      <p style="margin:0">There's nothing to set up mid-call and nothing leaves your Mac, no account, no sign-in, no analytics. It works the same in Zoom's desktop app and in browser-based Google Meet and Teams.</p>
+    </div>
+
+    <div class="cta-band">
+      <h2>Try it on your next call</h2>
+      <p>Plug in, pick the window, and draw. Free for 7 days, then a one-time £6.99 licence.</p>
+      <a class="btn" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">Download SharePad for macOS</a>
+      <p class="sub">macOS 14+ · no subscription · updates for life</p>
+    </div>
+
+    <h2>Fixing a black shared window</h2>
+    <p>If the people on the call see a black window, it's almost always one of these:</p>
+    <ul class="plain">
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>The iPad is locked.</b> A locked iPad shows black. Unlock it and it returns.</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>You haven't tapped Trust yet.</b> The first time you connect, the iPad asks you to trust the Mac, tap it.</span></li>
+      <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>The window is hidden behind others.</b> Browser-based Google Meet and Teams only transmit a window that's actually visible. Turn on <b>Keep window on top</b> in the SharePad popover so it stays in front.</span></li>
+    </ul>
+
+    <h2>Common questions</h2>
+    <details class="faq">
+      <summary>Do I need to install anything on the iPad?</summary>
+      <div class="body">No. There's nothing to install and no app to open on the iPad, just connect it over USB. Everything runs on the Mac side.</div>
+    </details>
+    <details class="faq">
+      <summary>Does it work wirelessly?</summary>
+      <div class="body">You connect with a USB cable. SharePad uses the same wired connection macOS already exposes for a plugged-in iPad, the one QuickTime uses, so there's no wireless pairing or network involved.</div>
+    </details>
+    <details class="faq">
+      <summary>Which drawing or notes apps does it work with?</summary>
+      <div class="body">Any of them. SharePad shows your iPad's whole screen, so you can use Procreate, GoodNotes, Freeform, Notability or Apple Notes, whatever you already draw or write in. There's nothing to integrate.</div>
+    </details>
+    <details class="faq">
+      <summary>Does it share the iPad's sound?</summary>
+      <div class="body">No. SharePad is video only by design. It shows the iPad's screen, not its audio, so your call's own microphone handles the talking.</div>
+    </details>
+    <p style="margin-top:28px">More on the <a href="/">SharePad home page</a>, including the full FAQ and a short demo.</p>
+  </div>
+</article>
+
+<footer>
+  <div class="wrap">
+    <a href="/">sharepad.co</a> · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms &amp; refunds</a> · <a href="https://github.com/jonyardley/SharePad">GitHub</a>
+  </div>
+</footer>
+
+<!-- Cloudflare Web Analytics -->
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "039052be0c2642ea88a61dc8e59c95ed"}'></script>
+</body>
+</html>
