@@ -66,10 +66,15 @@ final class LicenseGateTests: GateTestCase {
         let prefs = try ephemeralPreferences()
         prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
         let window = FakeShareWindow()
-        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        let model = makeModel(
+            preferences: prefs,
+            window: window,
+            sleep: { _ in },
+            sessionLimit: 100
+        )
         await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
         XCTAssertTrue(model.isWindowVisible)
-        try await Task.sleep(for: .seconds(0.5))
+        await poll { model.isTrialOverlayShown }
         XCTAssertEqual(window.trialOverlayStates, [true])
         XCTAssertTrue(model.isTrialOverlayShown)
     }
@@ -100,9 +105,14 @@ final class LicenseGateTests: GateTestCase {
         let prefs = try ephemeralPreferences()
         prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
         let window = FakeShareWindow()
-        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        let model = makeModel(
+            preferences: prefs,
+            window: window,
+            sleep: { _ in },
+            sessionLimit: 100
+        )
         await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
-        try await Task.sleep(for: .seconds(0.5))
+        await poll { model.isTrialOverlayShown }
         XCTAssertNil(model.sessionEndsAt)
         XCTAssertEqual(window.trialOverlayStates, [true])
         // Armed (non-nil) then cleared (nil) immediately before the pause overlay.
@@ -193,9 +203,14 @@ final class LicenseGateTests: GateTestCase {
         let prefs = try ephemeralPreferences()
         prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
         let window = FakeShareWindow()
-        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        let model = makeModel(
+            preferences: prefs,
+            window: window,
+            sleep: { _ in },
+            sessionLimit: 100
+        )
         await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
-        try await Task.sleep(for: .seconds(0.5)) // budget spent, paused
+        await poll { model.isTrialOverlayShown } // budget spent, paused
         XCTAssertTrue(model.isTrialOverlayShown)
         XCTAssertEqual(window.trialOverlayStates, [true])
 
@@ -214,10 +229,14 @@ final class LicenseGateTests: GateTestCase {
         let model = try makeModel(
             preferences: ephemeralPreferences(),
             window: window,
-            sessionLimit: 0.05
+            sleep: { _ in },
+            sessionLimit: 100
         )
         await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
-        try await Task.sleep(for: .seconds(0.5))
+        // No expiry → no pause timer arms; drain any scheduled work, then confirm it stayed clear.
+        for _ in 0 ..< 100 {
+            await Task.yield()
+        }
         XCTAssertEqual(window.trialOverlayStates, [])
     }
 
@@ -225,9 +244,14 @@ final class LicenseGateTests: GateTestCase {
         let prefs = try ephemeralPreferences()
         prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
         let window = FakeShareWindow()
-        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        let model = makeModel(
+            preferences: prefs,
+            window: window,
+            sleep: { _ in },
+            sessionLimit: 100
+        )
         await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
-        try await Task.sleep(for: .seconds(0.5))
+        await poll { window.trialOverlayStates == [true] }
         model.toggleWindow()
         XCTAssertFalse(model.isTrialOverlayShown)
         XCTAssertEqual(window.trialOverlayStates, [true, false])
@@ -237,9 +261,14 @@ final class LicenseGateTests: GateTestCase {
         let prefs = try ephemeralPreferences()
         prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
         let window = FakeShareWindow()
-        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        let model = makeModel(
+            preferences: prefs,
+            window: window,
+            sleep: { _ in },
+            sessionLimit: 100
+        )
         await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
-        try await Task.sleep(for: .seconds(0.5))
+        await poll { window.trialOverlayStates == [true] }
         let key = try signedKey(for: "buyer@example.com")
         XCTAssertTrue(model.enterLicense(email: "buyer@example.com", key: key))
         XCTAssertFalse(model.isTrialOverlayShown)
@@ -255,13 +284,14 @@ final class LicenseGateTests: GateTestCase {
             preferences: prefs,
             capture: capture,
             window: window,
-            sessionLimit: 0.05
+            sleep: { _ in },
+            sessionLimit: 100
         )
         await model.reconcile(devices: [
             CaptureDevice(id: "a", name: "iPad"),
             CaptureDevice(id: "b", name: "iPad 2"),
         ])
-        try await Task.sleep(for: .seconds(0.5))
+        await poll { window.trialOverlayStates == [true] }
         XCTAssertEqual(window.trialOverlayStates, [true])
 
         capture.startResult = false
@@ -277,19 +307,35 @@ final class LicenseGateTests: GateTestCase {
         let prefs = try ephemeralPreferences()
         prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
         let window = FakeShareWindow()
-        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        let model = makeModel(
+            preferences: prefs,
+            window: window,
+            sleep: { _ in },
+            sessionLimit: 100
+        )
         await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
-        try await Task.sleep(for: .seconds(0.5))
-        XCTAssertEqual(window.trialOverlayStates, [true]) // device A's overlay fired
+        await poll { window.trialOverlayStates == [true] } // device A's overlay fired
 
         await model.reconcile(devices: [CaptureDevice(id: "b", name: "iPad 2")]) // hot-swap A→B
         XCTAssertFalse(model.isTrialOverlayShown) // A's overlay cleared on swap
-        try await Task.sleep(for: .seconds(0.5))
-        XCTAssertEqual(window.trialOverlayStates, [
+        await poll { window.trialOverlayStates == [
             true,
             false,
             true,
-        ]) // B's session re-armed + fired
+        ] } // B's session re-armed + fired
         XCTAssertTrue(model.isTrialOverlayShown)
+    }
+
+    private func poll(
+        timeoutIterations: Int = 100_000,
+        _ predicate: () -> Bool,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async {
+        for _ in 0 ..< timeoutIterations {
+            if predicate() { return }
+            await Task.yield()
+        }
+        XCTFail("poll condition never satisfied", file: file, line: line)
     }
 }
