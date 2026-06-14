@@ -87,7 +87,7 @@ export function escapeHtml(text) {
 }
 
 // ── Stripe signature verification (Web Crypto; no SDK) ──
-async function verifyStripeSignature(payload, header, secret) {
+export async function verifyStripeSignature(payload, header, secret) {
   if (!secret) return false;
 
   let timestamp = null;
