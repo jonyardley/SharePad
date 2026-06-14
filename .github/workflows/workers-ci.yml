@@ -33,7 +33,7 @@ jobs:
         with:
           node-version: 20
 
-      # Zero-dependency guard: catch a syntax error in any worker source file
+      # Zero-dependency guard: catch a syntax error in each worker entry-point (src/*.mjs, src/*.js)
       # before running the suite (cheaper signal than a test crash).
       - name: Syntax check
         working-directory: workers/${{ matrix.worker }}
