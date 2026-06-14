@@ -160,7 +160,6 @@ final class AppModelLifecycleTests: AppModelTestCase {
         await model.reconcile(devices: [device("a")])
         let resumesBefore = capture.resumeCount
 
-        // Start the production observation loop, then emit a restart event.
         let observation = Task { await model.observeRestarts() }
         defer { observation.cancel() }
         capture.sendRestart()
