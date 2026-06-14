@@ -18,19 +18,21 @@ struct TrialCountdownWatermark: View {
 
     var body: some View {
         VStack {
+            Spacer()
             HStack {
                 Spacer()
                 TimelineView(.periodic(from: .now, by: 1)) { context in
                     let remaining = SessionCountdown.remainingText(until: endsAt, now: context.date)
+                    // Monospaced digits keep every "M:SS" the same width, so the pill
+                    // doesn't reflow each second as proportional glyphs change size.
                     Label("Free trial — pauses in \(remaining)", systemImage: "hourglass")
-                        .font(.callout.weight(.semibold))
+                        .font(.callout.weight(.semibold).monospacedDigit())
                         .foregroundStyle(.white)
                         .padding(.vertical, Theme.Spacing.row)
                         .padding(.horizontal, Theme.Spacing.section)
                         .background(.black.opacity(0.55), in: Capsule())
                 }
             }
-            Spacer()
         }
         .padding(Theme.Spacing.section)
     }
