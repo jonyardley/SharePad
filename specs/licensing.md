@@ -151,5 +151,6 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
    for the no-gate storefront, so eligibility is settled.
 4. **Past-buyer outreach** — how to reach existing `buy.sharepad.co` buyers with
    their minted keys (Stripe customer export).
-5. **/recover rate limit** — add a Cloudflare rate-limiting rule (e.g. 5 req/min/IP)
-   at deployment; it's a purchase oracle and each probe costs a Stripe API call.
+5. ~~**/recover rate limit**~~ — **resolved**: 5 req/min/IP rate limit applied via a
+   Cloudflare dashboard rule (Security → WAF → Rate limiting); see workers/licenses/wrangler.toml.
+   Observability enabled on the licences worker.
