@@ -37,7 +37,7 @@ jobs:
       # before running the suite (cheaper signal than a test crash).
       - name: Syntax check
         working-directory: workers/${{ matrix.worker }}
-        run: for f in src/*.mjs src/*.js; do [ -e "$f" ] && node --check "$f"; done
+        run: shopt -s nullglob; for f in src/*.mjs src/*.js; do node --check "$f"; done
 
       - name: Test
         working-directory: workers/${{ matrix.worker }}
