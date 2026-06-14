@@ -70,8 +70,7 @@ The live site has no trial yet. When the gate goes live, add, don't rewrite:
 - One honest line under pricing: "Try everything free for a week — no card, no
   account. After that, £6.99 keeps it yours for good."
 - One FAQ entry, in the site's voice: *"What happens after the trial?"* — "The app
-  keeps working; sharing just pauses now and then until you add your licence.
-  Nothing is removed, and a licence clears it straight away."
+  keeps working; sharing just pauses now and then until you add your licence."
 
 ---
 
