@@ -167,6 +167,28 @@ final class LicenseGateTests: GateTestCase {
             .timeIntervalSinceReferenceDate, 1140, accuracy: 0.01)
     }
 
+    func testSwitchingBackToADeviceResumesItsRemainingBudget() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        var clock = Date(timeIntervalSinceReferenceDate: 1000)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, now: { clock }, sessionLimit: 100)
+        await model.reconcile(devices: [
+            CaptureDevice(id: "a", name: "iPad"),
+            CaptureDevice(id: "b", name: "iPad 2"),
+        ])
+        // A armed at 1000 → deadline 1100.
+        clock = Date(timeIntervalSinceReferenceDate: 1040)
+        await model.switchTo(deviceID: "b") // A froze with 60s left; B fresh → 1040+100=1140.
+        XCTAssertEqual(try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
+            .timeIntervalSinceReferenceDate, 1140, accuracy: 0.01)
+        clock = Date(timeIntervalSinceReferenceDate: 1060)
+        await model.switchTo(deviceID: "a")
+        // A RESUMES its 60s → deadline 1060+60=1120, NOT a fresh 1060+100=1160.
+        XCTAssertEqual(try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
+            .timeIntervalSinceReferenceDate, 1120, accuracy: 0.01)
+    }
+
     func testExhaustedSessionPausesImmediatelyOnSameDeviceReplug() async throws {
         let prefs = try ephemeralPreferences()
         prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
