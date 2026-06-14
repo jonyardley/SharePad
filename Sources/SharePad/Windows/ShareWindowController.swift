@@ -69,6 +69,11 @@ final class ShareWindowController: ShareWindowControlling {
         overlayModel.sessionEndsAt = endsAt
     }
 
+    func setTrialActions(onBuy: (() -> Void)?, onEnterLicense: @escaping () -> Void) {
+        overlayModel.onBuy = onBuy
+        overlayModel.onEnterLicense = onEnterLicense
+    }
+
     private func apply(size videoSize: CGSize, to window: NSWindow) {
         window.level = keepOnTop ? .floating : .normal
         window.contentAspectRatio = videoSize
@@ -148,6 +153,8 @@ final class ShareWindowController: ShareWindowControlling {
 final class ShareOverlayModel {
     var trialOverlayVisible = false
     var sessionEndsAt: Date?
+    var onBuy: (() -> Void)?
+    var onEnterLicense: () -> Void = {}
 }
 
 private struct ShareRootView: View {
@@ -158,7 +165,7 @@ private struct ShareRootView: View {
         ZStack {
             PreviewView(layer: previewLayer)
             if overlay.trialOverlayVisible {
-                TrialOverlayView()
+                TrialOverlayView(onBuy: overlay.onBuy, onEnterLicense: overlay.onEnterLicense)
             } else if let endsAt = overlay.sessionEndsAt {
                 TrialCountdownWatermark(endsAt: endsAt)
             }

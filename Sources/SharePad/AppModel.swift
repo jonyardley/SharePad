@@ -24,6 +24,10 @@ final class AppModel {
 
     private(set) var entitlement: Entitlement = .trial(daysLeft: EntitlementClock.trialDays)
     private(set) var isTrialOverlayShown = false
+
+    /// Set by the composition root (App.swift) so the trial-pause overlay can open
+    /// licence entry without the model layer reaching into the UI (LicenseWindow).
+    var onEnterLicenseRequested: (() -> Void)?
     // When set, a post-trial session is counting down to the pause; the watermark
     // and popover render it live. Nil once paused, licensed, or not sharing.
     private(set) var sessionEndsAt: Date?
@@ -134,6 +138,10 @@ final class AppModel {
         CMIO.allowScreenCaptureDevices()
         permission = CameraPermission.status
         window.setKeepOnTop(keepOnTop)
+        window.setTrialActions(
+            onBuy: License.buyURL != nil ? { [weak self] in self?.openBuyPage() } : nil,
+            onEnterLicense: { [weak self] in self?.onEnterLicenseRequested?() }
+        )
         windowHotkey = GlobalHotkey(
             id: GlobalHotkey.WindowToggle.id,
             keyCode: GlobalHotkey.WindowToggle.keyCode,

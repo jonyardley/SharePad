@@ -31,6 +31,10 @@ enum LicenseWindow {
         )
         win.title = "Enter your SharePad licence"
         win.isReleasedWhenClosed = false
+        // The share window floats when "Keep window on top" is on, so a normal-level
+        // entry window would open behind it (and the trial-pause overlay) where the
+        // user never sees it. Float the entry window so it sits above the feed.
+        win.level = .floating
         return win
     }
 }
