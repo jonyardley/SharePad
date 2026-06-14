@@ -1,0 +1,44 @@
+name: Workers CI
+
+# The worker suites otherwise run only at deploy time on main. Run them on PRs
+# (and on main) so a broken money-path change is caught at review time.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/**"
+      - ".github/workflows/workers-ci.yml"
+  pull_request:
+    paths:
+      - "workers/**"
+      - ".github/workflows/workers-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test ${{ matrix.worker }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        worker: [licenses, purchase-email]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      # Zero-dependency guard: catch a syntax error in any worker source file
+      # before running the suite (cheaper signal than a test crash).
+      - name: Syntax check
+        working-directory: workers/${{ matrix.worker }}
+        run: for f in src/*.mjs src/*.js; do [ -e "$f" ] && node --check "$f"; done
+
+      - name: Test
+        working-directory: workers/${{ matrix.worker }}
+        run: npm test
