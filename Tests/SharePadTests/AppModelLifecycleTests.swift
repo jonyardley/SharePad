@@ -147,4 +147,29 @@ final class AppModelLifecycleTests: AppModelTestCase {
         model.popoverDidDisappear()
         XCTAssertEqual(capture.thumbnailActive, false)
     }
+
+    func testCaptureRestartEventTriggersRestart() async throws {
+        let capture = FakeCaptureController()
+        let window = FakeShareWindow()
+        let model = try makeModel(
+            capture: capture,
+            window: window,
+            preferences: ephemeralPreferences()
+        )
+        // Establish a selected device so restart() does observable work.
+        await model.reconcile(devices: [device("a")])
+        let resumesBefore = capture.resumeCount
+
+        let observation = Task { await model.observeRestarts() }
+        defer { observation.cancel() }
+        capture.sendRestart()
+
+        // Let the observer process the event (cooperative yield; both run on MainActor).
+        var processed = false
+        for _ in 0 ..< 1000 {
+            if capture.resumeCount > resumesBefore { processed = true; break }
+            await Task.yield()
+        }
+        XCTAssertTrue(processed, "a restarts-stream event did not invoke restart()")
+    }
 }
