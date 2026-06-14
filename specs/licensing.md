@@ -141,6 +141,8 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
    `buy.sharepad.co` buyers.
 4. Add trial-aware copy to the landing page once the gate is live.
 5. Release via the existing Sparkle pipeline (`specs/distribution.md`).
+6. Create the `/recover` WAF rate-limit rule in the Cloudflare dashboard (5 req/min/IP, URI
+   path starts with `/recover`) — it is dashboard-managed, so `wrangler deploy` will not create it.
 
 ## 8. Open questions
 
@@ -151,6 +153,7 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
    for the no-gate storefront, so eligibility is settled.
 4. **Past-buyer outreach** — how to reach existing `buy.sharepad.co` buyers with
    their minted keys (Stripe customer export).
-5. ~~**/recover rate limit**~~ — **resolved**: 5 req/min/IP rate limit applied via a
-   Cloudflare dashboard rule (Security → WAF → Rate limiting); see workers/licenses/wrangler.toml.
-   Observability enabled on the licences worker.
+5. **/recover rate limit** — **config + runbook ready; *pending* the actual dashboard rule.**
+   Observability is enabled on the licences worker (wrangler.toml). The 5 req/min/IP WAF
+   rate-limit rule (Security → WAF → Rate limiting, URI path starts with /recover) must still
+   be created in the Cloudflare dashboard at deploy — nothing in code enforces it yet.
