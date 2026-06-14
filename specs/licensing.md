@@ -1,7 +1,8 @@
 # Licensing & Monetisation — Spec (v2)
 
 > Status: **app + worker landed 2026-06-13; Stripe/Cloudflare deployment + live
-> URLs shipped — live 2026-06-14 (see `CHANGELOG.md` 1.1.0).**
+> URLs shipped — live 2026-06-14 (see `CHANGELOG.md` 1.1.0)** (deployment-hardening
+> follow-ups tracked in §8).
 >
 > **Reopens the 2026-06-07 "no-gate" decision.** That decision shipped a live
 > Stripe Managed Payments storefront (£6.99 one-time, `buy.sharepad.co`,

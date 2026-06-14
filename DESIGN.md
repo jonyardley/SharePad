@@ -1,7 +1,7 @@
 # SharePad — Design Spec
 
 > Status: **Living spec — implementation in progress.** This document informs the
-> plan; it is not the plan. Last reviewed: 2026-06-13.
+> plan; it is not the plan. Last reviewed: 2026-06-14.
 >
 > Name **SharePad**, bundle id `com.jonyardley.sharepad` — confirmed at Phase 0.
 
