@@ -198,7 +198,7 @@ final class AppModel {
         shareLostSignal = false
     }
 
-    /// Raise the lost-share signal and auto-expire it, so a stale banner/badge doesn't
+    /// Raise the lost-share signal and auto-expire it, so a stale popover banner doesn't
     /// linger after the user has moved on (or replugged). Reconnect/dismiss clear it early.
     private func raiseShareLost() {
         shareLostSignal = true
