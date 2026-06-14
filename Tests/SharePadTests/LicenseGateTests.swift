@@ -148,6 +148,63 @@ final class LicenseGateTests: XCTestCase {
         XCTAssertNil(try XCTUnwrap(window.trialCountdownDeadlines.last))
     }
 
+    func testSameDeviceResumesRemainingOnReplug() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        var clock = Date(timeIntervalSinceReferenceDate: 1000)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, now: { clock }, sessionLimit: 100)
+
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+        let armed = try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
+        XCTAssertEqual(armed.timeIntervalSinceReferenceDate, 1100, accuracy: 0.01)
+
+        clock = Date(timeIntervalSinceReferenceDate: 1030) // 30s of sharing
+        await model.reconcile(devices: []) // unplug — freezes 70s remaining
+        XCTAssertNil(model.sessionEndsAt)
+
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")]) // replug at t=1030
+        let resumed = try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
+        // 70s left resumes → deadline 1030+70=1100, NOT a fresh 1030+100=1130
+        XCTAssertEqual(resumed.timeIntervalSinceReferenceDate, 1100, accuracy: 0.01)
+    }
+
+    func testDifferentDeviceStartsFreshSession() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        var clock = Date(timeIntervalSinceReferenceDate: 1000)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, now: { clock }, sessionLimit: 100)
+
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+        clock = Date(timeIntervalSinceReferenceDate: 1030)
+        await model.reconcile(devices: []) // unplug A
+
+        await model.reconcile(devices: [CaptureDevice(id: "b", name: "iPad 2")]) // different iPad
+        let fresh = try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
+        XCTAssertEqual(fresh.timeIntervalSinceReferenceDate, 1130, accuracy: 0.01) // full 100s
+    }
+
+    func testExhaustedSessionPausesImmediatelyOnSameDeviceReplug() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+        try await Task.sleep(for: .seconds(0.5)) // budget spent, paused
+        XCTAssertTrue(model.isTrialOverlayShown)
+        XCTAssertEqual(window.trialOverlayStates, [true])
+
+        await model.reconcile(devices: []) // unplug clears the overlay display
+        XCTAssertFalse(model.isTrialOverlayShown)
+
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")]) // replug
+        // Same iPad with 0 budget → pauses immediately, no fresh countdown.
+        XCTAssertTrue(model.isTrialOverlayShown)
+        XCTAssertNil(model.sessionEndsAt)
+        XCTAssertEqual(window.trialOverlayStates, [true, false, true])
+    }
+
     func testNoOverlayDuringTrial() async throws {
         let window = FakeShareWindow()
         let model = try makeModel(

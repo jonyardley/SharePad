@@ -29,7 +29,7 @@ builders can compile out. We sell convenience, not enforcement.
 | Source licence | **GPLv3** (unchanged) | Still truly open source; the gate is honor-system by design. |
 | Price model | **One-time purchase**, all updates included | Right weight for a single-purpose menu-bar utility. Price set in the Stripe dashboard (open question — not load-bearing). |
 | Trial | **7 days**, full-featured, starts at first launch | Client-side only; no server involvement. |
-| Expired-trial gate | **Session limit**: share window works ~5 min/session, then a polite overlay; app relaunch (or window re-show) resets it; a trial expiring while the window is already open gates on the next show — deliberate honor-system leniency | Converts daily users without ever bricking someone mid-meeting — they can always restart. |
+| Expired-trial gate | **Session limit**: ~5 min of *actual sharing* per session, then a polite overlay. Budget is tied to the connected iPad — unplug/replug or hiding the window *resumes* the same countdown (no reset); only a different iPad or an app relaunch starts fresh. A trial expiring while the window is already open gates on the next show — deliberate honor-system leniency | Converts daily users without ever bricking someone mid-meeting — they can always restart, but can't dodge the gate by replugging. |
 | Checkout | **Stripe Managed Payments** (merchant of record on Jon's existing Stripe account) + **Stripe Payment Link**, opened in the default browser | MoR handles global VAT/sales tax (the thing that made self-remittance a non-starter); ~3.5% on top of standard processing, ≈6–7% all-in. Browser checkout beats an embedded webview for autofill/Apple Pay/trust. |
 | Licence keys | **Offline-signed**: Ed25519 signature of the buyer's email, base64url-encoded; app verifies with an embedded public key via CryptoKit | No activation server, no network calls, works offline forever, no third-party dependency (~50 lines, no CocoaFob). |
 | Key issuance | **One Cloudflare Worker, two GET routes, no webhook, no database** | Ed25519 signatures are deterministic → a key can always be re-derived from the email; Stripe itself is the purchase record. |
@@ -91,11 +91,17 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
 - **`AppModel`** owns entitlement state and the session-limit timer: starts when
   the share window opens while `.trialExpired`, fires at 5 minutes. Never runs
   mid-trial or when licensed. Views render state and send intents only.
+  - **Resume, don't reset (Model A).** The 5-minute budget meters *actual sharing*
+    and is tied to the connected iPad (`sessionRemaining` + `sessionDeviceID`).
+    Unplug/replug or hiding the window **suspends** the countdown and **resumes**
+    the same remaining time for the same iPad — so replugging can't dodge the gate.
+    Only a *different* iPad or an app relaunch starts a fresh 5 minutes. A live
+    "pauses in M:SS" countdown shows on the share window (watermark) and popover.
 - **Gate overlay**: at the limit, an opaque full-window overlay renders *in* the
   share window ("Your free trial has ended — buy a licence to keep sharing your
   iPad" + Buy button). Copy never mentions the relaunch reset (honor-system, but
-  don't advertise the bypass). The capture session keeps running underneath;
-  relaunching resets the session.
+  don't advertise the bypass). The capture session keeps running underneath; a
+  different iPad or an app relaunch resets the session, the same iPad resumes.
 - **Popover**: a status row — "Free trial — N days left" / "Free trial ended — sharing
   pauses after 5 min" — with **Buy** (opens `buy.sharepad.co`) and **Enter
   licence…** (sheet: email + key). Licensed state stays quiet.
