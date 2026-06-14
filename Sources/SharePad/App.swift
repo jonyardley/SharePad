@@ -19,15 +19,14 @@ private struct StatusItemLabel: View {
     var model: AppModel
 
     var body: some View {
-        // Menu-bar items render monochrome (template), so signal state with a symbol
-        // swap, not a colour the menu bar strips. The transient lost-share alert takes
-        // precedence so a closed-popover user still sees the share dropped.
-        Image(systemName: symbolName)
+        // Menu-bar items render monochrome (template), so signal state with a glyph swap,
+        // not a colour the menu bar strips. A lost share shows no alarm glyph here — the
+        // iPad is simply gone, so the idle mark is honest; the popover banner is the notice.
+        icon
     }
 
-    private var symbolName: String {
-        if model.shareLostSignal { return "exclamationmark.triangle.fill" }
-        return model.isLive ? "ipad.landscape.badge.play" : "ipad.landscape"
+    private var icon: Image {
+        Image(model.isLive ? "MenuBarIconLive" : "MenuBarIcon")
     }
 }
 
