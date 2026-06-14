@@ -112,6 +112,42 @@ final class LicenseGateTests: XCTestCase {
         XCTAssertTrue(model.isTrialOverlayShown)
     }
 
+    func testCountdownArmsWhenExpiredSessionStarts() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, sessionLimit: 100)
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+        XCTAssertNotNil(model.sessionEndsAt)
+        XCTAssertNotNil(try XCTUnwrap(window.trialCountdownDeadlines.first))
+        XCTAssertEqual(window.trialOverlayStates, []) // counting down, not paused yet
+    }
+
+    func testCountdownClearsWhenWindowHidden() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, sessionLimit: 100)
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+        model.toggleWindow()
+        XCTAssertNil(model.sessionEndsAt)
+        XCTAssertNil(try XCTUnwrap(window.trialCountdownDeadlines.last))
+    }
+
+    func testCountdownClearsWhenOverlayFires() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, sessionLimit: 0.05)
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+        try await Task.sleep(for: .seconds(0.5))
+        XCTAssertNil(model.sessionEndsAt)
+        XCTAssertEqual(window.trialOverlayStates, [true])
+        // Armed (non-nil) then cleared (nil) immediately before the pause overlay.
+        XCTAssertNotNil(try XCTUnwrap(window.trialCountdownDeadlines.first))
+        XCTAssertNil(try XCTUnwrap(window.trialCountdownDeadlines.last))
+    }
+
     func testNoOverlayDuringTrial() async throws {
         let window = FakeShareWindow()
         let model = try makeModel(

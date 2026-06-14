@@ -24,6 +24,9 @@ final class AppModel {
 
     private(set) var entitlement: Entitlement = .trial(daysLeft: EntitlementClock.trialDays)
     private(set) var isTrialOverlayShown = false
+    // When set, a post-trial session is counting down to the pause; the watermark
+    // and popover render it live. Nil once paused, licensed, or not sharing.
+    private(set) var sessionEndsAt: Date?
 
     var isConnected: Bool {
         currentDeviceName != nil
@@ -448,6 +451,9 @@ extension AppModel {
     private func startTrialSessionIfNeeded() {
         refreshEntitlement()
         guard entitlement == .trialExpired, sessionTimer == nil else { return }
+        let deadline = now().addingTimeInterval(sessionLimit)
+        sessionEndsAt = deadline
+        window.setTrialCountdown(endsAt: deadline)
         sessionTimer = Task { [weak self] in
             guard let self else { return }
             do {
@@ -456,6 +462,8 @@ extension AppModel {
                 return
             }
             guard isWindowVisible, entitlement == .trialExpired else { return }
+            sessionEndsAt = nil
+            window.setTrialCountdown(endsAt: nil)
             isTrialOverlayShown = true
             window.setTrialOverlay(true)
         }
@@ -464,6 +472,10 @@ extension AppModel {
     private func endTrialSession() {
         sessionTimer?.cancel()
         sessionTimer = nil
+        if sessionEndsAt != nil {
+            sessionEndsAt = nil
+            window.setTrialCountdown(endsAt: nil)
+        }
         if isTrialOverlayShown {
             isTrialOverlayShown = false
             window.setTrialOverlay(false)

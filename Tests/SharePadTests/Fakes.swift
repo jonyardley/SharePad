@@ -71,4 +71,10 @@ final class FakeShareWindow: ShareWindowControlling {
     func setTrialOverlay(_ visible: Bool) {
         trialOverlayStates.append(visible)
     }
+
+    private(set) var trialCountdownDeadlines: [Date?] = []
+
+    func setTrialCountdown(endsAt: Date?) {
+        trialCountdownDeadlines.append(endsAt)
+    }
 }

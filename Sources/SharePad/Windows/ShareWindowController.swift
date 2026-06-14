@@ -65,6 +65,10 @@ final class ShareWindowController: ShareWindowControlling {
         overlayModel.trialOverlayVisible = visible
     }
 
+    func setTrialCountdown(endsAt: Date?) {
+        overlayModel.sessionEndsAt = endsAt
+    }
+
     private func apply(size videoSize: CGSize, to window: NSWindow) {
         window.level = keepOnTop ? .floating : .normal
         window.contentAspectRatio = videoSize
@@ -143,6 +147,7 @@ final class ShareWindowController: ShareWindowControlling {
 @Observable
 final class ShareOverlayModel {
     var trialOverlayVisible = false
+    var sessionEndsAt: Date?
 }
 
 private struct ShareRootView: View {
@@ -154,6 +159,8 @@ private struct ShareRootView: View {
             PreviewView(layer: previewLayer)
             if overlay.trialOverlayVisible {
                 TrialOverlayView()
+            } else if let endsAt = overlay.sessionEndsAt {
+                TrialCountdownWatermark(endsAt: endsAt)
             }
         }
     }
