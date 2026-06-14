@@ -121,10 +121,11 @@ struct PopoverView: View {
     @ViewBuilder private var shareLostBanner: some View {
         if model.shareLostSignal {
             HStack(spacing: Theme.Spacing.row) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-                Text("iPad disconnected — your share stopped.")
+                Image(systemName: "cable.connector.slash")
+                    .foregroundStyle(.secondary)
+                Text("iPad disconnected")
                     .font(.caption)
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Button {
                     model.dismissShareLost()
