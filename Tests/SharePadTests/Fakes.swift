@@ -78,13 +78,5 @@ final class FakeShareWindow: ShareWindowControlling {
         trialCountdownDeadlines.append(endsAt)
     }
 
-    private(set) var trialActionsSet = 0
-    private(set) var lastOnBuy: (() -> Void)?
-    private(set) var lastOnEnterLicense: (() -> Void)?
-
-    func setTrialActions(onBuy: (() -> Void)?, onEnterLicense: @escaping () -> Void) {
-        trialActionsSet += 1
-        lastOnBuy = onBuy
-        lastOnEnterLicense = onEnterLicense
-    }
+    func setTrialActions(onBuy _: (() -> Void)?, onEnterLicense _: @escaping () -> Void) {}
 }
