@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { base64url, licenseKey, normalizeEmail, purchaseEmailHtml } from "../src/worker.js";
+import { base64url, licenseKey, normalizeEmail, purchaseEmailHtml, purchaseEmailText } from "../src/worker.js";
 
 test("normalizeEmail trims and lowercases", () => {
   assert.equal(normalizeEmail("  Buyer@Example.COM \n"), "buyer@example.com");
@@ -41,4 +41,25 @@ test("purchaseEmailHtml includes the download link, normalized email, key, and r
 test("purchaseEmailHtml escapes a hostile email", () => {
   const html = purchaseEmailHtml("u", "<img src=x>@y.z", "k", "r");
   assert.ok(!html.includes("<img"));
+});
+
+test("purchaseEmailHtml uses a bulletproof button and avoids rgba/pre", () => {
+  const html = purchaseEmailHtml("https://sharepad.co/download", "b@y.z", "K", "r");
+  assert.ok(html.includes('bgcolor="#3E4CB3"'));
+  assert.ok(!html.includes("rgba("));
+  assert.ok(!html.includes("<pre"));
+});
+
+test("purchaseEmailText includes the download link, normalized email, key, and recover link; no emoji", () => {
+  const text = purchaseEmailText(
+    "https://sharepad.co/download",
+    "  Buyer@Example.com ",
+    "ABC-key_123",
+    "https://w.test/recover",
+  );
+  assert.ok(text.includes("https://sharepad.co/download"));
+  assert.ok(text.includes("buyer@example.com"));
+  assert.ok(text.includes("ABC-key_123"));
+  assert.ok(text.includes("https://w.test/recover"));
+  assert.ok(!/\p{Extended_Pictographic}/u.test(text));
 });
