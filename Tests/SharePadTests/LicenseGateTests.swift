@@ -4,45 +4,7 @@ import CryptoKit
 import XCTest
 
 @MainActor
-final class LicenseGateTests: XCTestCase {
-    private let privateKey = Curve25519.Signing.PrivateKey()
-    private let day: TimeInterval = 86400
-
-    private func ephemeralPreferences() throws -> Preferences {
-        let name = "sharepad.tests.\(UUID().uuidString)"
-        addTeardownBlock { UserDefaults.standard.removePersistentDomain(forName: name) }
-        return try Preferences(defaults: XCTUnwrap(UserDefaults(suiteName: name)))
-    }
-
-    private func validator() -> LicenseValidator {
-        LicenseValidator(
-            publicKeyBase64: privateKey.publicKey.rawRepresentation.base64EncodedString()
-        )
-    }
-
-    private func signedKey(for email: String) throws -> String {
-        let message = Data(LicenseValidator.normalize(email).utf8)
-        return try privateKey.signature(for: message).base64EncodedString()
-    }
-
-    private func makeModel(
-        preferences: Preferences,
-        capture: FakeCaptureController = FakeCaptureController(),
-        window: FakeShareWindow = FakeShareWindow(),
-        now: @escaping () -> Date = Date.init,
-        sessionLimit: TimeInterval = 5 * 60
-    ) -> AppModel {
-        AppModel(
-            preferences: preferences,
-            capture: capture,
-            window: window,
-            thumbnailLayer: AVSampleBufferDisplayLayer(),
-            validator: validator(),
-            now: now,
-            sessionLimit: sessionLimit
-        )
-    }
-
+final class LicenseGateTests: GateTestCase {
     func testFirstLaunchIsRecordedOnce() throws {
         let prefs = try ephemeralPreferences()
         _ = makeModel(preferences: prefs)
@@ -183,6 +145,26 @@ final class LicenseGateTests: XCTestCase {
         await model.reconcile(devices: [CaptureDevice(id: "b", name: "iPad 2")]) // different iPad
         let fresh = try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
         XCTAssertEqual(fresh.timeIntervalSinceReferenceDate, 1130, accuracy: 0.01) // full 100s
+    }
+
+    func testManualSwitchToDifferentDeviceStartsFresh() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        var clock = Date(timeIntervalSinceReferenceDate: 1000)
+        let window = FakeShareWindow()
+        let model = makeModel(preferences: prefs, window: window, now: { clock }, sessionLimit: 100)
+        await model.reconcile(devices: [
+            CaptureDevice(id: "a", name: "iPad"),
+            CaptureDevice(id: "b", name: "iPad 2"),
+        ])
+        XCTAssertEqual(try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
+            .timeIntervalSinceReferenceDate, 1100, accuracy: 0.01) // A counting
+
+        clock = Date(timeIntervalSinceReferenceDate: 1040)
+        await model.switchTo(deviceID: "b")
+        // Picking a different iPad gets a fresh budget → 1040+100=1140, not A's 1100.
+        XCTAssertEqual(try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
+            .timeIntervalSinceReferenceDate, 1140, accuracy: 0.01)
     }
 
     func testExhaustedSessionPausesImmediatelyOnSameDeviceReplug() async throws {

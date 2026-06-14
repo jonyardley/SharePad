@@ -305,6 +305,10 @@ extension AppModel {
         failed = !running
         if running {
             preferences.lastDeviceID = device.id
+            // A manual switch is a different iPad: suspend the old device's countdown
+            // and re-arm so the gate re-buckets to a fresh budget for the new one.
+            suspendTrialSession()
+            armOrResumeTrialSession()
         } else {
             window.hide()
             isWindowVisible = false
@@ -456,8 +460,8 @@ extension AppModel {
 
     private func armOrResumeTrialSession() {
         refreshEntitlement()
-        guard entitlement == .trialExpired, sessionTimer == nil,
-              !isTrialOverlayShown else { return }
+        guard entitlement == .trialExpired, isWindowVisible,
+              sessionTimer == nil, !isTrialOverlayShown else { return }
         if currentDeviceID != sessionDeviceID {
             sessionDeviceID = currentDeviceID
             sessionRemaining = sessionLimit
