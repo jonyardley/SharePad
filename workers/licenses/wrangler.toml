@@ -1,14 +1,20 @@
-# Rate limiting for /recover is enforced by a Cloudflare dashboard rule
-# (Security → WAF → Rate limiting rules), not in-worker:
-#   - Match: hostname = <licences worker host>, URI path starts with "/recover"
-#   - Rate: 5 requests / 1 minute, per client IP
-#   - Action: Block (or Managed Challenge), 60s timeout
-# Rationale: /recover is an unauthenticated purchase-enumeration oracle and each
-# probe costs a Stripe API call (specs/licensing.md §8.5).
+# Rate limiting for /recover uses the Workers Rate Limiting binding below (not a
+# WAF dashboard rule — those require a zone/custom domain and don't apply to the
+# workers.dev subdomain). /recover is an unauthenticated purchase-enumeration
+# oracle and each probe costs a Stripe API call (specs/licensing.md §8). The
+# limit is enforced in src/index.mjs before any Stripe call.
 
 name = "sharepad-licenses"
 main = "src/index.mjs"
 compatibility_date = "2026-06-01"
+
+[[ratelimits]]
+name = "RECOVER_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60
 
 # Capture logs/metrics for the money-path /key + /recover routes (Stripe calls,
 # key issuance) so abuse and outages are visible/alertable. 100% sampling is fine

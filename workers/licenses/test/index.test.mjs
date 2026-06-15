@@ -8,7 +8,11 @@ afterEach(() => { globalThis.fetch = realFetch; });
 async function generateEnv() {
   const { privateKey } = await crypto.subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pkcs8 = Buffer.from(await crypto.subtle.exportKey('pkcs8', privateKey)).toString('base64');
-  return { ED25519_PRIVATE_KEY: pkcs8, STRIPE_API_KEY: 'rk_test_stub' };
+  return {
+    ED25519_PRIVATE_KEY: pkcs8,
+    STRIPE_API_KEY: 'rk_test_stub',
+    RECOVER_LIMITER: { limit: async () => ({ success: true }) },
+  };
 }
 
 function stubStripe(status, body) {
@@ -70,6 +74,12 @@ test('/recover with no purchases is 404', async () => {
   stubStripe(200, { data: [] });
   const response = await worker.fetch(new Request('https://w.test/recover?email=x@y.z'), await generateEnv());
   assert.equal(response.status, 404);
+});
+
+test('/recover is rate-limited with 429 when the limiter denies', async () => {
+  const env = { ...(await generateEnv()), RECOVER_LIMITER: { limit: async () => ({ success: false }) } };
+  const response = await worker.fetch(new Request('https://w.test/recover?email=x@y.z'), env);
+  assert.equal(response.status, 429);
 });
 
 test('a malformed signing key is a 500, not a 502', async () => {
