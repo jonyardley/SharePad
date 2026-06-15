@@ -11,12 +11,23 @@ async function generateEnv() {
   return {
     ED25519_PRIVATE_KEY: pkcs8,
     STRIPE_API_KEY: 'rk_test_stub',
+    RESEND_API_KEY: 're_test_stub',
     RECOVER_LIMITER: { limit: async () => ({ success: true }) },
   };
 }
 
-function stubStripe(status, body) {
-  globalThis.fetch = async () => new Response(JSON.stringify(body), { status });
+// /key calls only Stripe; /recover calls Stripe then Resend. Route by host so a
+// single stub serves both and we can capture what /recover tried to email.
+function stubStripe(status, body, { resendStatus = 200 } = {}) {
+  const sent = [];
+  globalThis.fetch = async (url, init) => {
+    if (String(url).includes('api.resend.com')) {
+      sent.push(JSON.parse(init.body));
+      return new Response('{}', { status: resendStatus });
+    }
+    return new Response(JSON.stringify(body), { status });
+  };
+  return sent;
 }
 
 test('unknown route is 404 with no-store', async () => {
@@ -57,11 +68,31 @@ test('/recover with no email renders the form', async () => {
   assert.ok((await response.text()).includes('<form'));
 });
 
-test('/recover with paid history shows the key', async () => {
-  stubStripe(200, { data: [{ payment_status: 'paid', customer_details: { email: 'buyer@example.com' } }] });
+test('/recover with paid history emails the key and never shows it', async () => {
+  const sent = stubStripe(200, { data: [{ payment_status: 'paid', customer_details: { email: 'buyer@example.com' } }] });
   const response = await worker.fetch(new Request('https://w.test/recover?email=Buyer@Example.com'), await generateEnv());
   assert.equal(response.status, 200);
-  assert.ok((await response.text()).includes('buyer@example.com'));
+  const html = await response.text();
+  assert.ok(html.includes('buyer@example.com'));
+  assert.ok(/inbox/i.test(html));
+  // The key must reach the inbox, not the page.
+  assert.equal(sent.length, 1);
+  assert.equal(sent[0].to, 'Buyer@Example.com');
+  assert.ok(/[A-Za-z0-9_-]{86}/.test(sent[0].text));
+  assert.ok(!/[A-Za-z0-9_-]{86}/.test(html));
+});
+
+test('/recover returns 502 and no key when the email send fails', async () => {
+  const sent = stubStripe(
+    200,
+    { data: [{ payment_status: 'paid', customer_details: { email: 'buyer@example.com' } }] },
+    { resendStatus: 500 },
+  );
+  const response = await worker.fetch(new Request('https://w.test/recover?email=buyer@example.com'), await generateEnv());
+  assert.equal(response.status, 502);
+  const html = await response.text();
+  assert.equal(sent.length, 1);
+  assert.ok(!/[A-Za-z0-9_-]{86}/.test(html));
 });
 
 test('/recover rejects a paid session whose email does not match', async () => {

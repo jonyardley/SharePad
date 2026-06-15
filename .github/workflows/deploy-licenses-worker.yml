@@ -42,8 +42,10 @@ jobs:
 
       # Deploy + sync the required secrets. ED25519_PRIVATE_KEY must be the same
       # value as the purchase-email Worker and pair with the public key embedded
-      # in the app; STRIPE_API_KEY is the restricted "Checkout Sessions: read" key.
-      # If either GitHub secret is unset the deploy fails loudly, which is correct.
+      # in the app; STRIPE_API_KEY is the restricted "Checkout Sessions: read" key;
+      # RESEND_API_KEY (same value as the purchase-email Worker) lets /recover email
+      # the key instead of rendering it (specs/recover-email-delivery.md). If any
+      # GitHub secret is unset the deploy fails loudly, which is correct.
       - name: Deploy with Wrangler
         uses: cloudflare/wrangler-action@v4
         with:
@@ -53,6 +55,8 @@ jobs:
           secrets: |
             ED25519_PRIVATE_KEY
             STRIPE_API_KEY
+            RESEND_API_KEY
         env:
           ED25519_PRIVATE_KEY: ${{ secrets.ED25519_PRIVATE_KEY }}
           STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}

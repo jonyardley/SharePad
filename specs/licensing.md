@@ -64,14 +64,19 @@ key = base64url( Ed25519-sign(privateKey, lowercase(trim(email))) )
   derives the key from the buyer's email, renders it on a small branded page
   (with a note that it's recoverable anytime at `/recover`).
 - **`GET /recover`** — email form → look up a completed purchase for that email
-  in Stripe → re-show the key. Gated by purchase existence, so it leaks nothing.
+  in Stripe → **email** the key to that address (it is *not* shown on the page).
+  `/recover` is unauthenticated, so rendering the key would hand it to anyone who
+  can name a customer's email; emailing it binds recovery to inbox control
+  (`specs/recover-email-delivery.md`).
 - Secrets: the Ed25519 private key + a **restricted** Stripe API key (read
   Checkout Sessions / Customers only).
 - Licence email: sent exactly-once by the existing `sharepad-purchase-email`
   webhook worker (`checkout.session.completed`), which now carries the download
   link **and** the licence key. It needs `ED25519_PRIVATE_KEY` (same value as the
-  licences worker). The `sharepad-licenses` worker sends no email; it serves
-  `/recover` (and an optional `/key` page). Buyer-journey wording lives in
+  licences worker). The `sharepad-licenses` worker also sends one email — from
+  `/recover`, the key to the buyer's address (it needs `RESEND_API_KEY`, same value
+  as the purchase-email worker); its `/key` page still renders the key inline.
+  Buyer-journey wording lives in
   `specs/marketing-copy.md`; flow + Stripe config in `specs/purchase-flow.md`.
 
 **Note:** Stripe Managed Payments is already live for the no-gate storefront
@@ -128,7 +133,8 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
 - **Manual** (the part that counts):
   1. Stripe **test mode** end-to-end: Payment Link → pay → `/key` page shows key
      → paste into app → licensed persists across relaunch.
-  2. `/recover` returns the same key for a paid email; rejects an unknown email.
+  2. `/recover` **emails** the key for a paid email (the page shows only a
+     confirmation, never the key); rejects an unknown email.
   3. 5-minute overlay appears (debug-shortened limit), restart resets, Buy
      button opens checkout; overlay never appears mid-trial or licensed.
   4. Gate changes don't touch capture — share still works in Zoom + a browser
@@ -159,7 +165,10 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
    call — see `workers/licenses/wrangler.toml` + `src/index.mjs`. A WAF dashboard rule was
    ruled out: it needs a zone/custom domain and doesn't apply to the workers.dev subdomain.
    Observability is enabled on the worker.
-6. **Pause timer vs. system sleep** — the post-trial session timer uses `Task.sleep`, whose
+6. ~~**/recover key disclosure**~~ — **resolved** (2026-06-15): `/recover` now
+   **emails** the key instead of rendering it, so recovery requires inbox control,
+   not just knowing a customer's email (`specs/recover-email-delivery.md`).
+7. **Pause timer vs. system sleep** — the post-trial session timer uses `Task.sleep`, whose
    clock does not advance while the Mac is asleep, so a device's session budget can over-grant
    time after a laptop sleep (the displayed `sessionEndsAt` countdown and the actual pause can
    diverge). Accepted for v1; revisit by re-arming the session from `sessionEndsAt` on wake.
