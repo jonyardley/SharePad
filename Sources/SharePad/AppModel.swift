@@ -243,7 +243,7 @@ final class AppModel {
         }
     }
 
-    private func observeRestarts() async {
+    func observeRestarts() async {
         for await _ in capture.restarts {
             await restart()
         }

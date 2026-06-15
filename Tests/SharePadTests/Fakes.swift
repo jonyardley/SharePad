@@ -5,7 +5,16 @@ import AVFoundation
 /// tests only after the awaited call returns, so there is no concurrent access.
 final class FakeCaptureController: CaptureControlling, @unchecked Sendable {
     let videoSizes = AsyncStream<CGSize> { _ in }
-    let restarts = AsyncStream<Void> { _ in }
+    let restarts: AsyncStream<Void>
+    private let restartContinuation: AsyncStream<Void>.Continuation
+
+    init() {
+        (restarts, restartContinuation) = AsyncStream.makeStream(of: Void.self)
+    }
+
+    func sendRestart() {
+        restartContinuation.yield()
+    }
 
     var startResult = true
     var resumeResult = true
