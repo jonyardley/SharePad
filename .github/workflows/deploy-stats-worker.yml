@@ -1,0 +1,52 @@
+name: Deploy Stats Worker
+
+# Deploy the sharepad-stats dashboard Worker (specs/stats-dashboard.md) on changes
+# to its folder, or on manual dispatch. Runtime secrets are synced from GitHub
+# Actions secrets, so GitHub is the single source of truth.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/stats/**"
+      - ".github/workflows/deploy-stats-worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy sharepad-stats Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Test
+        working-directory: workers/stats
+        run: npm test
+
+      # First deploy provisions the stats.sharepad.co custom domain (same zone-perm
+      # token that already provisioned appcast.sharepad.co). Worker secrets:
+      #   DASHBOARD_TOKEN        — the dashboard access gate (required to serve data)
+      #   CF_API_TOKEN           — Account Analytics: Read (AE SQL + Web Analytics RUM)
+      #   STRIPE_API_KEY         — Checkout Sessions: read (reused from the other workers)
+      # Any unset secret degrades that card to "not configured" rather than failing.
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/stats
+          secrets: |
+            DASHBOARD_TOKEN
+            CF_API_TOKEN
+            STRIPE_API_KEY
+        env:
+          DASHBOARD_TOKEN: ${{ secrets.STATS_DASHBOARD_TOKEN }}
+          CF_API_TOKEN: ${{ secrets.STATS_ANALYTICS_TOKEN }}
+          STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
