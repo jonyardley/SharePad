@@ -1,10 +1,5 @@
-// Pure helpers for the stats dashboard: request builders, response parsers,
-// formatters, the auth check, and HTML rendering. No IO — everything here is
-// unit-tested; src/index.mjs does the fetching.
-
 // ── Auth ──
 
-// Constant-time-ish compare so a wrong token can't be teased out by timing.
 export function tokensMatch(presented, secret) {
   if (!presented || !secret || presented.length !== secret.length) return false;
   let diff = 0;
@@ -59,12 +54,6 @@ export function buildVersionSQL(dataset, days) {
           GROUP BY version ORDER BY checks DESC`;
 }
 
-export function buildActiveSQL(dataset, days) {
-  return `SELECT SUM(_sample_interval) AS checks
-          FROM ${dataset}
-          WHERE timestamp > NOW() - INTERVAL '${days}' DAY`;
-}
-
 // The SQL API returns { data: [ {col: value, …} ] }.
 export function parseAESql(json) {
   return (json?.data ?? []).map((row) => ({ ...row }));
@@ -75,11 +64,6 @@ export function aeVersionRows(json) {
     version: r.version ?? 'unknown',
     checks: Math.round(Number(r.checks) || 0),
   }));
-}
-
-export function aeTotalChecks(json) {
-  const row = parseAESql(json)[0];
-  return Math.round(Number(row?.checks) || 0);
 }
 
 // ── Web Analytics (RUM GraphQL) → pageviews + visits ──
@@ -131,8 +115,6 @@ function esc(s) {
 
 // ── HTML render ──
 
-// Each card is { title, status: 'ok'|'unconfigured'|'error', body }. A missing
-// secret or failed upstream degrades to a notice, never blanks the page.
 function card(title, inner, note) {
   return `<section class="card"><h2>${esc(title)}</h2>${inner}${note ? `<p class="note">${esc(note)}</p>` : ''}</section>`;
 }

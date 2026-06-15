@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  aeTotalChecks, aeVersionRows, buildRumQuery, buildVersionSQL, fmtInt, fmtMoney,
+  aeVersionRows, buildRumQuery, buildVersionSQL, fmtInt, fmtMoney,
   isoDaysAgo, parseDownloads, parseRum, parseStripe, presentedToken, renderHTML, tokensMatch,
 } from '../src/lib.mjs';
 
@@ -56,10 +56,9 @@ test('buildVersionSQL targets the dataset and window', () => {
   assert.match(sql, /SUM\(_sample_interval\)/);
 });
 
-test('aeVersionRows / aeTotalChecks parse the SQL API shape', () => {
+test('aeVersionRows parses the SQL API shape', () => {
   const json = { data: [{ version: '1.2.0', checks: '42' }, { version: 'unknown', checks: 3 }] };
   assert.deepEqual(aeVersionRows(json), [{ version: '1.2.0', checks: 42 }, { version: 'unknown', checks: 3 }]);
-  assert.equal(aeTotalChecks({ data: [{ checks: '52' }] }), 52);
   assert.deepEqual(aeVersionRows({}), []);
 });
 

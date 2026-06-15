@@ -68,8 +68,8 @@ the APIs or burn GitHub's unauthenticated rate limit.
 
 - **Downloads:** total DMG downloads (GitHub Releases stable `SharePad.dmg`), per
   release; appcast-check counts as a secondary install proxy.
-- **Active installs / versions:** update-checks (last 1d / 7d) and version split from
-  `sharepad_appcast` (`SUM(_sample_interval)`).
+- **Active installs / versions:** update-checks (last 7d, ≈ active installs) and the
+  version split from `sharepad_appcast` (`SUM(_sample_interval)`).
 - **Site traffic:** pageviews + visits, last 7d, from `rumPageloadEventsAdaptiveGroups`
   (account-scoped — sharepad.co is grey-cloud, so the RUM beacon, not zone analytics,
   holds this).

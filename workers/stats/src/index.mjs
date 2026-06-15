@@ -1,6 +1,4 @@
-// Unified stats dashboard. See specs/stats-dashboard.md. Auth-gates, then queries
-// GitHub / Analytics Engine / Web Analytics / Stripe in parallel (fail-soft, each
-// cached ~5 min) and renders one page. All pure logic lives in ./lib.mjs.
+// Stats dashboard Worker. See specs/stats-dashboard.md.
 
 import {
   aeVersionRows, buildRumQuery, buildVersionSQL, isoDaysAgo,
@@ -52,7 +50,6 @@ async function gather(env) {
 
 const unconfigured = (reason) => Promise.resolve({ ok: false, reason });
 
-// Wraps a source: caches a successful result ~5 min; a throw degrades to {ok:false}.
 async function safe(key, fn) {
   try {
     return await cached(key, 300, async () => ({ ok: true, value: await fn() }));
