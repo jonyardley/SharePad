@@ -3,21 +3,23 @@
     <channel>
         <title>SharePad</title>
         <item>
-            <title>1.1.0</title>
-            <pubDate>Sat, 13 Jun 2026 17:49:01 +0000</pubDate>
-            <sparkle:version>10</sparkle:version>
-            <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+            <title>1.2.0</title>
+            <pubDate>Mon, 15 Jun 2026 11:43:17 +0000</pubDate>
+            <sparkle:version>11</sparkle:version>
+            <sparkle:shortVersionString>1.2.0</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <description sparkle:format="markdown"><![CDATA[## 1.1.0
-- SharePad now has a 7-day free trial. After it ends, sharing pauses briefly each
-  session until you add a licence — a one-time £6.99 purchase that works offline,
-  with no account.
-- Already bought SharePad? You won't be charged again. In the menu bar choose
-  "Enter licence…", then "Lost your key?" to fetch your key with your purchase
-  email, and paste it in — the pause is gone for good.
+            <description sparkle:format="markdown"><![CDATA[## 1.2.0
+- During a trial pause, SharePad now shows a live countdown in the share window
+  and popover, so you know exactly when sharing resumes.
+- You can now add your licence directly from the trial-pause message — no need to
+  hunt through the menu.
+- Your free trial is now remembered per Mac, so switching between iPads no longer
+  resets it.
+- Clearer popover guidance while the iPad is connecting or waking, and gentler
+  feedback if it disconnects mid-session.
 
 ]]></description>
-            <enclosure url="https://sharepad.co/SharePad-1.1.0-3de01d4c.dmg" length="1722562" type="application/octet-stream" sparkle:edSignature="kRdfuCzy4Xv0lM1iQyM+/BLX+3O5FfGmYrbTI4B/Pf/VHKw4pjVzUVDvjy5CWj1c6YKUQPdpMJ75Z6WuqgEeDA=="/>
+            <enclosure url="https://sharepad.co/SharePad-1.2.0-14ec1057.dmg" length="1764820" type="application/octet-stream" sparkle:edSignature="FLcWQQmQrAnni+3d1dv2fhAl+PQowc7jW2LSEPuc3BsSPAMDS7ptEi5ll/yJouznlW2rbo+E6q4jotAwW8tWAw=="/>
         </item>
     </channel>
 </rss>
