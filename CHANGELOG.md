@@ -5,6 +5,16 @@ update dialog** (Sparkle shows it to people when they update), so write each ent
 for users, not developers. Add a new `## <version>` section at the top before you
 tag a release.
 
+## 1.2.0
+- During a trial pause, SharePad now shows a live countdown in the share window
+  and popover, so you know exactly when sharing resumes.
+- You can now add your licence directly from the trial-pause message — no need to
+  hunt through the menu.
+- Your free trial is now remembered per Mac, so switching between iPads no longer
+  resets it.
+- Clearer popover guidance while the iPad is connecting or waking, and gentler
+  feedback if it disconnects mid-session.
+
 ## 1.1.0
 - SharePad now has a 7-day free trial. After it ends, sharing pauses briefly each
   session until you add a licence — a one-time £6.99 purchase that works offline,
