@@ -485,11 +485,8 @@ extension AppModel {
         window.setTrialCountdown(endsAt: deadline)
         sessionTimer = Task { [weak self] in
             guard let self else { return }
-            do {
-                try await Task.sleep(for: .seconds(remaining))
-            } catch {
-                return
-            }
+            await sleep(.seconds(remaining))
+            guard !Task.isCancelled else { return }
             guard isWindowVisible, entitlement == .trialExpired else { return }
             sessionBudgets[deviceID] = 0
             showTrialPause()

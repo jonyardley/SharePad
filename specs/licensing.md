@@ -158,3 +158,8 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
    Observability is enabled on the licences worker (wrangler.toml). The 5 req/min/IP WAF
    rate-limit rule (Security → WAF → Rate limiting, URI path starts with /recover) must still
    be created in the Cloudflare dashboard at deploy — nothing in code enforces it yet.
+6. **Pause timer vs. system sleep** — the post-trial session timer uses `Task.sleep`, whose
+   clock does not advance while the Mac is asleep, so a device's session budget can over-grant
+   time after a laptop sleep (the displayed `sessionEndsAt` countdown and the actual pause can
+   diverge). Accepted for v1; revisit by re-arming the session from `sessionEndsAt` on wake.
+   Needs on-device verification first. (CORRECTNESS-01)
