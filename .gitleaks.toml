@@ -27,14 +27,18 @@ description = "Commit-safe public values"
 # SUPublicEDKey is the public half of the signing keypair — it is meant to live
 # in project.yml / the app's Info.plist. The Cloudflare Web Analytics beacon
 # token (data-cf-beacon) is a public client-side identifier shipped in the
-# landing page's HTML, not a secret. The third regex is a licence-key test vector
+# landing page's HTML, not a secret. ACCESS_AUD is the Cloudflare Access
+# application "audience" tag — a public identifier (it appears in the `aud` claim
+# of every Access JWT and in the login-redirect URL), embedded as a Worker var to
+# validate Access tokens; not a secret. The licence-key regex is a test vector
 # (LicenseValidatorTests) — an Ed25519 *signature* of an email, public by
-# construction (the app verifies it with the embedded public key). It's pinned by
-# value, not by variable name, so a real secret pasted on the same line is still
-# caught. Match the line, not the captured value.
+# construction (the app verifies it with the embedded public key). The variable
+# names are pinned by name, not value, so a real secret pasted on the same line is
+# still caught. Match the line, not the captured value.
 regexTarget = "line"
 regexes = [
   '''SUPublicEDKey''',
   '''data-cf-beacon''',
+  '''ACCESS_AUD''',
   '''YahgYgZ6fYgl4MsWJpRwtJWdcL6fmEzbk9yFoCmxJpe2DFae''',
 ]
