@@ -68,11 +68,15 @@ final class AppModel {
     private let now: () -> Date
     private let sessionLimit: TimeInterval
     private var sessionTimer: Task<Void, Never>?
-    // The post-trial pause meters actual sharing: `sessionRemaining` is the budget
-    // left for `sessionDeviceID`. The same iPad resumes its remaining time on
-    // reconnect (unplug/replug can't reset the gate); a different iPad starts fresh.
-    private var sessionRemaining: TimeInterval = 0
-    private var sessionDeviceID: String?
+    // The post-trial pause meters actual sharing per iPad: `sessionBudgets[deviceID]`
+    // is the time left for that device. The same iPad resumes its remaining time on
+    // reconnect or device-switch; a different iPad starts fresh. Keyed per device so
+    // alternating between two iPads can't reset either one's budget.
+    private var sessionBudgets: [String: TimeInterval] = [:]
+    // The device the currently-armed timer/countdown belongs to. Distinct from
+    // `currentDeviceID`, which `switchTo` updates to the new device before suspending
+    // the old session — so the budget write-back must target the *active* device.
+    private var activeSessionDeviceID: String?
     private(set) var currentDeviceID: String?
     private var isReconfiguring = false
     private var windowHotkey: GlobalHotkey?
@@ -123,7 +127,6 @@ final class AppModel {
         self.validator = validator
         self.now = now
         self.sessionLimit = sessionLimit
-        sessionRemaining = sessionLimit
         monitor = DeviceMonitor()
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
@@ -469,16 +472,14 @@ extension AppModel {
     private func armOrResumeTrialSession() {
         refreshEntitlement()
         guard entitlement == .trialExpired, isWindowVisible,
-              sessionTimer == nil, !isTrialOverlayShown else { return }
-        if currentDeviceID != sessionDeviceID {
-            sessionDeviceID = currentDeviceID
-            sessionRemaining = sessionLimit
-        }
-        guard sessionRemaining > 0 else {
+              sessionTimer == nil, !isTrialOverlayShown,
+              let deviceID = currentDeviceID else { return }
+        let remaining = sessionBudgets[deviceID] ?? sessionLimit
+        activeSessionDeviceID = deviceID
+        guard remaining > 0 else {
             showTrialPause()
             return
         }
-        let remaining = sessionRemaining
         let deadline = now().addingTimeInterval(remaining)
         sessionEndsAt = deadline
         window.setTrialCountdown(endsAt: deadline)
@@ -490,7 +491,7 @@ extension AppModel {
                 return
             }
             guard isWindowVisible, entitlement == .trialExpired else { return }
-            sessionRemaining = 0
+            sessionBudgets[deviceID] = 0
             showTrialPause()
         }
     }
@@ -508,11 +509,12 @@ extension AppModel {
     private func suspendTrialSession() {
         sessionTimer?.cancel()
         sessionTimer = nil
-        if let deadline = sessionEndsAt {
-            sessionRemaining = max(0, deadline.timeIntervalSince(now()))
+        if let deadline = sessionEndsAt, let deviceID = activeSessionDeviceID {
+            sessionBudgets[deviceID] = max(0, deadline.timeIntervalSince(now()))
             sessionEndsAt = nil
             window.setTrialCountdown(endsAt: nil)
         }
+        activeSessionDeviceID = nil
         if isTrialOverlayShown {
             isTrialOverlayShown = false
             window.setTrialOverlay(false)
@@ -522,7 +524,7 @@ extension AppModel {
     // A licence makes the gate moot: clear the display and forget the budget entirely.
     private func resetTrialSession() {
         suspendTrialSession()
-        sessionRemaining = sessionLimit
-        sessionDeviceID = nil
+        sessionBudgets.removeAll()
+        activeSessionDeviceID = nil
     }
 }
