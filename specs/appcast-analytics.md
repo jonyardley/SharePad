@@ -76,12 +76,19 @@ devices.
 
 ## Error handling
 
-Auto-update must never break for a logging outage:
+Two invariants: (a) never serve a wrong or unsigned appcast, and (b) a logging
+problem never affects what's served.
 
-- Upstream fetch failure → still return a usable response (cache / pass-through
-  status). Never 500 the appcast because logging is down.
-- `writeDataPoint` is fire-and-forget; a logging error never affects the served
-  body.
+- `writeDataPoint` is fire-and-forget, wrapped in try/catch, and `env.AE?.` is
+  optional-chained — a logging error (or a missing binding) never affects the
+  served body.
+- Upstream fetch failure → return `502`. This does **not** break auto-update:
+  Sparkle treats a failed feed fetch as "no update this cycle" and retries on the
+  next interval, so the worst case is a missed check, not a broken updater. The
+  upstream is GitHub Pages (highly available), so a hard 502 here is simpler and
+  honest — we'd rather 502 than risk serving a stale/wrong appcast from a fallback
+  cache. (If GH Pages reliability ever becomes a problem, add a `caches.default`
+  stale-serve fallback; not worth the complexity now.)
 
 ## App + docs changes
 

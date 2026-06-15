@@ -46,7 +46,7 @@ test('/appcast.xml proxies the upstream body as XML', async () => {
   assert.equal(await response.text(), APPCAST);
 });
 
-test('/appcast.xml logs one data point with the parsed version', async () => {
+test('/appcast.xml logs one data point with version, country, and the raw UA fallback', async () => {
   stubUpstream();
   const ae = fakeAE();
   await worker.fetch(
@@ -56,6 +56,8 @@ test('/appcast.xml logs one data point with the parsed version', async () => {
   assert.equal(ae.points.length, 1);
   assert.deepEqual(ae.points[0].indexes, ['1.1.0']);
   assert.equal(ae.points[0].blobs[0], '1.1.0');
+  assert.equal(ae.points[0].blobs[1], 'XX'); // no request.cf in tests → default
+  assert.equal(ae.points[0].blobs[2], 'SharePad/1.1.0 Sparkle/2.9.2'); // raw UA preserved for format-change recovery
 });
 
 test('a logging failure never breaks the served appcast', async () => {

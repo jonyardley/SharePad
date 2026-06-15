@@ -63,6 +63,16 @@ rm DeveloperID.p12 AuthKey_*.p8 sparkle_private_key
 ```
 
 ## Step 5 — Cut the release
+> **Gate (one-time, then whenever the appcast Worker changes):** the
+> `appcast.sharepad.co` logging-proxy Worker must be **deployed and serving**
+> before tagging any build that carries `SUFeedURL =
+> https://appcast.sharepad.co/appcast.xml` — otherwise that build's first update
+> check hits a dead host and can't auto-update. Verify:
+> ```bash
+> cd workers/appcast && npx wrangler deploy   # if not already live
+> curl -s https://appcast.sharepad.co/appcast.xml | diff - <(curl -s https://sharepad.co/appcast.xml)  # must be identical
+> ```
+
 First, **add a `## <version>` section at the top of `CHANGELOG.md`** (in a normal
 PR to `main`) — its contents are shown to users in the in-app update dialog. Then
 tag. **Push tags over SSH** — the HTTPS token can't push to Actions/workflow paths.

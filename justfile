@@ -128,6 +128,7 @@ appcast-stats days="7":
     : "${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN (needs 'Account Analytics: Read')}"
     ACCOUNT="${CF_ACCOUNT_ID:-b232fe74d0fd6056b69aeaa6a79c51b7}"
     DAYS="{{ days }}"
+    [[ "$DAYS" =~ ^[0-9]+$ ]] || { echo "days must be a positive integer (got '$DAYS')" >&2; exit 1; }
     SQL="SELECT blob1 AS version, SUM(_sample_interval) AS checks
          FROM sharepad_appcast
          WHERE timestamp > NOW() - INTERVAL '$DAYS' DAY
