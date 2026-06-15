@@ -42,7 +42,7 @@ cannot help.
 | Notarization | `notarytool submit --wait` + `stapler staple`, via App Store Connect API key |
 | Package | **DMG** (create-dmg), notarized + stapled |
 | Auto-update | **Sparkle 2** (EdDSA-signed appcast) — first third-party dep, flagged |
-| Appcast hosting | **GitHub Release asset** (`releases/latest/download/appcast.xml`) |
+| Appcast hosting | Published to **gh-pages** (`sharepad.co/appcast.xml`); the app's feed URL is the **`appcast.sharepad.co` logging-proxy Worker**, which serves it unchanged + records install/version stats (`specs/appcast-analytics.md`) |
 | Versioning | `MARKETING_VERSION` → **1.0.0**; `CURRENT_PROJECT_VERSION` auto from CI |
 | Release trigger | git tag `v*` → release CI workflow |
 
@@ -151,11 +151,12 @@ These aren't "distribution" proper but belong to the same 1.0 push:
 
 ## 11. Open questions
 
-1. ~~**Appcast hosting**~~ — **Resolved:** a **GitHub Release asset** at the stable
-   `…/releases/latest/download/appcast.xml`. The release job generates the appcast and
-   attaches it alongside the DMG. (Switched from GitHub Pages because `main` is branch-
-   protected — the Actions bot can't push to it — and the appcast is a build artifact,
-   not source. No Pages dependency, no branch push.)
+1. ~~**Appcast hosting**~~ — **Resolved:** published to the **gh-pages** branch and
+   served at `sharepad.co/appcast.xml` (the Actions bot can push gh-pages; `main` is
+   branch-protected, so the appcast — a build artifact — never touches it). The app's
+   `SUFeedURL` points at the **`appcast.sharepad.co` logging-proxy Worker**, which
+   returns this same appcast and records anonymous install/version stats
+   (`specs/appcast-analytics.md`); auto-update and EdDSA verification are unaffected.
 2. ~~**DMG vs zip**~~ — **Resolved (v1):** the notarized **DMG** is both the download
    and the Sparkle feed enclosure (Sparkle 2 installs from a DMG). Delta/zip deferred.
 3. **dSYM handling** — keep dSYMs as release artifacts for future crash

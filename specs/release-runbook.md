@@ -72,9 +72,10 @@ git tag v1.0.0
 git push git@github.com:jonyardley/SharePad.git v1.0.0
 gh run watch    # follow the build
 ```
-Success → a **GitHub Release** with both `SharePad.dmg` and `appcast.xml` attached.
-The app's update feed is `…/releases/latest/download/appcast.xml`, which always points
-at the newest release — so cutting a new tag is all it takes to ship an update.
+Success → the DMG + `appcast.xml` published to **gh-pages** (`sharepad.co/appcast.xml`).
+The app's update feed is `https://appcast.sharepad.co/appcast.xml` — the logging-proxy
+Worker that serves this appcast unchanged and records install/version stats
+(`specs/appcast-analytics.md`) — so cutting a new tag is all it takes to ship an update.
 
 ## Step 6 — Verify on the iPad (the step that proves it works)
 1. **Download the DMG in a browser** (so it carries the quarantine flag a real user

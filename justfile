@@ -95,6 +95,48 @@ install-hooks:
     git config core.hooksPath .githooks
     @echo "git hooks installed (core.hooksPath -> .githooks). Needs: brew install gitleaks"
 
+# ── Analytics ──
+# Report GitHub Release download counts: the DMG (installs) and appcast.xml (Sparkle
+# update-checks, a proxy for active installs). Read-only; needs `gh` authenticated.
+# Only release assets are counted — the versioned DMGs served from sharepad.co
+# (GitHub Pages) have no download logs, so they're not included.
+downloads:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    REPO="${GH_REPO:-jonyardley/SharePad}"
+    echo "→ GitHub Release downloads ($REPO)"
+    echo
+    gh api "repos/$REPO/releases" --paginate \
+        --jq '.[] | .tag_name as $t | (.assets[]? | [$t, .name, (.download_count|tostring)] | @tsv)' \
+        | awk -F'\t' '
+            { printf "  %-10s %-38s %6s\n", $1, $2, $3
+              if ($2 ~ /\.dmg$/)  dmg     += $3
+              if ($2 ~ /appcast/) appcast += $3 }
+            END {
+              print  "  --------------------------------------------------------"
+              printf "  DMG downloads (all releases):          %6d\n", dmg
+              printf "  appcast.xml fetches (update checks):    %6d\n", appcast }'
+
+# Active installs + version adoption from the appcast Worker's Analytics Engine
+# dataset (specs/appcast-analytics.md). Needs CLOUDFLARE_API_TOKEN with the
+# "Account Analytics: Read" permission — the wrangler OAuth login does NOT carry it,
+# so mint a scoped token (or just read the same data in the Cloudflare dashboard).
+# Optional: CF_ACCOUNT_ID (defaults to the SharePad account) and DAYS (default 7).
+appcast-stats days="7":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN (needs 'Account Analytics: Read')}"
+    ACCOUNT="${CF_ACCOUNT_ID:-b232fe74d0fd6056b69aeaa6a79c51b7}"
+    DAYS="{{ days }}"
+    SQL="SELECT blob1 AS version, SUM(_sample_interval) AS checks
+         FROM sharepad_appcast
+         WHERE timestamp > NOW() - INTERVAL '$DAYS' DAY
+         GROUP BY version ORDER BY checks DESC"
+    echo "→ appcast update-checks, last $DAYS days (by app version)"
+    curl -sS "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/analytics_engine/sql" \
+        -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --data-binary "$SQL" \
+        | python3 -c "import json,sys; d=json.load(sys.stdin); d.get('success',True) or sys.exit('  query failed: %s'%d.get('errors',d)); rows=d.get('data') or []; t=sum(int(float(r['checks'])) for r in rows); [print('  %-12s %6d'%(r['version'],int(float(r['checks'])))) for r in rows] or print('  (no data yet)'); rows and print('  ------------------\n  %-12s %6d'%('total',t))"
+
 # ── Release / distribution ──
 # See specs/distribution.md. `release-build` is ad-hoc and credential-free (enough
 # for the Step 1 on-iPad camera check); `sign`/`notarize`/`dmg` need a Developer ID
@@ -156,10 +198,12 @@ release: release-build sign notarize dmg
     @echo "Release DMG: .build/SharePad.dmg"
 
 # generate + EdDSA-sign the Sparkle appcast from the notarized DMG into .build/appcast/.
-# CI attaches it to the GitHub Release (served at releases/latest/download/appcast.xml),
-# so there's no push to the protected main branch. Needs SPARKLE_ED_KEY_PATH (the
-# private key file), DOWNLOAD_URL_PREFIX (the release-asset base URL, trailing slash),
-# and RELEASE_VERSION (tag without the leading v) for the versioned DMG filename;
+# CI publishes it (with the DMG) to the gh-pages branch, served at sharepad.co/appcast.xml,
+# so there's no push to the protected main branch. The app fetches it via the
+# appcast.sharepad.co logging-proxy Worker (specs/appcast-analytics.md). Needs
+# SPARKLE_ED_KEY_PATH (the private key file), DOWNLOAD_URL_PREFIX (the gh-pages base
+# URL, https://sharepad.co/, trailing slash), and RELEASE_VERSION (tag without the
+# leading v) for the versioned DMG filename;
 # generate_appcast reads the version from the app inside the DMG and writes appcast.xml.
 sparkle-appcast:
     #!/usr/bin/env bash

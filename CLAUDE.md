@@ -64,6 +64,8 @@ just test          # run the unit tests
 just fmt           # swiftformat .   (must pass before commit)
 just lint          # swiftlint + swiftformat --lint (must pass before push)
 just scan          # gitleaks secret scan over full history (same check CI runs)
+just downloads     # GitHub Release download counts (DMG installs + appcast update-checks)
+just appcast-stats # active installs + version adoption from the appcast Worker (Analytics Engine)
 just install-hooks # enable the pre-commit secret scan (run once per clone/worktree)
 just release-build # Release build, Hardened Runtime, ad-hoc (for local on-iPad checks)
 just release       # full pipeline: build → Developer ID sign → notarize → DMG (needs creds)
@@ -220,6 +222,13 @@ before touching capture.
   connection (Non-Negotiable 5).
 - **App Sandbox breaks the opt-in.** Ship un-sandboxed (v1). Enabling the sandbox =
   empty device list with no obvious cause.
+- **The appcast feed is the `appcast.sharepad.co` Worker, not gh-pages directly.**
+  `SUFeedURL` points at the logging-proxy Worker (`specs/appcast-analytics.md`); it
+  serves the gh-pages appcast unchanged and records install/version stats. **The
+  Worker must be deployed and serving before any build carrying that feed URL ships**
+  — otherwise new installs check a dead feed and can't auto-update. Changing
+  `SUFeedURL` again strands existing installs on the old URL until they update, so
+  treat it as permanent.
 - **Normal window + browser meeting apps.** The chosen "normal window" (not pinned)
   shares fine in **Zoom desktop** even when occluded, but **browser Meet/Teams only
   transmit a *visible* window** — a buried window shares blank. The popover's
