@@ -19,6 +19,33 @@ export function presentedToken(request) {
   return auth.startsWith('Bearer ') ? auth.slice(7) : null;
 }
 
+// ── Cloudflare Access (SSO) ──
+// Pure parts of Access JWT validation; the signature check (IO + crypto) is in access.mjs.
+
+// The Access JWT, from the header Access injects or the CF_Authorization cookie.
+export function accessTokenFromRequest(request) {
+  const header = request.headers.get('cf-access-jwt-assertion');
+  if (header) return header;
+  const cookie = (request.headers.get('cookie') ?? '')
+    .split(';').map((c) => c.trim()).find((c) => c.startsWith('CF_Authorization='));
+  return cookie ? cookie.slice('CF_Authorization='.length) : null;
+}
+
+export function decodeJwtSegment(segment) {
+  const b64 = segment.replace(/-/g, '+').replace(/_/g, '/');
+  return JSON.parse(atob(b64.padEnd(b64.length + ((4 - (b64.length % 4)) % 4), '=')));
+}
+
+// Claim checks only — audience must match this app, must carry a future expiry,
+// and must be issued by our team. Missing exp/iss are rejected (fail closed).
+export function accessClaimsValid(payload, teamDomain, aud, nowSeconds) {
+  if (!payload) return false;
+  if (typeof payload.exp !== 'number' || payload.exp < nowSeconds) return false;
+  if (payload.iss !== `https://${teamDomain}`) return false;
+  const auds = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+  return auds.includes(aud);
+}
+
 // ── Time ──
 
 export function isoDaysAgo(now, days) {
