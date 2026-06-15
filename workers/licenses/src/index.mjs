@@ -7,7 +7,7 @@ export default {
     const url = new URL(request.url);
     try {
       if (url.pathname === '/key') return await keyPage(url, env);
-      if (url.pathname === '/recover') return await recoverPage(url, env);
+      if (url.pathname === '/recover') return await recoverPage(url, env, request);
       return htmlResponse(messagePage('Not found', 'Nothing to see here.'), 404);
     } catch (error) {
       if (error instanceof StripeUnavailableError) {
@@ -40,9 +40,14 @@ async function keyPage(url, env) {
   return htmlResponse(keyHtml(email, await deriveKey(env, email)));
 }
 
-async function recoverPage(url, env) {
+async function recoverPage(url, env, request) {
   const email = url.searchParams.get('email');
   if (!email) return htmlResponse(recoverFormHtml());
+  const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
+  const { success } = await env.RECOVER_LIMITER.limit({ key: ip });
+  if (!success) {
+    return htmlResponse(messagePage('Slow down', 'Too many attempts — please wait a minute and try again.'), 429);
+  }
   const sessions = await stripeGet(
     `/v1/checkout/sessions?customer_details[email]=${encodeURIComponent(normalizeEmail(email))}&status=complete&limit=100`,
     env,
