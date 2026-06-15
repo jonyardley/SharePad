@@ -1,0 +1,44 @@
+name: Deploy Appcast Worker
+
+# Deploy the sharepad-appcast Cloudflare Worker (the Sparkle appcast logging proxy,
+# specs/appcast-analytics.md) whenever its code changes on main, or on manual
+# dispatch. Unlike the money-path workers this one has NO runtime secrets — it
+# serves the public appcast and writes anonymous stats to Analytics Engine.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/appcast/**"
+      - ".github/workflows/deploy-appcast-worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy sharepad-appcast Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Test
+        working-directory: workers/appcast
+        run: npm test
+
+      # First deploy provisions the appcast.sharepad.co custom domain (wrangler.toml
+      # routes). That needs the CLOUDFLARE_API_TOKEN to carry Zone DNS + Workers
+      # Routes edit on the sharepad.co zone, not just Workers Scripts. If the token
+      # is workers-only, the custom domain must be created once in the dashboard
+      # (like the licenses rate-limit rule) — see specs/appcast-analytics.md.
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/appcast
