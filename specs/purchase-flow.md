@@ -27,7 +27,8 @@ why "buy again" behaves the way it does (below).
      with the **download link + licence key**.
    - **Page (instant, optional):** if the Payment Link redirects to the
      `sharepad-licenses` worker `/key?session_id=...`, that page also shows the key.
-   `/recover` re-derives the key for any paid email at any time.
+   `/recover` re-derives the key for any paid email at any time and emails it to
+   that address.
 5. **Activate.** Buyer opens SharePad -> Enter licence... -> pastes email + key.
    The app validates it **offline** against the embedded public key -> Licensed.
    The pause stops and the Buy button disappears.
@@ -40,8 +41,8 @@ licence is bound to the email, not the machine.
 | Situation | Handling |
 |---|---|
 | Card declined / payment fails | Stripe shows the error; no redirect, no key. Retry. |
-| Paid, but closed the tab before `/key` | The **email** delivers the key; **`/recover`** re-derives it anytime. |
-| Email never arrives (spam / Resend down) | `/key` page already showed it; `/recover` is the durable fallback. |
+| Paid, but closed the tab before `/key` | The **email** delivers the key; **`/recover`** re-sends it to the inbox anytime. |
+| Email never arrives (spam / Resend down) | `/key` page already showed it; `/recover` re-sends it to the inbox (and reports a 502 if Resend is down, rather than a false success). |
 | `/key` with a bad/expired `session_id` | "Purchase not found" (404) + recover hint. |
 | Stripe API down during `/key` or `/recover` | "Temporary problem — try again" (502), not a false 404. |
 | Worker misconfigured (bad signing key) | "Something went wrong" (500), distinct from a Stripe outage. |
@@ -81,8 +82,12 @@ Instead, make a duplicate unnecessary and detectable:
   `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`, and `ED25519_PRIVATE_KEY` (same value
   as the licences worker).
 - **`sharepad-licenses`** (`/key`, `/recover`): `/recover` is the self-service
-  "lost my key" path; `/key` optionally shows the key instantly if the Payment
-  Link redirects there. No email is sent from here (the webhook owns email).
+  "lost my key" path — it **emails** the key to the buyer's address rather than
+  showing it on the page, so recovery requires inbox control, not just knowing a
+  customer's email (`specs/recover-email-delivery.md`); it needs `RESEND_API_KEY`
+  (same value as the purchase-email worker). `/key` optionally shows the key
+  instantly if the Payment Link redirects there (it carries a fresh post-checkout
+  `session_id`, so it is not an open oracle).
 
 Both Workers deploy via GitHub Actions on push to `main` (paths `workers/licenses/**`
 and `workers/purchase-email/**`), running their `npm test` first. Secrets are synced

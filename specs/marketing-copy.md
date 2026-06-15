@@ -131,7 +131,9 @@ the **download link + the licence key**. The HTML lives in `purchaseEmailHtml`.
   exactly-once per paid checkout. It needs `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`,
   and `ED25519_PRIVATE_KEY` (same value as the licences worker). Deploy it *with* the
   gated app release — until then, a no-gate buyer would get a key they can't yet use.
-- **`sharepad-licenses`** worker: `/recover` (self-service re-derivation) and an
-  optional `/key` page. It does not send email.
+- **`sharepad-licenses`** worker: `/recover` (self-service re-derivation, which
+  **emails** the key to the buyer's address — the page above promises exactly that,
+  "we'll send your key straight back" — see `specs/recover-email-delivery.md`) and
+  an optional `/key` page that renders the key inline.
 - **Existing buyers** (from the no-gate era): mint with `workers/licenses/scripts/mint-key.mjs`
   and send by hand using the §3 shape.
