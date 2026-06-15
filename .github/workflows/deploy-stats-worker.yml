@@ -31,22 +31,38 @@ jobs:
         run: npm test
 
       # First deploy provisions the stats.sharepad.co custom domain (same zone-perm
-      # token that already provisioned appcast.sharepad.co). Worker secrets:
-      #   DASHBOARD_TOKEN        — the dashboard access gate (required to serve data)
-      #   CF_API_TOKEN           — Account Analytics: Read (AE SQL + Web Analytics RUM)
-      #   STRIPE_API_KEY         — Checkout Sessions: read (reused from the other workers)
-      # Any unset secret degrades that card to "not configured" rather than failing.
+      # token that already provisioned appcast.sharepad.co).
       - name: Deploy with Wrangler
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: workers/stats
-          secrets: |
-            DASHBOARD_TOKEN
-            CF_API_TOKEN
-            STRIPE_API_KEY
+
+      # Sync each Worker secret only if its GitHub secret is set — so the deploy
+      # never fails on an absent one, and the matching card just shows "not
+      # configured" until it's added. (wrangler-action's `secrets:` block hard-fails
+      # on any missing value, which is why we sync them here instead.)
+      #   DASHBOARD_TOKEN   — the access gate (required to serve data)
+      #   CF_API_TOKEN      — Account Analytics: Read (AE SQL + Web Analytics RUM)
+      #   STRIPE_API_KEY    — Checkout Sessions: read (reused from the other workers)
+      - name: Sync secrets (each, if set)
+        working-directory: workers/stats
         env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           DASHBOARD_TOKEN: ${{ secrets.STATS_DASHBOARD_TOKEN }}
           CF_API_TOKEN: ${{ secrets.STATS_ANALYTICS_TOKEN }}
           STRIPE_API_KEY: ${{ secrets.STRIPE_API_KEY }}
+        run: |
+          set -euo pipefail
+          put() {
+            if [ -n "${2:-}" ]; then
+              printf '%s' "$2" | npx --yes wrangler@4 secret put "$1"
+            else
+              echo "::notice::$1 not set — skipping; its dashboard card shows 'not configured'."
+            fi
+          }
+          put DASHBOARD_TOKEN "${DASHBOARD_TOKEN:-}"
+          put CF_API_TOKEN "${CF_API_TOKEN:-}"
+          put STRIPE_API_KEY "${STRIPE_API_KEY:-}"
