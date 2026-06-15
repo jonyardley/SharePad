@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
-  aeVersionRows, buildRumQuery, buildVersionSQL, fmtInt, fmtMoney,
-  isoDaysAgo, parseDownloads, parseRum, parseStripe, presentedToken, renderHTML, tokensMatch,
+  accessClaimsValid, accessTokenFromRequest, aeVersionRows, buildRumQuery, buildVersionSQL,
+  decodeJwtSegment, fmtInt, fmtMoney, isoDaysAgo, parseDownloads, parseRum, parseStripe,
+  presentedToken, renderHTML, tokensMatch,
 } from '../src/lib.mjs';
 
 // ── auth ──
@@ -26,6 +27,37 @@ test('presentedToken reads query, then cookie, then bearer', () => {
     'tok',
   );
   assert.equal(presentedToken(new Request('https://s.test/')), null);
+});
+
+// ── Cloudflare Access ──
+
+test('accessTokenFromRequest reads the header, then the cookie', () => {
+  assert.equal(
+    accessTokenFromRequest(new Request('https://s.test/', { headers: { 'cf-access-jwt-assertion': 'jwt1' } })),
+    'jwt1',
+  );
+  assert.equal(
+    accessTokenFromRequest(new Request('https://s.test/', { headers: { cookie: 'x=1; CF_Authorization=jwt2' } })),
+    'jwt2',
+  );
+  assert.equal(accessTokenFromRequest(new Request('https://s.test/')), null);
+});
+
+test('decodeJwtSegment decodes base64url JSON', () => {
+  const seg = Buffer.from(JSON.stringify({ kid: 'k1' })).toString('base64url');
+  assert.deepEqual(decodeJwtSegment(seg), { kid: 'k1' });
+});
+
+test('accessClaimsValid enforces aud, expiry, and issuer', () => {
+  const team = 'team.cloudflareaccess.com';
+  const aud = 'app-aud';
+  const now = 1000;
+  assert.equal(accessClaimsValid({ aud, exp: 2000, iss: `https://${team}` }, team, aud, now), true);
+  assert.equal(accessClaimsValid({ aud: ['other', aud], exp: 2000 }, team, aud, now), true); // aud array
+  assert.equal(accessClaimsValid({ aud, exp: 500 }, team, aud, now), false);                  // expired
+  assert.equal(accessClaimsValid({ aud: 'wrong', exp: 2000 }, team, aud, now), false);        // wrong aud
+  assert.equal(accessClaimsValid({ aud, exp: 2000, iss: 'https://evil.com' }, team, aud, now), false); // wrong issuer
+  assert.equal(accessClaimsValid(null, team, aud, now), false);
 });
 
 // ── downloads ──

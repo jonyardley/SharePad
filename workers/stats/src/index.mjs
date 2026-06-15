@@ -4,19 +4,20 @@ import {
   aeVersionRows, buildRumQuery, buildVersionSQL, isoDaysAgo,
   parseDownloads, parseRum, parseStripe, presentedToken, renderHTML, tokensMatch,
 } from './lib.mjs';
+import { accessVerified } from './access.mjs';
 
 export default {
   async fetch(request, env) {
-    if (!env.DASHBOARD_TOKEN) {
-      return text('Dashboard not configured: set the DASHBOARD_TOKEN secret.', 503);
-    }
     const url = new URL(request.url);
-    if (!tokensMatch(presentedToken(request), env.DASHBOARD_TOKEN)) {
+    // Cloudflare Access (SSO) is the primary gate; DASHBOARD_TOKEN is the fallback
+    // for the *.workers.dev path that Access doesn't cover. Either one authorizes.
+    const tokenOk = tokensMatch(presentedToken(request), env.DASHBOARD_TOKEN);
+    if (!tokenOk && !(await accessVerified(request, env))) {
       return text('Unauthorized', 401, { 'www-authenticate': 'Bearer' });
     }
     // Token arrived in the URL → move it into an httpOnly cookie and strip it from
     // the address bar so it doesn't linger in history / referrers.
-    if (url.searchParams.get('token')) {
+    if (tokenOk && url.searchParams.get('token')) {
       return new Response(null, {
         status: 302,
         headers: {
