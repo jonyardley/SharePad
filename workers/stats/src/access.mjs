@@ -39,6 +39,9 @@ export async function accessVerified(request, env) {
   } catch {
     return false;
   }
+  // Pin the algorithm — we only ever verify RS256, so reject anything else before
+  // touching the key (guards against algorithm-confusion if this is ever refactored).
+  if (header.alg !== 'RS256') return false;
   if (!accessClaimsValid(payload, teamDomain, aud, Math.floor(Date.now() / 1000))) return false;
 
   try {

@@ -36,11 +36,12 @@ export function decodeJwtSegment(segment) {
   return JSON.parse(atob(b64.padEnd(b64.length + ((4 - (b64.length % 4)) % 4), '=')));
 }
 
-// Claim checks only — audience must match this app, not expired, issued by our team.
+// Claim checks only — audience must match this app, must carry a future expiry,
+// and must be issued by our team. Missing exp/iss are rejected (fail closed).
 export function accessClaimsValid(payload, teamDomain, aud, nowSeconds) {
   if (!payload) return false;
-  if (typeof payload.exp === 'number' && payload.exp < nowSeconds) return false;
-  if (payload.iss && payload.iss !== `https://${teamDomain}`) return false;
+  if (typeof payload.exp !== 'number' || payload.exp < nowSeconds) return false;
+  if (payload.iss !== `https://${teamDomain}`) return false;
   const auds = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
   return auds.includes(aud);
 }

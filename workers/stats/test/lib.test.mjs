@@ -50,13 +50,16 @@ test('decodeJwtSegment decodes base64url JSON', () => {
 
 test('accessClaimsValid enforces aud, expiry, and issuer', () => {
   const team = 'team.cloudflareaccess.com';
+  const iss = `https://${team}`;
   const aud = 'app-aud';
   const now = 1000;
-  assert.equal(accessClaimsValid({ aud, exp: 2000, iss: `https://${team}` }, team, aud, now), true);
-  assert.equal(accessClaimsValid({ aud: ['other', aud], exp: 2000 }, team, aud, now), true); // aud array
-  assert.equal(accessClaimsValid({ aud, exp: 500 }, team, aud, now), false);                  // expired
-  assert.equal(accessClaimsValid({ aud: 'wrong', exp: 2000 }, team, aud, now), false);        // wrong aud
+  assert.equal(accessClaimsValid({ aud, exp: 2000, iss }, team, aud, now), true);
+  assert.equal(accessClaimsValid({ aud: ['other', aud], exp: 2000, iss }, team, aud, now), true); // aud array
+  assert.equal(accessClaimsValid({ aud, exp: 500, iss }, team, aud, now), false);   // expired
+  assert.equal(accessClaimsValid({ aud, iss }, team, aud, now), false);             // missing exp → reject
+  assert.equal(accessClaimsValid({ aud: 'wrong', exp: 2000, iss }, team, aud, now), false); // wrong aud
   assert.equal(accessClaimsValid({ aud, exp: 2000, iss: 'https://evil.com' }, team, aud, now), false); // wrong issuer
+  assert.equal(accessClaimsValid({ aud, exp: 2000 }, team, aud, now), false);       // missing issuer → reject
   assert.equal(accessClaimsValid(null, team, aud, now), false);
 });
 
