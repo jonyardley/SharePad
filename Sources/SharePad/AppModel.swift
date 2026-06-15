@@ -105,9 +105,22 @@ final class AppModel {
             preferences: preferences,
             capture: controller,
             window: window,
-            thumbnailLayer: controller.thumbnailLayer
+            thumbnailLayer: controller.thumbnailLayer,
+            sessionLimit: Self.debugSessionLimitOverride ?? 5 * 60
         )
     }
+
+    #if DEBUG
+        // `SHAREPAD_SESSION_LIMIT_SECONDS=10 just run` shortens the post-trial pause budget
+        // so the gate is testable without the real 5-minute wait. DEBUG only — the shipping
+        // binary always uses the production 5 minutes.
+        private static var debugSessionLimitOverride: TimeInterval? {
+            ProcessInfo.processInfo.environment["SHAREPAD_SESSION_LIMIT_SECONDS"]
+                .flatMap(TimeInterval.init)
+        }
+    #else
+        private static let debugSessionLimitOverride: TimeInterval? = nil
+    #endif
 
     init(
         preferences: Preferences,
