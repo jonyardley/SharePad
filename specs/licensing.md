@@ -1,7 +1,8 @@
 # Licensing & Monetisation — Spec (v2)
 
 > Status: **app + worker landed 2026-06-13; Stripe/Cloudflare deployment + live
-> URLs pending — §8.**
+> URLs shipped — live 2026-06-14 (see `CHANGELOG.md` 1.1.0)** (deployment-hardening
+> follow-ups tracked in §8).
 >
 > **Reopens the 2026-06-07 "no-gate" decision.** That decision shipped a live
 > Stripe Managed Payments storefront (£6.99 one-time, `buy.sharepad.co`,
@@ -9,8 +10,8 @@
 > 7-day in-app trial + offline licence-key gate on top of that storefront — an
 > **honor-system soft gate** (source builders can still compile it out), trading
 > the "byte-for-byte identical build" property for conversion. The existing
-> `buy.sharepad.co` storefront is reused as the Buy destination; wiring checkout
-> to licence-key issuance (the `workers/licenses/` route) is the pending deployment step.
+> `buy.sharepad.co` storefront is reused as the Buy destination; checkout is wired
+> to licence-key issuance (the `workers/licenses/` route) and live as of 2026-06-14.
 > Sibling: `specs/distribution.md` (release pipeline this builds on).
 
 ## 1. Problem & goal
