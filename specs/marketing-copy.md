@@ -34,7 +34,8 @@ Reproduced here as the reference. Edit the HTML for any change; keep this in ste
 - **Hero:** Share your thinking, not just your screen.
   - Turn the iPad into a live whiteboard using your favourite drawing or writing
     app. Connect it to your Mac and share in any call, without the faff.
-  - £6.99 once · no subscription · macOS 14+
+  - CTA pair: **Download — free for 7 days** and **Buy a licence — £6.99**.
+  - Free for 7 days, then £6.99 once · no subscription · macOS 14+
 - **See it in action.** On the left, the SharePad window. On the right, that same
   window shared into Google Meet at full size.
 - **Ready the moment you plug in.** SharePad lives in your menu bar and finds your
@@ -64,10 +65,11 @@ Reproduced here as the reference. Edit the HTML for any change; keep this in ste
   £6.99 · one-time payment · updates for life · no subscription
 - **Footer:** SharePad · Privacy · Terms & refunds · GitHub
 
-### When the trial gate ships — additions in the same voice
-The live site has no trial yet. When the gate goes live, add, don't rewrite:
+### Trial gate copy — live since 2026-06-14
+The 7-day trial + licence gate shipped, and the site now carries this copy (added,
+not rewritten, in the same voice):
 - Hero CTA pair: **Download — free for 7 days** and **Buy a licence — £6.99**.
-- One honest line under pricing: "Try everything free for a week — no card, no
+- One honest line near the pricing: "Try everything free for a week, no card and no
   account. After that, £6.99 keeps it yours for good."
 - One FAQ entry, in the site's voice: *"What happens after the trial?"* — "The app
   keeps working; sharing just pauses now and then until you add your licence."
