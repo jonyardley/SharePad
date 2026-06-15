@@ -18,6 +18,9 @@ export default {
         ), 502);
       }
       if (error instanceof EmailUnavailableError) {
+        // A returned 5xx is not counted as a Worker error, so log it to keep
+        // recover-send failures visible/alertable in observability.
+        console.error('recover email send failed:', error.message);
         return htmlResponse(messagePage(
           'Could not send the email',
           'We found your purchase but could not send the email just now — please try again in a minute.',
@@ -70,10 +73,8 @@ async function recoverPage(url, env, request) {
       'No SharePad purchase matches that email. Check you used the email from checkout.',
     ), 404);
   }
-  // Email the key rather than render it: /recover is unauthenticated, so showing
-  // it would hand the working key to anyone who can name a customer's email. This
-  // binds recovery to inbox control (specs/recover-email-delivery.md). /key still
-  // shows the key inline — it carries a fresh post-checkout session_id.
+  // /recover is unauthenticated — rendering the key would hand it to anyone who can
+  // name a customer's email; email it instead (specs/recover-email-delivery.md).
   await sendRecoverEmail(env, email, await deriveKey(env, email));
   return htmlResponse(sentPage(email));
 }
@@ -126,11 +127,10 @@ function sentPage(email) {
 }
 
 // ── Recover email (Resend) ──
-// /recover sends the key here rather than rendering it; mirrors the self-contained
-// send in the sharepad-purchase-email worker (no shared package between workers).
-async function sendRecoverEmail(env, to, key) {
+async function sendRecoverEmail(env, email, key) {
   const downloadUrl = env.DOWNLOAD_URL || 'https://sharepad.co/thanks-a7f3c92b.html?owner';
   const from = env.EMAIL_FROM || 'SharePad <hello@sharepad.co>';
+  const to = normalizeEmail(email);
 
   let response;
   try {

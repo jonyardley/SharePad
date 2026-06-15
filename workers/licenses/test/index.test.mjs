@@ -77,8 +77,10 @@ test('/recover with paid history emails the key and never shows it', async () =>
   assert.ok(/inbox/i.test(html));
   // The key must reach the inbox, not the page.
   assert.equal(sent.length, 1);
-  assert.equal(sent[0].to, 'Buyer@Example.com');
+  assert.equal(sent[0].to, 'buyer@example.com');
+  assert.equal(sent[0].subject, 'Your SharePad licence key');
   assert.ok(/[A-Za-z0-9_-]{86}/.test(sent[0].text));
+  assert.ok(/[A-Za-z0-9_-]{86}/.test(sent[0].html));
   assert.ok(!/[A-Za-z0-9_-]{86}/.test(html));
 });
 
