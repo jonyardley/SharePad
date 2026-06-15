@@ -63,14 +63,16 @@ rm DeveloperID.p12 AuthKey_*.p8 sparkle_private_key
 ```
 
 ## Step 5 — Cut the release
-> **Gate (one-time, then whenever the appcast Worker changes):** the
-> `appcast.sharepad.co` logging-proxy Worker must be **deployed and serving**
-> before tagging any build that carries `SUFeedURL =
+> **Gate (one-time):** the `appcast.sharepad.co` logging-proxy Worker must be
+> **deployed and serving** before tagging any build that carries `SUFeedURL =
 > https://appcast.sharepad.co/appcast.xml` — otherwise that build's first update
-> check hits a dead host and can't auto-update. Verify:
+> check hits a dead host and can't auto-update. Merging the worker to `main`
+> deploys it via `deploy-appcast-worker.yml`; the first deploy also provisions the
+> custom domain (see `specs/appcast-analytics.md` → Deployment for the token caveat).
+> Confirm it's live before tagging:
 > ```bash
-> cd workers/appcast && npx wrangler deploy   # if not already live
 > curl -s https://appcast.sharepad.co/appcast.xml | diff - <(curl -s https://sharepad.co/appcast.xml)  # must be identical
+> # fallback if CI couldn't provision it: cd workers/appcast && npx wrangler deploy
 > ```
 
 First, **add a `## <version>` section at the top of `CHANGELOG.md`** (in a normal

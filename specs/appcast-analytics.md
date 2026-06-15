@@ -105,6 +105,19 @@ problem never affects what's served.
   appcast byte-identical to the gh-pages copy; confirm a row lands in AE; bump a
   build and confirm Sparkle still updates against the new feed URL.
 
+## Deployment
+
+CI-driven, like the other workers: `.github/workflows/deploy-appcast-worker.yml`
+deploys on push to `main` under `workers/appcast/**` (no manual `wrangler`). It has
+no runtime secrets. `workers-ci.yml` runs its tests on PRs.
+
+The **first** deploy provisions the `appcast.sharepad.co` custom domain
+(`wrangler.toml` routes). That needs the CI `CLOUDFLARE_API_TOKEN` to carry **Zone
+DNS + Workers Routes edit** on the sharepad.co zone, not just Workers Scripts. If
+the existing token is workers-only, either widen it once or create the custom
+domain in the dashboard first (the same dashboard-managed pattern as the licenses
+rate-limit rule) — then CI deploys reconcile cleanly.
+
 ## Open questions
 
 - Reading AE via `just appcast-stats` needs a `CLOUDFLARE_API_TOKEN` with
