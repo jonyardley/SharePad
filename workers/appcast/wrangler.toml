@@ -1,0 +1,25 @@
+# Logging proxy for the Sparkle appcast (specs/appcast-analytics.md). Serves the
+# gh-pages appcast and records one anonymous data point per update-check so we can
+# see active installs over time + version adoption.
+#
+# Bound to a DEDICATED subdomain so the live marketing site (sharepad.co, served
+# from GitHub Pages, grey-cloud) is untouched. `custom_domain = true` makes wrangler
+# provision the proxied DNS record + edge cert, since the zone is already on
+# Cloudflare. The app's SUFeedURL points here (project.yml).
+name = "sharepad-appcast"
+main = "src/index.mjs"
+compatibility_date = "2026-06-01"
+
+routes = [
+  { pattern = "appcast.sharepad.co", custom_domain = true },
+]
+
+# Anonymous, aggregate-only telemetry: app version (from the User-Agent Sparkle
+# already sends) + Cloudflare-derived country. No IP, no device id, no cookies.
+[[analytics_engine_datasets]]
+binding = "AE"
+dataset = "sharepad_appcast"
+
+[observability]
+enabled = true
+head_sampling_rate = 1

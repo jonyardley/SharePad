@@ -62,7 +62,10 @@ targets:
         # Sparkle auto-update (specs/distribution.md §7). SUPublicEDKey is the
         # production EdDSA public key (safe to commit); its matching private key is
         # the SPARKLE_ED_PRIVATE_KEY CI secret used to sign the appcast.
-        SUFeedURL: https://sharepad.co/appcast.xml
+        # The feed is served by the appcast logging-proxy Worker (it returns the
+        # gh-pages appcast unchanged and records anonymous install/version stats —
+        # specs/appcast-analytics.md). Updates and EdDSA verification are unaffected.
+        SUFeedURL: https://appcast.sharepad.co/appcast.xml
         SUPublicEDKey: dENS5eDuSc3QhXyD4HZ115jBNiZGK3gGbaVehtrk5yM=
         SUEnableAutomaticChecks: true
     scheme:
