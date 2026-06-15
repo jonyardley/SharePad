@@ -80,6 +80,7 @@ test('/recover is rate-limited with 429 when the limiter denies', async () => {
   const env = { ...(await generateEnv()), RECOVER_LIMITER: { limit: async () => ({ success: false }) } };
   const response = await worker.fetch(new Request('https://w.test/recover?email=x@y.z'), env);
   assert.equal(response.status, 429);
+  assert.equal(response.headers.get('retry-after'), '60');
 });
 
 test('a malformed signing key is a 500, not a 502', async () => {
