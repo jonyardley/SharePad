@@ -1,0 +1,22 @@
+# Unified stats dashboard (specs/stats-dashboard.md). Queries GitHub Releases,
+# Analytics Engine, Web Analytics, and Stripe server-side and renders one page at
+# stats.sharepad.co. Gated by DASHBOARD_TOKEN (+ Cloudflare Access, recommended).
+name = "sharepad-stats"
+main = "src/index.mjs"
+compatibility_date = "2026-06-01"
+
+routes = [
+  { pattern = "stats.sharepad.co", custom_domain = true },
+]
+
+# Public/non-secret config. Secrets (DASHBOARD_TOKEN, CF_API_TOKEN, STRIPE_API_KEY)
+# are set via `wrangler secret` / the deploy workflow — never committed.
+[vars]
+CF_ACCOUNT_ID = "b232fe74d0fd6056b69aeaa6a79c51b7"
+WEB_ANALYTICS_SITE_TAG = "039052be0c2642ea88a61dc8e59c95ed"
+GITHUB_REPO = "jonyardley/SharePad"
+AE_DATASET = "sharepad_appcast"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
