@@ -46,7 +46,7 @@ async function recoverPage(url, env, request) {
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
   const { success } = await env.RECOVER_LIMITER.limit({ key: ip });
   if (!success) {
-    return htmlResponse(messagePage('Slow down', 'Too many attempts — please wait a minute and try again.'), 429);
+    return htmlResponse(messagePage('Slow down', 'Too many attempts — please wait a minute and try again.'), 429, { 'retry-after': '60' });
   }
   const sessions = await stripeGet(
     `/v1/checkout/sessions?customer_details[email]=${encodeURIComponent(normalizeEmail(email))}&status=complete&limit=100`,
@@ -79,12 +79,13 @@ async function stripeGet(path, env) {
   throw new StripeUnavailableError(`Stripe responded ${response.status}`);
 }
 
-function htmlResponse(body, status = 200) {
+function htmlResponse(body, status = 200, extraHeaders = {}) {
   return new Response(body, {
     status,
     headers: {
       'content-type': 'text/html; charset=utf-8',
       'cache-control': 'no-store',
+      ...extraHeaders,
     },
   });
 }

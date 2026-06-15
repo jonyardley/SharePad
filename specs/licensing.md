@@ -154,10 +154,11 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
    for the no-gate storefront, so eligibility is settled.
 4. **Past-buyer outreach** — how to reach existing `buy.sharepad.co` buyers with
    their minted keys (Stripe customer export).
-5. **/recover rate limit** — **config + runbook ready; *pending* the actual dashboard rule.**
-   Observability is enabled on the licences worker (wrangler.toml). The 5 req/min/IP WAF
-   rate-limit rule (Security → WAF → Rate limiting, URI path starts with /recover) must still
-   be created in the Cloudflare dashboard at deploy — nothing in code enforces it yet.
+5. ~~**/recover rate limit**~~ — **resolved**: enforced in-worker via the Workers Rate
+   Limiting binding (5 req/min/IP, keyed on the client IP), returning 429 before any Stripe
+   call — see `workers/licenses/wrangler.toml` + `src/index.mjs`. A WAF dashboard rule was
+   ruled out: it needs a zone/custom domain and doesn't apply to the workers.dev subdomain.
+   Observability is enabled on the worker.
 6. **Pause timer vs. system sleep** — the post-trial session timer uses `Task.sleep`, whose
    clock does not advance while the Mac is asleep, so a device's session budget can over-grant
    time after a laptop sleep (the displayed `sessionEndsAt` countdown and the actual pause can

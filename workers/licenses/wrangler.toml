@@ -1,8 +1,7 @@
-# Rate limiting for /recover uses the Workers Rate Limiting binding below (not a
-# WAF dashboard rule — those require a zone/custom domain and don't apply to the
-# workers.dev subdomain). /recover is an unauthenticated purchase-enumeration
-# oracle and each probe costs a Stripe API call (specs/licensing.md §8). The
-# limit is enforced in src/index.mjs before any Stripe call.
+# /recover rate limiting is in-worker (the binding below), not a WAF dashboard
+# rule — those need a zone/custom domain and don't apply to the workers.dev
+# subdomain. /recover is an unauthenticated purchase-enumeration oracle and each
+# probe costs a Stripe API call (specs/licensing.md §8).
 
 name = "sharepad-licenses"
 main = "src/index.mjs"
