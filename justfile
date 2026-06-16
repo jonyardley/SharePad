@@ -129,9 +129,11 @@ appcast-stats days="7":
     ACCOUNT="${CF_ACCOUNT_ID:-b232fe74d0fd6056b69aeaa6a79c51b7}"
     DAYS="{{ days }}"
     [[ "$DAYS" =~ ^[0-9]+$ ]] || { echo "days must be a positive integer (got '$DAYS')" >&2; exit 1; }
+    # Exclude 'unknown' non-app traffic so the count proxies real installs; keep in sync with workers/stats buildVersionSQL.
     SQL="SELECT blob1 AS version, SUM(_sample_interval) AS checks
          FROM sharepad_appcast
          WHERE timestamp > NOW() - INTERVAL '$DAYS' DAY
+           AND blob1 != 'unknown'
          GROUP BY version ORDER BY checks DESC"
     echo "→ appcast update-checks, last $DAYS days (by app version)"
     curl -sS "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/analytics_engine/sql" \

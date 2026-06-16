@@ -84,11 +84,12 @@ test('parseDownloads tolerates empty / missing assets', () => {
 
 // ── analytics engine ──
 
-test('buildVersionSQL targets the dataset and window', () => {
+test('buildVersionSQL targets the dataset and window, excluding non-app traffic', () => {
   const sql = buildVersionSQL('sharepad_appcast', 7);
   assert.match(sql, /FROM sharepad_appcast/);
   assert.match(sql, /INTERVAL '7' DAY/);
   assert.match(sql, /SUM\(_sample_interval\)/);
+  assert.match(sql, /blob1 != 'unknown'/);
 });
 
 test('aeVersionRows parses the SQL API shape', () => {

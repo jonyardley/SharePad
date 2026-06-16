@@ -74,10 +74,12 @@ export function parseDownloads(releases) {
 
 // ── Analytics Engine (SQL API) → active installs + version split ──
 
+// 'unknown' is non-app traffic (curl, crawlers, browsers poking the feed) — exclude it so the count proxies real installs.
 export function buildVersionSQL(dataset, days) {
   return `SELECT blob1 AS version, SUM(_sample_interval) AS checks
           FROM ${dataset}
           WHERE timestamp > NOW() - INTERVAL '${days}' DAY
+            AND blob1 != 'unknown'
           GROUP BY version ORDER BY checks DESC`;
 }
 
