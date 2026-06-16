@@ -124,9 +124,12 @@ export function parseRum(json) {
 // ── Stripe → sales count + gross ──
 
 export function parseStripe(json) {
-  const paid = (json?.data ?? []).filter((s) => s.payment_status === 'paid');
-  const gross = paid.reduce((sum, s) => sum + (s.amount_total ?? 0), 0);
-  return { count: paid.length, gross, currency: (paid[0]?.currency ?? 'gbp').toUpperCase() };
+  const completed = (json?.data ?? []).filter((s) => s.payment_status === 'paid');
+  const gross = completed.reduce((sum, s) => sum + (s.amount_total ?? 0), 0);
+  // A 100%-off voucher completes as paid with amount_total 0 — split it out so the
+  // count isn't mistaken for full-price sales.
+  const paid = completed.filter((s) => (s.amount_total ?? 0) > 0).length;
+  return { gross, paid, voucher: completed.length - paid, currency: (completed[0]?.currency ?? 'gbp').toUpperCase() };
 }
 
 // ── Formatting ──
@@ -170,7 +173,7 @@ export function renderHTML(d) {
     : notice(d.traffic.reason ?? 'Web Analytics unavailable.');
 
   const revenue = d.revenue.ok
-    ? `<p class="big">${fmtMoney(d.revenue.value.gross, d.revenue.value.currency)}</p><p class="muted">${fmtInt(d.revenue.value.count)} sales (last 100 checkouts)</p>`
+    ? `<p class="big">${fmtMoney(d.revenue.value.gross, d.revenue.value.currency)}</p><p class="muted">${fmtInt(d.revenue.value.paid)} paid · ${fmtInt(d.revenue.value.voucher)} voucher (last 100 checkouts)</p>`
     : notice(d.revenue.reason ?? 'Stripe unavailable.');
 
   return `<!doctype html><html lang="en"><head><meta charset="utf-8">

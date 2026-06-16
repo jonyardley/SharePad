@@ -114,14 +114,15 @@ test('parseRum applies the sample interval and defaults to zero', () => {
 
 // ── stripe ──
 
-test('parseStripe sums paid sessions only', () => {
+test('parseStripe sums gross and splits paid vs voucher', () => {
   const json = { data: [
     { payment_status: 'paid', amount_total: 699, currency: 'gbp' },
     { payment_status: 'paid', amount_total: 699, currency: 'gbp' },
+    { payment_status: 'paid', amount_total: 0, currency: 'gbp' },   // 100%-off voucher
     { payment_status: 'unpaid', amount_total: 699, currency: 'gbp' },
   ] };
-  assert.deepEqual(parseStripe(json), { count: 2, gross: 1398, currency: 'GBP' });
-  assert.deepEqual(parseStripe({}), { count: 0, gross: 0, currency: 'GBP' });
+  assert.deepEqual(parseStripe(json), { gross: 1398, paid: 2, voucher: 1, currency: 'GBP' });
+  assert.deepEqual(parseStripe({}), { gross: 0, paid: 0, voucher: 0, currency: 'GBP' });
 });
 
 // ── formatting ──
@@ -145,7 +146,7 @@ test('renderHTML shows data when ok and a notice when not', () => {
     downloads: { ok: true, value: { totalDmg: 15, perVersion: [{ tag: 'v1.2.0', dmg: 10 }] } },
     installs: { ok: false, reason: 'CF_API_TOKEN not set' },
     traffic: { ok: false, reason: 'CF_API_TOKEN not set' },
-    revenue: { ok: true, value: { gross: 1398, count: 2, currency: 'GBP' } },
+    revenue: { ok: true, value: { gross: 1398, paid: 2, voucher: 0, currency: 'GBP' } },
   });
   assert.match(html, /SharePad stats/);
   assert.match(html, /15/);            // downloads value
