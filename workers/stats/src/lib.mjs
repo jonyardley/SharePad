@@ -95,16 +95,20 @@ export function aeVersionRows(json) {
 
 // ── Web Analytics (RUM GraphQL) → pageviews + visits ──
 
-export function buildRumQuery(accountTag, siteTag, start, end) {
-  const query = `query Rum($accountTag: String!, $siteTag: String, $start: Time!, $end: Time!) {
+// Aggregates RUM across ALL Web Analytics sites in the account (no siteTag filter):
+// the GraphQL siteTag is not the JS beacon token, and sharepad.co's traffic is split
+// across two (duplicate) sites — summing them matches the dashboard's total. Revisit
+// if an unrelated property ever gets its own Web Analytics site on this account.
+export function buildRumQuery(accountTag, start, end) {
+  const query = `query Rum($accountTag: String!, $start: Time!, $end: Time!) {
     viewer { accounts(filter: { accountTag: $accountTag }) {
       rumPageloadEventsAdaptiveGroups(
         limit: 1,
-        filter: { datetime_geq: $start, datetime_lt: $end, siteTag: $siteTag }
+        filter: { datetime_geq: $start, datetime_lt: $end }
       ) { count avg { sampleInterval } sum { visits } }
     } }
   }`;
-  return { query, variables: { accountTag, siteTag, start, end } };
+  return { query, variables: { accountTag, start, end } };
 }
 
 export function parseRum(json) {

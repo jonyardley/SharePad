@@ -99,10 +99,11 @@ test('aeVersionRows parses the SQL API shape', () => {
 
 // ── web analytics (RUM) ──
 
-test('buildRumQuery wires account, site, and window', () => {
-  const { query, variables } = buildRumQuery('acct', 'site', '2026-06-08T00:00:00Z', '2026-06-15T00:00:00Z');
+test('buildRumQuery wires account + window and does not filter by site', () => {
+  const { query, variables } = buildRumQuery('acct', '2026-06-08T00:00:00Z', '2026-06-15T00:00:00Z');
   assert.match(query, /rumPageloadEventsAdaptiveGroups/);
-  assert.deepEqual(variables, { accountTag: 'acct', siteTag: 'site', start: '2026-06-08T00:00:00Z', end: '2026-06-15T00:00:00Z' });
+  assert.doesNotMatch(query, /siteTag/); // aggregate across all sites
+  assert.deepEqual(variables, { accountTag: 'acct', start: '2026-06-08T00:00:00Z', end: '2026-06-15T00:00:00Z' });
 });
 
 test('parseRum applies the sample interval and defaults to zero', () => {

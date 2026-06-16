@@ -72,7 +72,10 @@ the APIs or burn GitHub's unauthenticated rate limit.
   version split from `sharepad_appcast` (`SUM(_sample_interval)`).
 - **Site traffic:** pageviews + visits, last 7d, from `rumPageloadEventsAdaptiveGroups`
   (account-scoped — sharepad.co is grey-cloud, so the RUM beacon, not zone analytics,
-  holds this).
+  holds this). Summed across **all** the account's Web Analytics sites with **no
+  siteTag filter**: the GraphQL `siteTag` is not the JS beacon token, and sharepad.co
+  is currently split across two (duplicate) sites — summing matches the dashboard.
+  Revisit if an unrelated property ever gets Web Analytics on this account.
 - **Revenue:** completed checkout sessions — count + gross (last 100; paginate later).
 
 ## Error handling

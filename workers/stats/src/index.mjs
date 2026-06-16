@@ -95,9 +95,7 @@ async function aeSql(env, sql) {
 
 async function fetchTraffic(env) {
   const now = new Date();
-  const { query, variables } = buildRumQuery(
-    env.CF_ACCOUNT_ID, env.WEB_ANALYTICS_SITE_TAG, isoDaysAgo(now, 7), now.toISOString(),
-  );
+  const { query, variables } = buildRumQuery(env.CF_ACCOUNT_ID, isoDaysAgo(now, 7), now.toISOString());
   const res = await fetch('https://api.cloudflare.com/client/v4/graphql', {
     method: 'POST',
     headers: { authorization: `Bearer ${env.CF_API_TOKEN}`, 'content-type': 'application/json' },
