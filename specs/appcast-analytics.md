@@ -74,6 +74,14 @@ Mirrors the existing workers (ESM `.mjs`, `export default { fetch }`, `node:test
 collected), the signal is *update-checks per day*, a strong proxy, not unique
 devices.
 
+The install count and version table **exclude the `unknown` bucket** (`WHERE
+blob1 != 'unknown'`): non-app traffic (curl, crawlers, browsers poking the feed
+URL) parses to `unknown` and would otherwise inflate the count — e.g. a handful of
+manual `curl appcast.sharepad.co/appcast.xml` checks once outnumbered the lone real
+install. Both `just appcast-stats` and `workers/stats` apply the same filter, so the
+CLI and `stats.sharepad.co` agree. The raw UA is still in `blob3` for ad-hoc
+debugging of what's landing in `unknown`.
+
 ## Error handling
 
 Two invariants: (a) never serve a wrong or unsigned appcast, and (b) a logging
