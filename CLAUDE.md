@@ -1,16 +1,18 @@
 # SharePad — Development Guidelines
 
-> Last reviewed: 2026-06-04.
+> Last reviewed: 2026-06-16.
 >
-> **Status: Phases 0–4 landed, plus #7 (window-frame persistence) and #10 (popover
-> live thumbnail + device picker), and the 7-day trial + Ed25519 licence-key gate
-> (app + worker + Stripe/Cloudflare deployment shipped, live 2026-06-14 — see
-> `CHANGELOG.md` 1.1.0).** The full pipeline exists — CMIO
-> opt-in, `.muxed` capture, borderless aspect-locked share window, popover, automatic
-> connect/disconnect/wake lifecycle, and the trial-gated in-app purchase flow. The
-> gate is done; what remains is **Phase 5 (polish)** and follow-ups. The module map below is the *actual* layout. The
-> design spec is the source of truth for *what* we're building and *why*; this file
-> is *how* we build it. Read `DESIGN.md` first.
+> **Status: Phases 0–5 all shipped** (incl. #7 window-frame persistence and #10
+> popover live thumbnail + device picker) **plus the 7-day trial + Ed25519
+> licence-key gate** (app + worker + Stripe/Cloudflare deployment, live 2026-06-14
+> — see `CHANGELOG.md` 1.1.0). **v1.2.0 is the current public release; the product
+> is feature-complete and now in the marketing/launch phase.** The full pipeline
+> exists — CMIO opt-in, `.muxed` capture, borderless aspect-locked share window,
+> popover, automatic connect/disconnect/wake lifecycle, and the trial-gated in-app
+> purchase flow. What remains is publicity, maintenance, and follow-ups. The module
+> map below is the *actual* layout. The design spec is the source of truth for
+> *what* we're building and *why*; this file is *how* we build it. Read `DESIGN.md`
+> first.
 
 ## Project Overview
 
