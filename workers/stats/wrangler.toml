@@ -13,7 +13,6 @@ routes = [
 # are set via `wrangler secret` / the deploy workflow — never committed.
 [vars]
 CF_ACCOUNT_ID = "b232fe74d0fd6056b69aeaa6a79c51b7"
-WEB_ANALYTICS_SITE_TAG = "039052be0c2642ea88a61dc8e59c95ed"
 GITHUB_REPO = "jonyardley/SharePad"
 AE_DATASET = "sharepad_appcast"
 # Cloudflare Access (SSO) — public identifiers, not secrets. A valid Access JWT for
