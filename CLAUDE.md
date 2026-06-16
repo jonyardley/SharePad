@@ -39,6 +39,8 @@ Sources/SharePad/         # app code (see DESIGN.md §8 for the module map)
 Tests/SharePadTests/      # pure-logic tests (reducer, preferences)
 workers/licenses/           # Cloudflare Worker: licence key issuance (Stripe, trial gate)
 workers/purchase-email/     # Cloudflare Worker: post-purchase licence + download email (Resend)
+workers/appcast/            # Cloudflare Worker: appcast logging-proxy (active-install + version stats)
+workers/stats/              # Cloudflare Worker: unified stats dashboard at stats.sharepad.co
 ```
 
 ## Tech Stack
