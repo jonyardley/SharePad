@@ -5,7 +5,7 @@
 > follow-ups tracked in §8).
 >
 > **Reopens the 2026-06-07 "no-gate" decision.** That decision shipped a live
-> Stripe Managed Payments storefront (£6.99 one-time, `buy.sharepad.co`,
+> Stripe Managed Payments storefront (£2.99 one-time, `buy.sharepad.co`,
 > sell-the-build, *no* trial / keys / in-app gate). This v2 deliberately adds a
 > 7-day in-app trial + offline licence-key gate on top of that storefront — an
 > **honor-system soft gate** (source builders can still compile it out), trading
@@ -34,7 +34,7 @@ builders can compile out. We sell convenience, not enforcement.
 | Checkout | **Stripe Managed Payments** (merchant of record on Jon's existing Stripe account) + **Stripe Payment Link**, opened in the default browser | MoR handles global VAT/sales tax (the thing that made self-remittance a non-starter); ~3.5% on top of standard processing, ≈6–7% all-in. Browser checkout beats an embedded webview for autofill/Apple Pay/trust. |
 | Licence keys | **Offline-signed**: Ed25519 signature of the buyer's email, base64url-encoded; app verifies with an embedded public key via CryptoKit | No activation server, no network calls, works offline forever, no third-party dependency (~50 lines, no CocoaFob). |
 | Key issuance | **One Cloudflare Worker, two GET routes, no webhook, no database** | Ed25519 signatures are deterministic → a key can always be re-derived from the email; Stripe itself is the purchase record. |
-| Storefront | **Reuse the existing live `buy.sharepad.co`** (Stripe MP, £6.99) — the in-app Buy affordances point there | The no-gate model already shipped this storefront; the gate layers on top rather than replacing it. Wiring checkout success → key issuance is the pending step (§8). |
+| Storefront | **Reuse the existing live `buy.sharepad.co`** (Stripe MP, £2.99) — the in-app Buy affordances point there | The no-gate model already shipped this storefront; the gate layers on top rather than replacing it. Wiring checkout success → key issuance is the pending step (§8). |
 
 Anti-goals (out of scope): subscriptions, device-count activation limits,
 embedded webview checkout, online revocation, obfuscating or hardening the gate.
@@ -153,7 +153,7 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
 
 ## 8. Open questions
 
-1. ~~**Price**~~ — **resolved**: £6.99 one-time, already live on `buy.sharepad.co`.
+1. ~~**Price**~~ — **resolved**: £2.99 one-time, already live on `buy.sharepad.co`.
 2. **Worker domain** — workers.dev subdomain vs a custom domain on the existing
    gh-pages site's DNS. *(pending deployment)*
 3. ~~**SMP availability**~~ — **resolved**: Stripe Managed Payments is already live

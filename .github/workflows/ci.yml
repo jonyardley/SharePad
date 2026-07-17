@@ -52,3 +52,19 @@ jobs:
       # un-sandboxed) on the built app — a regression otherwise surfaces only live.
       - name: Verify app invariants
         run: just verify-app
+
+  site:
+    name: Site templates in sync
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+      # docs/ is generated from site/ templates + site/site.config.json. Fail if a
+      # committed docs/ page drifts from a fresh render (a hand-edit or stale build).
+      - name: Render and check for drift
+        run: |
+          node scripts/build-site.mjs
+          git diff --exit-code docs/ || {
+            echo "::error::docs/ is out of sync with site/ templates. Run 'just build-site' and commit."
+            exit 1
+          }
