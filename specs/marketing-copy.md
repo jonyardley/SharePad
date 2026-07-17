@@ -17,7 +17,7 @@ slogans. Examples straight from the live site:
   app. Connect it to your Mac and share in any call, without the faff."
 - "Ready the moment you plug in." · "Nothing leaves your Mac." · "How it ships,
   honestly." · "Questions, answered." · "Make every call more visual."
-- "£6.99 once · no subscription · macOS 14+"
+- "£2.99 once · no subscription · macOS 14+"
 
 > **Constraint:** the 7-day trial is entirely client-side, with no account or
 > email capture (that's the privacy promise — the app never sends your data). So
@@ -34,8 +34,8 @@ Reproduced here as the reference. Edit the HTML for any change; keep this in ste
 - **Hero:** Share your thinking, not just your screen.
   - Turn the iPad into a live whiteboard using your favourite drawing or writing
     app. Connect it to your Mac and share in any call, without the faff.
-  - CTA pair: **Download — free for 7 days** and **Buy a licence — £6.99**.
-  - Free for 7 days, then £6.99 once · no subscription · macOS 14+
+  - CTA pair: **Download — free for 7 days** and **Buy a licence — £2.99**.
+  - Free for 7 days, then £2.99 once · no subscription · macOS 14+
 - **See it in action.** On the left, the SharePad window. On the right, that same
   window shared into Google Meet at full size.
 - **Ready the moment you plug in.** SharePad lives in your menu bar and finds your
@@ -51,7 +51,7 @@ Reproduced here as the reference. Edit the HTML for any change; keep this in ste
   your data or anything about what you share.
 - **How it ships, honestly.** SharePad isn't on the Mac App Store, so you download
   it straight from here.
-  - £6.99, paid once. No subscription and no account, just a one-off payment, with
+  - £2.99, paid once. No subscription and no account, just a one-off payment, with
     automatic updates for life.
   - Every build is signed and notarised by Apple, so it opens with a normal double-click.
   - It runs outside Apple's sandbox, because that's the only way macOS will treat a
@@ -62,15 +62,15 @@ Reproduced here as the reference. Edit the HTML for any change; keep this in ste
   virtual camera?", Apple Pencil/drawing apps, requirements, why-not-App-Store,
   lag, the black-window fixes, audio, notifications, and privacy.
 - **Make every call more visual.** Plug in, pick the window, and draw.
-  £6.99 · one-time payment · updates for life · no subscription
+  £2.99 · one-time payment · updates for life · no subscription
 - **Footer:** SharePad · Privacy · Terms & refunds · GitHub
 
 ### Trial gate copy — live since 2026-06-14
 The 7-day trial + licence gate shipped, and the site now carries this copy (added,
 not rewritten, in the same voice):
-- Hero CTA pair: **Download — free for 7 days** and **Buy a licence — £6.99**.
+- Hero CTA pair: **Download — free for 7 days** and **Buy a licence — £2.99**.
 - One honest line near the pricing: "Try everything free for a week, no card and no
-  account. After that, £6.99 keeps it yours for good."
+  account. After that, £2.99 keeps it yours for good."
 - One FAQ entry, in the site's voice: *"What happens after the trial?"* — "The app
   keeps working; sharing just pauses now and then until you add your licence."
 

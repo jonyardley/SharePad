@@ -29,6 +29,15 @@ lint:
     swiftlint
     swiftformat --lint .
 
+# render the marketing site from site/ templates + site/site.config.json into docs/
+# (change the price once in site/site.config.json, then run this and commit docs/)
+build-site:
+    node scripts/build-site.mjs
+
+# build the site, then serve docs/ for local preview at http://localhost:4599
+preview-site: build-site
+    python3 -m http.server 4599 --directory docs
+
 # run unit tests (with code coverage; see `just coverage` for the report)
 test: gen
     xcodebuild -project SharePad.xcodeproj -scheme SharePad -configuration Debug -destination 'platform=macOS' -derivedDataPath .build -enableCodeCoverage YES test

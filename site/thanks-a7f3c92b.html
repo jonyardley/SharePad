@@ -1,5 +1,4 @@
 <!doctype html>
-<!-- GENERATED from site/thanks-a7f3c92b.html by scripts/build-site.mjs. Do not edit here; edit the template and run `just build-site`. -->
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -207,13 +206,13 @@
       var check = byId("check"); if (check) check.style.display = "none";
       hide("steps"); hide("opensource"); hide("activation-note"); hide("lostkey-note");
       set("headline", "Get SharePad");
-      set("lede", "Turn your iPad into a live whiteboard you can share in any call. One payment of £2.99, with updates for life.");
+      set("lede", "Turn your iPad into a live whiteboard you can share in any call. One payment of {{price}}, with updates for life.");
       var buy = byId("download");
       if (buy) {
         buy.setAttribute("href", "https://buy.sharepad.co");
         var ic = buy.querySelector("svg"); if (ic) ic.style.display = "none";
       }
-      set("download-label", "Get SharePad · £2.99");
+      set("download-label", "Get SharePad · {{price}}");
       var rel = byId("redownload-note"); if (rel) rel.hidden = false;
     } else if (owner) {
       set("headline", "Download SharePad");

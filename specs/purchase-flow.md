@@ -20,7 +20,7 @@ why "buy again" behaves the way it does (below).
 2. **Expiry.** After 7 days the share window pauses ~5 min into each session behind
    an overlay; relaunch resets it (honor system). Popover shows "Free trial ended".
 3. **Buy.** "Buy a licence" opens `buy.sharepad.co` -> 302 -> Stripe Checkout
-   (GBP 6.99, Apple Pay or card). Buyer pays.
+   (GBP 2.99, Apple Pay or card). Buyer pays.
 4. **Deliver.** Two paths, both fed by the same email-derived key:
    - **Email (primary, exactly-once):** the `sharepad-purchase-email` webhook fires
      on `checkout.session.completed`, derives the key, and sends one branded email
@@ -70,7 +70,7 @@ Instead, make a duplicate unnecessary and detectable:
 2. Recovery is the obvious answer to "I lost my key": the email, the `/recover`
    page, the "recover anytime, no account" line, and a "you don't need to buy
    again" nudge on the recover page. (Done.)
-3. Refund accidental same-email duplicates by hand (trivial volume at GBP 6.99).
+3. Refund accidental same-email duplicates by hand (trivial volume at GBP 2.99).
    If duplicates ever get common, extend the existing `sharepad-purchase-email`
    webhook to auto-refund a second same-email payment — the webhook is already
    there, so this is a small add when it's worth it.
