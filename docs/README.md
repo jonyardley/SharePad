@@ -36,7 +36,7 @@ URL so the storefront can change without touching the site. After payment, Strip
 redirects to **`thanks-a7f3c92b.html`**, whose download button resolves the current
 DMG from the public **`appcast.xml`** (falling back to the GitHub releases page if
 that fetch fails). The price appears many times across the site copy and the
-`schema.org` `Offer` block, so it is **not hand-edited here** — the price-bearing
+`schema.org` `Offer` block, so it is **not hand-edited here**. The price-bearing
 pages (`index.html`, `thanks-*.html`, `terms.html`,
 `share-ipad-on-zoom-google-meet-teams.html`) are **generated from the templates in
 `site/`**, with the value set once in `site/site.config.json`. Change the price

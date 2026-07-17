@@ -59,12 +59,18 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
       # docs/ is generated from site/ templates + site/site.config.json. Fail if a
       # committed docs/ page drifts from a fresh render (a hand-edit or stale build).
+      # Stage first so a newly rendered but uncommitted page (untracked) is caught too;
+      # plain `git diff` ignores untracked files.
       - name: Render and check for drift
         run: |
           node scripts/build-site.mjs
-          git diff --exit-code docs/ || {
+          git add -A docs/
+          git diff --cached --exit-code docs/ || {
             echo "::error::docs/ is out of sync with site/ templates. Run 'just build-site' and commit."
             exit 1
           }

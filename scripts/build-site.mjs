@@ -16,6 +16,9 @@ const siteDir = join(root, "site");
 const docsDir = join(root, "docs");
 
 const config = JSON.parse(readFileSync(join(siteDir, "site.config.json"), "utf8"));
+// Derive the bare numeric amount (for the schema.org Offer) from the display price
+// so the two can never drift; the config carries one price string, not two.
+config.priceAmount = (config.price.match(/[\d.]+/) || [""])[0];
 const templates = readdirSync(siteDir).filter((f) => f.endsWith(".html"));
 
 const provenance = (name) =>
@@ -26,7 +29,7 @@ for (const name of templates) {
   const template = readFileSync(join(siteDir, name), "utf8");
 
   const rendered = template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, key) => {
-    if (!(key in config)) throw new Error(`${name}: unknown token {{${key}}} — add it to site/site.config.json`);
+    if (!(key in config)) throw new Error(`${name}: unknown token {{${key}}}; add it to site/site.config.json`);
     return config[key];
   });
 
