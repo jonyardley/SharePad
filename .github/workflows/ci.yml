@@ -37,6 +37,21 @@ jobs:
       - name: Install tools
         run: brew install xcodegen just swiftlint
 
+      # The image's preinstalled swiftformat version drifts (some runners ship
+      # <0.62 which lacks wrapIfStatementBodies, others >=0.62 which enforces it
+      # by default), reddening `just lint` non-deterministically. Pin to the
+      # version developers run locally so the ruleset is stable — bump this and
+      # local together, deliberately, the same way the runner image is pinned.
+      - name: Pin SwiftFormat
+        env:
+          SWIFTFORMAT_VERSION: 0.62.1
+        run: |
+          curl -fsSL -o /tmp/swiftformat.zip \
+            "https://github.com/nicklockwood/SwiftFormat/releases/download/${SWIFTFORMAT_VERSION}/swiftformat.zip"
+          unzip -oq /tmp/swiftformat.zip -d /tmp/swiftformat-bin
+          sudo mv /tmp/swiftformat-bin/swiftformat "$(brew --prefix)/bin/swiftformat"
+          swiftformat --version
+
       - name: Lint
         run: just lint
 
