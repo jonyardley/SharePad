@@ -89,3 +89,18 @@ final class FakeShareWindow: ShareWindowControlling {
 
     func setTrialActions(onBuy _: (() -> Void)?, onEnterLicense _: @escaping () -> Void) {}
 }
+
+/// Records the non-fatal events AppModel emits, and how often the subscription was
+/// refreshed. @unchecked Sendable: touched only from the main actor in tests.
+final class SpyDiagnosticsReporter: DiagnosticsReporting, @unchecked Sendable {
+    private(set) var events: [DiagnosticEvent] = []
+    private(set) var refreshCount = 0
+
+    func report(_ event: DiagnosticEvent) {
+        events.append(event)
+    }
+
+    func refreshSubscription() {
+        refreshCount += 1
+    }
+}

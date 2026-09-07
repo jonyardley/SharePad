@@ -57,6 +57,14 @@ struct PopoverView: View {
                     .foregroundStyle(.secondary)
             }
 
+            Toggle("Send anonymous crash reports", isOn: Binding(
+                get: { model.diagnosticsEnabled },
+                set: { model.setDiagnosticsEnabled($0) }
+            ))
+            Text("Off by default. Crash and error diagnostics only, never your content or licence.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
             Divider()
 
             licenseSection

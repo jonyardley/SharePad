@@ -21,6 +21,7 @@ final class AppModel {
     private(set) var keepOnTop: Bool
     private(set) var launchAtLogin: Bool
     private(set) var launchAtLoginFailed = false
+    private(set) var diagnosticsEnabled: Bool
 
     private(set) var entitlement: Entitlement = .trial(daysLeft: EntitlementClock.trialDays)
     private(set) var isTrialOverlayShown = false
@@ -63,6 +64,7 @@ final class AppModel {
     private let monitor: DeviceMonitor
     private let window: ShareWindowControlling
     private let preferences: Preferences
+    private let reporter: DiagnosticsReporting
     private let sleep: @Sendable (Duration) async -> Void
     private let validator: LicenseValidator
     private let now: () -> Date
@@ -106,6 +108,7 @@ final class AppModel {
             capture: controller,
             window: window,
             thumbnailLayer: controller.thumbnailLayer,
+            reporter: DiagnosticsReporter.shared,
             sessionLimit: Self.debugSessionLimitOverride ?? 5 * 60
         )
     }
@@ -129,6 +132,7 @@ final class AppModel {
         thumbnailLayer: AVSampleBufferDisplayLayer,
         sleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
         validator: LicenseValidator = .production,
+        reporter: DiagnosticsReporting = .disabled,
         now: @escaping () -> Date = Date.init,
         sessionLimit: TimeInterval = 5 * 60
     ) {
@@ -138,11 +142,13 @@ final class AppModel {
         self.thumbnailLayer = thumbnailLayer
         self.sleep = sleep
         self.validator = validator
+        self.reporter = reporter
         self.now = now
         self.sessionLimit = sessionLimit
         monitor = DeviceMonitor()
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
+        diagnosticsEnabled = preferences.diagnosticsEnabled
         launchAtLogin = LaunchAtLogin.isEnabled
         if preferences.firstLaunchDate == nil {
             preferences.firstLaunchDate = now()
@@ -195,6 +201,12 @@ final class AppModel {
         window.setKeepOnTop(enabled)
     }
 
+    func setDiagnosticsEnabled(_ enabled: Bool) {
+        diagnosticsEnabled = enabled
+        preferences.diagnosticsEnabled = enabled
+        reporter.refreshSubscription()
+    }
+
     func setLaunchAtLogin(_ enabled: Bool) {
         do {
             try LaunchAtLogin.setEnabled(enabled)
@@ -234,6 +246,7 @@ final class AppModel {
     /// Raise the lost-share signal and auto-expire it, so a stale popover banner doesn't
     /// linger after the user has moved on (or replugged). Reconnect/dismiss clear it early.
     private func raiseShareLost() {
+        reporter.report(.shareLost)
         shareLostSignal = true
         shareLostDismissTask?.cancel()
         shareLostDismissTask = Task { [self] in
@@ -301,6 +314,7 @@ extension AppModel {
         }
         isLive = running
         failed = !running
+        if !running { reporter.report(.restartFailed) }
         isReconfiguring = false
     }
 
@@ -414,6 +428,7 @@ extension AppModel {
         }
         guard generation == connectGeneration, !isLive else { return }
         failed = true
+        reporter.report(.retryExhausted)
         window.hide()
         isWindowVisible = false
         suspendTrialSession()
@@ -450,7 +465,10 @@ extension AppModel {
 extension AppModel {
     @discardableResult
     func enterLicense(email: String, key: String) -> Bool {
-        guard validator.isValid(key: key, email: email) else { return false }
+        guard validator.isValid(key: key, email: email) else {
+            reporter.report(.licenseEntryFailed)
+            return false
+        }
         preferences.licenseEmail = LicenseValidator.normalize(email)
         preferences.licenseKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshEntitlement()

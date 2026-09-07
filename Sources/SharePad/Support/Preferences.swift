@@ -18,6 +18,13 @@ struct Preferences {
         nonmutating set { defaults.set(newValue, forKey: Key.keepOnTop) }
     }
 
+    // Opt-in crash/diagnostic reporting (specs/telemetry.md). Off by default: the
+    // privacy page promises nothing leaves the machine bar the update check.
+    var diagnosticsEnabled: Bool {
+        get { defaults.object(forKey: Key.diagnosticsEnabled) as? Bool ?? false }
+        nonmutating set { defaults.set(newValue, forKey: Key.diagnosticsEnabled) }
+    }
+
     var lastDeviceID: String? {
         get { defaults.string(forKey: Key.lastDeviceID) }
         nonmutating set { defaults.set(newValue, forKey: Key.lastDeviceID) }
@@ -74,6 +81,7 @@ struct Preferences {
     private enum Key {
         static let autoShowOnConnect = "autoShowOnConnect"
         static let keepOnTop = "keepOnTop"
+        static let diagnosticsEnabled = "diagnosticsEnabled"
         static let lastDeviceID = "lastDeviceID"
         static let windowOriginX = "windowOriginX"
         static let windowOriginY = "windowOriginY"

@@ -149,6 +149,28 @@ appcast-stats days="7":
         -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --data-binary "$SQL" \
         | python3 -c "import json,sys; d=json.load(sys.stdin); d.get('success',True) or sys.exit('  query failed: %s'%d.get('errors',d)); rows=d.get('data') or []; t=sum(int(float(r['checks'])) for r in rows); [print('  %-12s %6d'%(r['version'],int(float(r['checks'])))) for r in rows] or print('  (no data yet)'); rows and print('  ------------------\n  %-12s %6d'%('total',t))"
 
+# Crash/hang/event counts from the telemetry Worker's Analytics Engine dataset
+# (specs/telemetry.md). Same token caveat as appcast-stats: needs
+# CLOUDFLARE_API_TOKEN with "Account Analytics: Read" (the wrangler OAuth login
+# lacks it), or read the same data in the Cloudflare dashboard. Raw crash payloads
+# live in the sharepad-diagnostics R2 bucket (dashboard or `wrangler r2 object get`).
+# Optional: CF_ACCOUNT_ID (defaults to the SharePad account) and DAYS (default 7).
+telemetry-stats days="7":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    : "${CLOUDFLARE_API_TOKEN:?set CLOUDFLARE_API_TOKEN (needs 'Account Analytics: Read')}"
+    ACCOUNT="${CF_ACCOUNT_ID:-b232fe74d0fd6056b69aeaa6a79c51b7}"
+    DAYS="{{ days }}"
+    [[ "$DAYS" =~ ^[0-9]+$ ]] || { echo "days must be a positive integer (got '$DAYS')" >&2; exit 1; }
+    SQL="SELECT blob1 AS kind, blob3 AS version, SUM(_sample_interval) AS count
+         FROM sharepad_telemetry
+         WHERE timestamp > NOW() - INTERVAL '$DAYS' DAY
+         GROUP BY kind, version ORDER BY count DESC"
+    echo "→ telemetry, last $DAYS days (kind × app version)"
+    curl -sS "https://api.cloudflare.com/client/v4/accounts/$ACCOUNT/analytics_engine/sql" \
+        -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" --data-binary "$SQL" \
+        | python3 -c "import json,sys; d=json.load(sys.stdin); d.get('success',True) or sys.exit('  query failed: %s'%d.get('errors',d)); rows=d.get('data') or []; t=sum(int(float(r['count'])) for r in rows); [print('  %-7s %-12s %6d'%(r['kind'],r['version'],int(float(r['count'])))) for r in rows] or print('  (no data yet)'); rows and print('  --------------------------\n  %-20s %6d'%('total',t))"
+
 # ── Release / distribution ──
 # See specs/distribution.md. `release-build` is ad-hoc and credential-free (enough
 # for the Step 1 on-iPad camera check); `sign`/`notarize`/`dmg` need a Developer ID
