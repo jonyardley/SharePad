@@ -25,7 +25,8 @@ final class AppModelDiagnosticsTests: AppModelTestCase {
             preferences: ephemeralPreferences(),
             reporter: spy
         )
-        XCTAssertFalse(model.enterLicense(email: "buyer@example.com", key: "not-a-real-key"))
+        let result = model.enterLicense(email: "buyer@example.com", key: "not-a-real-key")
+        XCTAssertEqual(result, .malformedKey)
         XCTAssertEqual(spy.events, [.licenseEntryFailed])
     }
 

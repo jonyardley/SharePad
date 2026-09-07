@@ -1,6 +1,13 @@
 import CryptoKit
 import Foundation
 
+/// Why a licence key did or did not activate, so the UI can guide the buyer.
+enum LicenseCheck: Equatable {
+    case valid
+    case malformedKey
+    case mismatch
+}
+
 struct LicenseValidator {
     private let publicKey: Curve25519.Signing.PublicKey?
 
@@ -17,8 +24,21 @@ struct LicenseValidator {
     }
 
     func isValid(key: String, email: String) -> Bool {
-        guard let publicKey, let signature = Self.decodeBase64URL(key) else { return false }
-        return publicKey.isValidSignature(signature, for: Data(Self.normalize(email).utf8))
+        check(key: key, email: email) == .valid
+    }
+
+    // A malformed key (wrong length or not decodable) is almost always an
+    // incomplete paste; a decodable 64-byte signature that fails to verify is a
+    // wrong email. The UI tells the two apart so the buyer knows what to fix.
+    func check(key: String, email: String) -> LicenseCheck {
+        guard let signature = Self.decodeBase64URL(key), signature.count == 64 else {
+            return .malformedKey
+        }
+        guard let publicKey,
+              publicKey.isValidSignature(signature, for: Data(Self.normalize(email).utf8)) else {
+            return .mismatch
+        }
+        return .valid
     }
 
     static func normalize(_ email: String) -> String {

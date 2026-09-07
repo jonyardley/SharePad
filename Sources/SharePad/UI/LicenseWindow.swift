@@ -44,7 +44,7 @@ struct LicenseEntryView: View {
     let onClose: () -> Void
     @State private var email = ""
     @State private var key = ""
-    @State private var failed = false
+    @State private var failure: LicenseCheck?
     @State private var activated = false
 
     var body: some View {
@@ -66,8 +66,8 @@ struct LicenseEntryView: View {
                 .foregroundStyle(.secondary)
             TextField("Email used at purchase", text: $email)
             TextField("Licence key", text: $key)
-            if failed {
-                Text("That key doesn't match this email — check both and try again.")
+            if let failureMessage {
+                Text(failureMessage)
                     .font(.caption)
                     .foregroundStyle(.red)
             }
@@ -80,18 +80,30 @@ struct LicenseEntryView: View {
                 Button("Cancel") { onClose() }
                     .keyboardShortcut(.cancelAction)
                 Button("Activate") {
-                    if model.enterLicense(email: email, key: key) {
+                    let result = model.enterLicense(email: email, key: key)
+                    if result == .valid {
                         activated = true
                     } else {
-                        failed = true
+                        failure = result
                     }
                 }
                 .keyboardShortcut(.defaultAction)
                 .disabled(email.isEmpty || key.isEmpty)
             }
         }
-        .onChange(of: email) { failed = false }
-        .onChange(of: key) { failed = false }
+        .onChange(of: email) { failure = nil }
+        .onChange(of: key) { failure = nil }
+    }
+
+    private var failureMessage: String? {
+        switch failure {
+        case .malformedKey:
+            "That licence key looks incomplete. Paste the whole key from your purchase email."
+        case .mismatch:
+            "That key does not match this email. Use the address you bought with."
+        case .valid, .none:
+            nil
+        }
     }
 
     private var activatedView: some View {

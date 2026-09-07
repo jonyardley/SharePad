@@ -30,7 +30,7 @@ final class LicenseGateTests: GateTestCase {
         prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
         let model = makeModel(preferences: prefs)
         let key = try signedKey(for: "buyer@example.com")
-        XCTAssertTrue(model.enterLicense(email: " Buyer@Example.com ", key: key))
+        XCTAssertEqual(model.enterLicense(email: " Buyer@Example.com ", key: key), .valid)
         XCTAssertEqual(model.entitlement, .licensed)
         XCTAssertEqual(prefs.licenseEmail, "buyer@example.com")
         XCTAssertNotNil(prefs.licenseKey)
@@ -39,7 +39,7 @@ final class LicenseGateTests: GateTestCase {
     func testEnterInvalidLicenseIsRejected() throws {
         let prefs = try ephemeralPreferences()
         let model = makeModel(preferences: prefs)
-        XCTAssertFalse(model.enterLicense(email: "buyer@example.com", key: "bogus"))
+        XCTAssertEqual(model.enterLicense(email: "buyer@example.com", key: "bogus"), .malformedKey)
         XCTAssertNotEqual(model.entitlement, .licensed)
         XCTAssertNil(prefs.licenseEmail)
         XCTAssertNil(prefs.licenseKey)
@@ -49,7 +49,7 @@ final class LicenseGateTests: GateTestCase {
         let prefs = try ephemeralPreferences()
         let model = makeModel(preferences: prefs)
         let key = try signedKey(for: "other@example.com")
-        XCTAssertFalse(model.enterLicense(email: "buyer@example.com", key: key))
+        XCTAssertEqual(model.enterLicense(email: "buyer@example.com", key: key), .mismatch)
         XCTAssertNotEqual(model.entitlement, .licensed)
         XCTAssertNil(prefs.licenseEmail)
     }
@@ -270,7 +270,7 @@ final class LicenseGateTests: GateTestCase {
         await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
         await poll { window.trialOverlayStates == [true] }
         let key = try signedKey(for: "buyer@example.com")
-        XCTAssertTrue(model.enterLicense(email: "buyer@example.com", key: key))
+        XCTAssertEqual(model.enterLicense(email: "buyer@example.com", key: key), .valid)
         XCTAssertFalse(model.isTrialOverlayShown)
         XCTAssertEqual(window.trialOverlayStates, [true, false])
     }

@@ -464,16 +464,17 @@ extension AppModel {
 /// ── Licensing: trial entitlement, licence entry, expired-session gate ──
 extension AppModel {
     @discardableResult
-    func enterLicense(email: String, key: String) -> Bool {
-        guard validator.isValid(key: key, email: email) else {
+    func enterLicense(email: String, key: String) -> LicenseCheck {
+        let result = validator.check(key: key, email: email)
+        guard result == .valid else {
             reporter.report(.licenseEntryFailed)
-            return false
+            return result
         }
         preferences.licenseEmail = LicenseValidator.normalize(email)
         preferences.licenseKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
         refreshEntitlement()
         resetTrialSession()
-        return true
+        return .valid
     }
 
     func openBuyPage() {
