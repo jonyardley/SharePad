@@ -46,7 +46,9 @@ output:
 ---
 
 Claude Code cannot read `.omp/agents`, so `.claude/agents/test-runner.md` is the
-same agent for Claude Code. Keep the two bodies in step.
+same agent for Claude Code, with Claude-native frontmatter (its OMP-only fields,
+list-form `tools` and array `model` do not carry across). Keep the two bodies in
+step.
 
 You run tests for the SharePad repo and report results. You never edit files.
 

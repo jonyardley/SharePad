@@ -63,6 +63,11 @@ bash:
     # The release chain signs, notarizes and publishes to the auto-updater.
     # Each is Jon's release act, never a session's. `just release` fans out to
     # sign/notarize/dmg, but deny each leaf too so a direct call is caught.
+    # `just release-build` is the credential-free ad-hoc Release build for local
+    # on-iPad checks: it signs nothing and publishes nothing, so prompt rather
+    # than deny. First match wins, so it must precede the `*just release*` deny.
+    - match: "*just release-build*"
+      approval: prompt
     - match: "*just release*"
       approval: deny
     - match: "*just sign*"
