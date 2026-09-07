@@ -1,0 +1,48 @@
+# Wireless spike (specs/wireless.md). Throwaway: nothing here ships.
+# Run from spike/wireless.
+
+set shell := ["bash", "-uc"]
+
+default:
+    @just --list
+
+# Build both Mac executables (release: latency work on a debug build is meaningless)
+build:
+    cd Spike && swift build -c release
+
+# Mac receiver with a window: pick this one for the real measurement session
+receiver name="SharePad Spike" csv="/tmp/spike-latency.csv":
+    cd Spike && swift run -c release spike-receiver --name "{{name}}" --csv "{{csv}}"
+
+# Receiver with no window, for a scripted check
+receiver-headless seconds="20" csv="/tmp/spike-latency.csv" snapshot="/tmp/spike-frame.png":
+    cd Spike && swift run -c release spike-receiver --headless --exit-after {{seconds}} \
+        --csv "{{csv}}" --snapshot "{{snapshot}}" --snapshot-after 45
+
+# Mac-only proof of the transport: fake iPad, no hardware needed
+fakesender seconds="18":
+    cd Spike && swift run -c release spike-fakesender --seconds {{seconds}}
+
+# Generate the iPad sender Xcode project
+gen:
+    xcodegen generate
+
+# Compile-check the iPad app without signing (what CI-less verification can prove)
+sender-build: gen
+    xcodebuild -project WirelessSpikeSender.xcodeproj -scheme WirelessSpikeSender \
+        -destination 'generic/platform=iOS' -configuration Debug \
+        CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build | tail -5
+
+# Install and run on a connected iPad. Needs SPIKE_TEAM_ID and a trusted device.
+sender-run device: gen
+    xcodebuild -project WirelessSpikeSender.xcodeproj -scheme WirelessSpikeSender \
+        -destination 'platform=iOS,name={{device}}' -configuration Debug \
+        -allowProvisioningUpdates DEVELOPMENT_TEAM="${SPIKE_TEAM_ID}" build
+
+# Median/p95/jitter from a recorded CSV, ignoring the first two seconds of warm-up
+stats csv="/tmp/spike-latency.csv":
+    ./analyse.swift "{{csv}}"
+
+# Open the iPad project in Xcode (easiest route for the on-device run)
+open: gen
+    open WirelessSpikeSender.xcodeproj

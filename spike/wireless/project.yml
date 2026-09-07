@@ -1,0 +1,45 @@
+# Throwaway spike project (specs/wireless.md), deliberately separate from the
+# shipping SharePad project.yml at the repo root: nothing here should ever end up
+# in the Mac app's target graph.
+name: WirelessSpikeSender
+
+options:
+  minimumXcodeGenVersion: "2.40.0"
+  bundleIdPrefix: com.jonyardley.sharepadspike
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+configs:
+  Debug: debug
+  Release: release
+
+packages:
+  Spike:
+    path: Spike
+
+settings:
+  base:
+    # Swift 5 language mode on purpose: strict concurrency checking is not worth
+    # fighting in code with a two-day life.
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  WirelessSpikeSender:
+    type: application
+    platform: iOS
+    sources:
+      - Sender
+    dependencies:
+      - package: Spike
+        product: SpikeWire
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jonyardley.sharepadspike.sender
+        GENERATE_INFOPLIST_FILE: "NO"
+        INFOPLIST_FILE: Sender/Info.plist
+        TARGETED_DEVICE_FAMILY: "2"
+        CODE_SIGN_STYLE: Automatic
+        SUPPORTS_MACCATALYST: "NO"
