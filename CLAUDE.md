@@ -43,6 +43,7 @@ workers/licenses/           # Cloudflare Worker: licence key issuance (Stripe, t
 workers/purchase-email/     # Cloudflare Worker: post-purchase licence + download email (Resend)
 workers/appcast/            # Cloudflare Worker: appcast logging-proxy (active-install + version stats)
 workers/stats/              # Cloudflare Worker: unified stats dashboard at stats.sharepad.co
+workers/telemetry/          # Cloudflare Worker: opt-in crash/diagnostic sink at telemetry.sharepad.co
 ```
 
 ## Tech Stack
@@ -70,6 +71,7 @@ just lint          # swiftlint + swiftformat --lint (must pass before push)
 just scan          # gitleaks secret scan over full history (same check CI runs)
 just downloads     # GitHub Release download counts (DMG installs + appcast update-checks)
 just appcast-stats # active installs + version adoption from the appcast Worker (Analytics Engine)
+just telemetry-stats # crash/hang/error counts from the telemetry Worker (opt-in; Analytics Engine)
 just install-hooks # enable the pre-commit secret scan (run once per clone/worktree)
 just release-build # Release build, Hardened Runtime, ad-hoc (for local on-iPad checks)
 just release       # full pipeline: build → Developer ID sign → notarize → DMG (needs creds)
@@ -263,6 +265,12 @@ before touching capture.
   subview added on top of the hosting view: that does **not** reliably composite
   above the layer-backed preview (the overlay silently never renders). Keep new
   share-window chrome inside this root, not as added subviews.
+- **Telemetry is opt-in and off by default** (`specs/telemetry.md`). The privacy
+  page promises nothing leaves the machine bar the update check, so
+  `Preferences.diagnosticsEnabled` defaults false and `DiagnosticsReporter` sends
+  only when the user turns it on. It is first-party MetricKit (crashes/hangs) plus
+  four named non-fatals, never any content, licence, or device id. Never flip the
+  default to on without a privacy-page change and a deliberate decision.
 
 ## Workflow
 

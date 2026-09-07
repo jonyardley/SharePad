@@ -44,6 +44,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         model.start()
         updater.start()
+        // Subscribe to MetricKit only if the user has opted in (specs/telemetry.md);
+        // a no-op otherwise. Guarded above so it never runs under XCTest.
+        DiagnosticsReporter.shared.refreshSubscription()
         WindowSharing.startGuarding()
     }
 }

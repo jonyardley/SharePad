@@ -1,0 +1,29 @@
+# Opt-in crash/diagnostic sink (specs/telemetry.md). Receives anonymous JSON from
+# the app only when the user has turned reporting on. Bound to a DEDICATED
+# subdomain so the live marketing site (sharepad.co) is untouched;
+# `custom_domain = true` provisions the proxied DNS record + edge cert. The app's
+# endpoint points here (Sources/SharePad/Support/Diagnostics.swift).
+name = "sharepad-telemetry"
+main = "src/index.mjs"
+compatibility_date = "2026-06-01"
+
+routes = [
+  { pattern = "telemetry.sharepad.co", custom_domain = true },
+]
+
+# Anonymous, aggregate-only time series: kind (crash/hang/event), event name,
+# app + OS version, and Cloudflare-derived country. No IP, no device id, no cookies.
+[[analytics_engine_datasets]]
+binding = "AE"
+dataset = "sharepad_telemetry"
+
+# Raw MetricKit crash/hang payloads (no user content) for later inspection when a
+# count spikes. Named events are never written here. Create the bucket on first
+# deploy (wrangler) or once in the dashboard.
+[[r2_buckets]]
+binding = "DIAGNOSTICS"
+bucket_name = "sharepad-diagnostics"
+
+[observability]
+enabled = true
+head_sampling_rate = 1

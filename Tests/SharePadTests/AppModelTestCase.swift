@@ -19,14 +19,16 @@ class AppModelTestCase: XCTestCase {
     func makeModel(
         capture: FakeCaptureController,
         window: FakeShareWindow,
-        preferences: Preferences
+        preferences: Preferences,
+        reporter: DiagnosticsReporting = .disabled
     ) -> AppModel {
         AppModel(
             preferences: preferences,
             capture: capture,
             window: window,
             thumbnailLayer: AVSampleBufferDisplayLayer(),
-            sleep: { _ in } // retries run without real delay
+            sleep: { _ in }, // retries run without real delay
+            reporter: reporter
         )
     }
 }
