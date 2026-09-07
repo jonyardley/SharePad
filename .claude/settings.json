@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(just gen)",
+      "Bash(just build)",
+      "Bash(just run)",
+      "Bash(just test)",
+      "Bash(just coverage)",
+      "Bash(just fmt)",
+      "Bash(just lint)",
+      "Bash(just scan)",
+      "Bash(just verify-app)",
+      "Bash(just verify-app:*)",
+      "Bash(just verify-release)",
+      "Bash(just check-pairing)",
+      "Bash(just downloads)",
+      "Bash(just appcast-stats)",
+      "Bash(just appcast-stats:*)",
+      "Bash(just build-site)",
+      "Bash(just install-hooks)",
+      "Bash(xcodegen generate:*)",
+      "Bash(swiftformat:*)",
+      "Bash(swiftlint:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git rev-parse:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(gh pr checks:*)",
+      "Bash(gh pr diff:*)",
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh run list:*)",
+      "Bash(gh run view:*)",
+      "Bash(gh run watch:*)",
+      "Bash(gh label list:*)",
+      "Bash(ls:*)",
+      "Bash(cat:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(sort:*)",
+      "Bash(echo:*)",
+      "Bash(test:*)",
+      "Bash(lsof:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:developer.apple.com)",
+      "WebFetch(domain:sparkle-project.org)"
+    ],
+    "ask": [
+      "Bash(gh run rerun:*)",
+      "Bash(gh run cancel:*)",
+      "Bash(gh workflow run:*)",
+      "Bash(git push --force:*)"
+    ],
+    "deny": [
+      "Bash(gh pr merge:*)",
+      "Bash(git push origin main)",
+      "Bash(git push origin main:*)",
+      "Bash(just release)",
+      "Bash(just release:*)",
+      "Bash(just sign)",
+      "Bash(just sign:*)",
+      "Bash(just notarize)",
+      "Bash(just notarize:*)",
+      "Bash(just dmg)",
+      "Bash(just dmg:*)",
+      "Bash(just sparkle-appcast)",
+      "Bash(just sparkle-appcast:*)",
+      "Bash(wrangler deploy:*)",
+      "Bash(wrangler publish:*)",
+      "Bash(npx wrangler deploy:*)",
+      "Bash(npx wrangler publish:*)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "just install-hooks >/dev/null 2>&1 || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.swift) command -v swiftformat >/dev/null 2>&1 && swiftformat \"$f\" >/dev/null 2>&1 ;; esac; exit 0"
+          }
+        ]
+      }
+    ]
+  }
+}

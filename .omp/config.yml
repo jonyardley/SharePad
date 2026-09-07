@@ -1,0 +1,100 @@
+# Project-local OMP settings. Read only from the cwd's .omp/, so start omp from
+# the repo root. Deep-merged over ~/.omp/agent/config.yml; arrays replace,
+# records merge key by key.
+#
+# This file mirrors CLAUDE.md's guardrails and .claude/settings.json's gates so
+# the OMP harness enforces what the guidance states. A stated invariant is only
+# real if something enforces it, and OMP reads none of .claude/settings.json.
+# Keep the two in step.
+
+# Prewalk hands the session to a cheaper model at the first edit after any todo
+# call. It cannot tell a licence-key change from a copy tweak, so in this repo it
+# inverts the domain-sensitivity override in CLAUDE.md: capture pipeline, CMIO
+# opt-in, permissions, entitlements, Ed25519 licensing and the Sparkle appcast
+# are exactly the surfaces that must go UP a tier, never down. Arm it deliberately
+# per session when executing a finished plan instead:
+#   omp --prewalk-into anthropic/claude-sonnet-5:xhigh
+prewalk:
+  enabled: false
+
+# Roles matching the global ladder. Only roles that differ from it are set; the
+# rest (smol, tiny, commit, vision) inherit ~/.omp/agent/config.yml.
+modelRoles:
+  # The default for coding and agentic sessions.
+  default: anthropic/claude-opus-5:xhigh
+  # Plan turns are fewer and shorter than coding ones.
+  plan: anthropic/claude-opus-5:high
+  # The top rung, for the silent-failure surfaces: the CMIO opt-in and muxed
+  # capture setup (an empty device list or a surprise mic prompt, not a crash),
+  # Ed25519 licence validation, and the Sparkle appcast (a broken feed strands
+  # every install on the auto-updater). `slow` sits one keystroke from the model
+  # switcher via the default cycleOrder.
+  slow: anthropic/claude-fable-5:max
+  # Conventional Tier 2 fan-out writers on non-sensitive surfaces.
+  task: anthropic/claude-sonnet-5:xhigh
+  # The reviewer is never weaker than the writer. Costs nothing until
+  # advisor.enabled or --advisor; pair it on capture/licensing/appcast work,
+  # where a wrong turn is a silent no-op rather than a crash.
+  advisor: anthropic/claude-opus-5:high
+
+# The gates in .claude/settings.json, mirrored. CLAUDE.md and the global
+# AGENTS.md both state: a human merges, never push to main, releases and deploys
+# are Jon's. OMP reads none of .claude/settings.json, so restate them here.
+#
+# bash.patterns is an array, and a repo array REPLACES the global one rather than
+# merging key by key, so the machine-wide rules from ~/.omp/agent/config.yml are
+# restated below (minus the iOS-simulator rules, which do not apply to this
+# menu-bar macOS app). Within a segment the first matching rule wins, so every
+# deny precedes the prompts.
+bash:
+  patterns:
+    # A human reviews and merges. Agents never merge.
+    - match: "*gh pr merge*"
+      approval: deny
+    # Never push to main, in any of the three spellings: plain, flagged
+    # (push --force origin main, where the flag sits mid-command), and refspec
+    # (HEAD:main and its fully qualified HEAD:refs/heads/main form).
+    - match: "*push*origin main*"
+      approval: deny
+    - match: "*push*:main*"
+      approval: deny
+    - match: "*push*refs/heads/main*"
+      approval: deny
+    # The release chain signs, notarizes and publishes to the auto-updater.
+    # Each is Jon's release act, never a session's. `just release` fans out to
+    # sign/notarize/dmg, but deny each leaf too so a direct call is caught.
+    - match: "*just release*"
+      approval: deny
+    - match: "*just sign*"
+      approval: deny
+    - match: "*just notarize*"
+      approval: deny
+    - match: "*just dmg*"
+      approval: deny
+    - match: "*just sparkle-appcast*"
+      approval: deny
+    # The four Cloudflare Workers are the deploy surface. Deny both wrangler
+    # spellings so a global install and an npx invocation are both caught.
+    - match: "*wrangler deploy*"
+      approval: deny
+    - match: "*wrangler publish*"
+      approval: deny
+    - match: rm -rf /*
+      approval: deny
+    # Never cancel or re-run CI unless asked.
+    - match: "*gh run rerun*"
+      approval: prompt
+    - match: "*gh run cancel*"
+      approval: prompt
+    - match: "*gh workflow run*"
+      approval: prompt
+    - match: "*push --force*"
+      approval: prompt
+
+# A bash.patterns deny governs the bash tool only: the same command issued
+# through eval spawns its own shell and is unaffected, and under yolo it resolves
+# to allow. A prompt policy on eval is enforced in every mode, including yolo,
+# and closes that hole beside every deny above.
+tools:
+  approval:
+    eval: prompt
