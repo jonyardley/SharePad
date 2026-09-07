@@ -59,6 +59,30 @@ final class LicenseValidatorTests: XCTestCase {
         XCTAssertFalse(validator.isValid(key: "not-a-key!!", email: "buyer@example.com"))
     }
 
+    func testCheckReturnsValidForMatchingKey() throws {
+        let result = try validator.check(
+            key: key(for: "buyer@example.com"), email: "buyer@example.com"
+        )
+        XCTAssertEqual(result, .valid)
+    }
+
+    func testCheckReturnsMalformedForIncompleteKey() {
+        let result = validator.check(key: "not-a-key!!", email: "buyer@example.com")
+        XCTAssertEqual(result, .malformedKey)
+    }
+
+    func testCheckReturnsMalformedForTruncatedKey() throws {
+        let truncated = try String(key(for: "buyer@example.com").dropLast(12))
+        XCTAssertEqual(validator.check(key: truncated, email: "buyer@example.com"), .malformedKey)
+    }
+
+    func testCheckReturnsMismatchForWrongEmail() throws {
+        let result = try validator.check(
+            key: key(for: "buyer@example.com"), email: "other@example.com"
+        )
+        XCTAssertEqual(result, .mismatch)
+    }
+
     func testBadPublicKeyRejectsEverythingAndIsNotConfigured() throws {
         let broken = LicenseValidator(publicKeyBase64: "garbage")
         XCTAssertFalse(broken.isConfigured)

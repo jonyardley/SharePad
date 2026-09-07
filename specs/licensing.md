@@ -125,6 +125,23 @@ Follows the existing non-negotiables (pure reducers, dumb views, state in
   (`buy.sharepad.co`, already Gumroad-free); the in-app Buy affordances point
   there. Trial-aware marketing copy waits until the gate is deployment-wired.
 
+### 5a. Activation-failure feedback (2026-09-07)
+
+`LicenseValidator.check(key:email:)` returns a `LicenseCheck` (`valid`,
+`malformedKey`, `mismatch`) so the entry form can tell a buyer what to fix: an
+incomplete/garbled key ("looks incomplete, paste the whole key") versus a valid
+64-byte signature that does not verify for this email ("does not match this
+email, use the address you bought with"). `isValid` is now `check(...) == .valid`;
+`AppModel.enterLicense` returns the `LicenseCheck`. The always-visible "Lost your
+key?" link (worker `/recover`) is the recovery path on either failure.
+
+A failed activation also emits the anonymous `licenseEntryFailed` non-fatal
+(specs/telemetry.md) so activation friction is visible in aggregate; the email and
+key are never sent. Update-check failures (dead feed, failed download or bad
+signature) emit `updateCheckFailed` via a Sparkle `SPUUpdaterDelegate`, filtering
+out benign outcomes (no update, user-cancelled install). Sparkle still owns all
+user-facing update UI.
+
 ## 6. Testing
 
 - **Unit**: `LicenseValidator` (valid / invalid / tampered / wrong-email key),

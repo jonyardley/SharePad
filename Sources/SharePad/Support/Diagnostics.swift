@@ -8,6 +8,7 @@ enum DiagnosticEvent: String {
     case restartFailed
     case shareLost
     case licenseEntryFailed
+    case updateCheckFailed
 }
 
 protocol DiagnosticsReporting: Sendable {

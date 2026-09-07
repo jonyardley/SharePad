@@ -64,7 +64,7 @@ plus the raw payload to read are enough.
 | `Preferences.diagnosticsEnabled` | Bool, **default false**; the opt-in toggle's backing store |
 | `PopoverView` toggle | "Send anonymous crash reports" with a one-line rationale |
 | `App.swift` | subscribe the reporter to MetricKit at launch **iff** opted in (and not under XCTest) |
-| `AppModel` | emit the four non-fatal events at their transitions, via an injected `DiagnosticsReporting` |
+| `AppModel` / `SparkleUpdater` | emit the five non-fatal events at their transitions, via an injected `DiagnosticsReporting` |
 | `workers/telemetry/src/index.mjs` | `fetch`: validate POST, write AE, put crash/hang to R2; fail soft |
 | `workers/telemetry/wrangler.toml` | AE dataset + R2 binding + `custom_domain` route |
 | `workers/telemetry/test/index.test.mjs` | `node --test`, mirrors the appcast worker suite |
@@ -72,7 +72,7 @@ plus the raw payload to read are enough.
 
 ### Domain non-fatal events (what MetricKit cannot see)
 
-Grounded in the code, four events, each a bare name with no payload and no PII:
+Grounded in the code, five events, each a bare name with no payload and no PII:
 
 - `retryExhausted` - the first-connect retry loop gave up with the device still not
   live (`AppModel.retryLoop`).
@@ -80,7 +80,11 @@ Grounded in the code, four events, each a bare name with no payload and no PII:
   (`AppModel.restart`).
 - `shareLost` - the iPad vanished while its share window was up (`raiseShareLost`).
 - `licenseEntryFailed` - a user-entered key failed validation (`enterLicense`
-  returns false). The email and key are **never** sent, only the fact of a failure.
+  returns a non-`valid` `LicenseCheck`). The email and key are **never** sent, only
+  the fact of a failure.
+- `updateCheckFailed` - a Sparkle update cycle aborted on a real failure (dead
+  feed, failed download, bad signature), filtered of benign outcomes (no update,
+  user-cancelled install) via `SparkleUpdater.shouldReport`.
 
 ### POST body
 
