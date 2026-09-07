@@ -20,6 +20,12 @@ public final class H264Encoder {
     private var session: VTCompressionSession?
     private var sessionWidth: Int32 = 0
     private var sessionHeight: Int32 = 0
+    // Submitted-but-unreturned frames. The encoder owns this rather than its
+    // caller because only it sees every path a frame can die on: a refused
+    // session, a rejected submission, an error status in the handler. A count
+    // that leaks on those paths would stall the stream for good.
+    private let pendingLock = NSLock()
+    private var pending = 0
 
     public init(bitrate: Int = 8_000_000, expectedFrameRate: Int = 15) {
         self.bitrate = bitrate
@@ -32,6 +38,12 @@ public final class H264Encoder {
         }
     }
 
+    public var pendingFrames: Int {
+        pendingLock.lock()
+        defer { pendingLock.unlock() }
+        return pending
+    }
+
     public func encode(pixelBuffer: CVPixelBuffer, presentationTime: CMTime) {
         let width = Int32(CVPixelBufferGetWidth(pixelBuffer))
         let height = Int32(CVPixelBufferGetHeight(pixelBuffer))
@@ -40,7 +52,8 @@ public final class H264Encoder {
         // fresh parameter sets.
         guard let session = prepareSession(width: width, height: height) else { return }
 
-        VTCompressionSessionEncodeFrame(
+        addPending(1)
+        let status = VTCompressionSessionEncodeFrame(
             session,
             imageBuffer: pixelBuffer,
             presentationTimeStamp: presentationTime,
@@ -48,8 +61,13 @@ public final class H264Encoder {
             frameProperties: nil,
             infoFlagsOut: nil
         ) { [weak self] status, _, sampleBuffer in
+            self?.addPending(-1)
             guard status == noErr, let sampleBuffer else { return }
             self?.handle(sampleBuffer, width: width, height: height)
+        }
+        if status != noErr {
+            addPending(-1)
+            print("[encoder] submit failed: \(status)")
         }
     }
 
@@ -60,6 +78,19 @@ public final class H264Encoder {
         self.session = nil
         sessionWidth = 0
         sessionHeight = 0
+        resetPending()
+    }
+
+    private func addPending(_ delta: Int) {
+        pendingLock.lock()
+        pending = max(0, pending + delta)
+        pendingLock.unlock()
+    }
+
+    private func resetPending() {
+        pendingLock.lock()
+        pending = 0
+        pendingLock.unlock()
     }
 
     private func prepareSession(width: Int32, height: Int32) -> VTCompressionSession? {

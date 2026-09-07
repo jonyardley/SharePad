@@ -79,6 +79,7 @@ final class Receiver {
     private var snapshotWritten = false
     private var startedAt = Date().timeIntervalSince1970
     private var pendingMeta: [UInt32: (bytes: Int, keyframe: Bool, interval: Double)] = [:]
+    private var hudPrints = 0
 
     init(options: Options) {
         self.options = options
@@ -88,7 +89,8 @@ final class Receiver {
         if let path = options.csvPath {
             FileManager.default.createFile(atPath: path, contents: nil)
             csv = FileHandle(forWritingAtPath: path)
-            write(csvLine: "seq,recv_wall,latency_ms,decode_ms,interval_ms,bytes,keyframe")
+            write(csvLine: "seq,recv_wall,latency_ms,latency_valid," +
+                "decode_ms,interval_ms,bytes,keyframe")
         }
     }
 
@@ -116,11 +118,12 @@ final class Receiver {
         }
 
         queue.asyncAfter(deadline: .now() + 1) { [weak self] in self?.sendPing() }
-        Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { [weak self] _ in
-            self?.publishHUD()
-        }
+        // Every stat lives on `queue`, so the HUD is built there too and only the
+        // finished string crosses to main. A main-thread timer reading the stats
+        // directly would race the decode callbacks that write them.
+        queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in self?.publishHUD() }
         if let seconds = options.exitAfter {
-            DispatchQueue.main.asyncAfter(deadline: .now() + seconds) { [weak self] in
+            queue.asyncAfter(deadline: .now() + seconds) { [weak self] in
                 self?.finish()
             }
         }
@@ -199,9 +202,25 @@ final class Receiver {
 
     private func handleDecoded(_ frame: H264Decoder.DecodedFrame) {
         let now = Date().timeIntervalSince1970
+        let pixelBuffer = frame.pixelBuffer
+        DispatchQueue.main.async { [weak self] in
+            self?.enqueue(pixelBuffer)
+        }
+        // VideoToolbox calls this back on its own thread; the stats belong to
+        // `queue` and are only ever touched there.
+        queue.async { [weak self] in
+            self?.record(frame: frame, arrivedAt: now)
+        }
+    }
+
+    private func record(frame: H264Decoder.DecodedFrame, arrivedAt now: Double) {
         let captureInReceiverClock = frame.captureWallClock - clock.offset
         let latency = (now - captureInReceiverClock) * 1000
-        if clock.isSynced, latency > -50, latency < 5000 {
+        // A zero capture time means the sender could not match the frame to a
+        // capture instant, so there is no latency to measure from it.
+        let isValid = clock.isSynced && frame.captureWallClock > 0
+            && latency > -50 && latency < 5000
+        if isValid {
             latencyMs.add(latency)
         }
         decodeMs.add(frame.decodeSeconds * 1000)
@@ -212,6 +231,7 @@ final class Receiver {
             "\(frame.sequence)",
             String(format: "%.6f", now),
             String(format: "%.2f", latency),
+            isValid ? "1" : "0",
             String(format: "%.3f", frame.decodeSeconds * 1000),
             String(format: "%.2f", meta?.interval ?? 0),
             "\(meta?.bytes ?? 0)",
@@ -222,11 +242,6 @@ final class Receiver {
            frameCount >= options.snapshotAfterFrames {
             snapshotWritten = true
             writeSnapshot(frame.pixelBuffer, to: path)
-        }
-
-        let pixelBuffer = frame.pixelBuffer
-        DispatchQueue.main.async { [weak self] in
-            self?.enqueue(pixelBuffer)
         }
     }
 
@@ -278,10 +293,12 @@ final class Receiver {
 
     private func publishHUD() {
         let text = hudText()
-        onHUD?(text)
-        if Int((Date().timeIntervalSince1970 - startedAt) * 4) % 4 == 0, frameCount > 0 {
+        DispatchQueue.main.async { [weak self] in self?.onHUD?(text) }
+        if hudPrints % 4 == 0, frameCount > 0 {
             print("[receiver] " + text.replacingOccurrences(of: "\n", with: " | "))
         }
+        hudPrints += 1
+        queue.asyncAfter(deadline: .now() + 0.25) { [weak self] in self?.publishHUD() }
     }
 
     private func hudText() -> String {
@@ -329,19 +346,25 @@ final class Receiver {
     }
 
     func finish() {
-        print("\n=== spike-receiver summary ===")
-        print(hudText())
-        if let median = latencyMs.median {
-            print(String(
-                format: "capture→decoded median %.1f ms over %d samples (p95 %.1f, MAD ±%.1f)",
-                median, latencyMs.count, latencyMs.p95 ?? 0, latencyMs.medianAbsoluteDeviation ?? 0
-            ))
+        queue.async { [weak self] in
+            guard let self else { exit(0) }
+            print("\n=== spike-receiver summary ===")
+            print(hudText())
+            if let median = latencyMs.median {
+                print(String(
+                    format: "capture→decoded median %.1f ms over %d samples (p95 %.1f, MAD ±%.1f)",
+                    median,
+                    latencyMs.count,
+                    latencyMs.p95 ?? 0,
+                    latencyMs.medianAbsoluteDeviation ?? 0
+                ))
+            }
+            print("NOTE: this is capture→decoded, not glass-to-glass. Add iPad touch/display")
+            print("      and Mac present time; the camera method in specs/wireless.md is the")
+            print("      number the go/kill call uses.")
+            csv?.closeFile()
+            exit(0)
         }
-        print("NOTE: this is capture→decoded, not glass-to-glass. Add iPad touch/display")
-        print("      and Mac present time; the camera method in specs/wireless.md is the")
-        print("      number the go/kill call uses.")
-        csv?.closeFile()
-        exit(0)
     }
 }
 

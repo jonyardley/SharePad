@@ -51,12 +51,14 @@ struct Options {
 final class FrameSource {
     private let width: Int
     private let height: Int
+    private let fps: Int
     private var pool: CVPixelBufferPool?
     private let startedAt = Date().timeIntervalSince1970
 
-    init(width: Int, height: Int) {
+    init(width: Int, height: Int, fps: Int) {
         self.width = width
         self.height = height
+        self.fps = fps
 
         let poolAttributes: [String: Any] = [kCVPixelBufferPoolMinimumBufferCountKey as String: 4]
         let bufferAttributes: [String: Any] = [
@@ -128,7 +130,7 @@ final class FrameSource {
 
         // A sweeping bar gives motion the encoder has to work on, so the bitrate
         // is not the trivial static-screen case.
-        let sweep = CGFloat(index % max(fps(index: index), 1)) / CGFloat(max(fps(index: index), 1))
+        let sweep = CGFloat(index % max(fps, 1)) / CGFloat(max(fps, 1))
         context.setFillColor(NSColor.systemRed.cgColor)
         context.fill(CGRect(x: sweep * CGFloat(width), y: 0, width: 24, height: CGFloat(height)))
 
@@ -138,14 +140,10 @@ final class FrameSource {
             .foregroundColor: NSColor.darkGray,
         ])
     }
-
-    private func fps(index _: Int) -> Int {
-        15
-    }
 }
 
 let options = Options.parse(Array(CommandLine.arguments.dropFirst()))
-let source = FrameSource(width: options.width, height: options.height)
+let source = FrameSource(width: options.width, height: options.height, fps: options.fps)
 let sender = SpikeStreamSender(bitrate: options.bitrate, expectedFrameRate: options.fps)
 
 sender.onStats = { stats in

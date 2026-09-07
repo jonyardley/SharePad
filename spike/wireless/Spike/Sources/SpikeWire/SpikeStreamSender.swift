@@ -46,7 +46,6 @@ public final class SpikeStreamSender {
     private var meter = RateMeter()
     private var stats = Stats()
     private var isStreaming = false
-    private var pendingEncodes = 0
     private var encoderDrops = 0
 
     public init(bitrate: Int = 8_000_000, expectedFrameRate: Int = 15) {
@@ -99,11 +98,10 @@ public final class SpikeStreamSender {
             // process; unbounded, the frame source keeps submitting and the
             // backlog drains as a burst of stale frames reading ~1.8 s late.
             // Capping in-flight encodes keeps the measured latency the real one.
-            guard pendingEncodes < 3 else {
+            guard encoder.pendingFrames < 3 else {
                 encoderDrops += 1
                 return
             }
-            pendingEncodes += 1
             captureTimes[presentationTime.value] = captureWallClock
             if captureTimes.count > 240 {
                 // Frames the encoder never emitted (dropped internally) would leak.
@@ -157,7 +155,6 @@ public final class SpikeStreamSender {
     }
 
     private func handleEncoded(_ frame: H264Encoder.EncodedFrame) {
-        pendingEncodes = max(0, pendingEncodes - 1)
         guard isStreaming, let connection else { return }
 
         if frame.isKeyframe, !frame.parameterSets.isEmpty,
@@ -170,8 +167,10 @@ public final class SpikeStreamSender {
             lastParameterSets = frame.parameterSets
         }
 
-        let captureWallClock = captureTimes.removeValue(forKey: frame.presentationTime.value)
-            ?? Date().timeIntervalSince1970
+        // 0 means "capture time unknown", which the receiver reads as a frame it
+        // must not draw a latency sample from. A wall-clock fallback here would
+        // silently report a near-zero latency for that frame instead.
+        let captureWallClock = captureTimes.removeValue(forKey: frame.presentationTime.value) ?? 0
         sequence += 1
         // Keyframes are never dropped: losing one strands the decoder for up to
         // the keyframe interval.

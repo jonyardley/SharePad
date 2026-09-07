@@ -15,6 +15,7 @@ guard let contents = try? String(contentsOfFile: path, encoding: .utf8) else {
 struct Row {
     let wall: Double
     let latency: Double
+    let latencyValid: Bool
     let decode: Double
     let interval: Double
     let bytes: Int
@@ -26,20 +27,21 @@ let rows: [Row] = contents
     .dropFirst()
     .compactMap { line in
         let fields = line.split(separator: ",", omittingEmptySubsequences: false).map(String.init)
-        guard fields.count >= 7,
+        guard fields.count >= 8,
               let wall = Double(fields[1]),
               let latency = Double(fields[2]),
-              let decode = Double(fields[3]),
-              let interval = Double(fields[4]),
-              let bytes = Int(fields[5])
+              let decode = Double(fields[4]),
+              let interval = Double(fields[5]),
+              let bytes = Int(fields[6])
         else { return nil }
         return Row(
             wall: wall,
             latency: latency,
+            latencyValid: fields[3] == "1",
             decode: decode,
             interval: interval,
             bytes: bytes,
-            keyframe: fields[6] == "1"
+            keyframe: fields[7] == "1"
         )
     }
 
@@ -87,11 +89,17 @@ let elapsed = String(format: "%.1f", span)
 print("\(path): \(rows.count) frames, \(steady.count) after warm-up, \(elapsed) s")
 print(String(format: "rate                   %.1f fps, %.0f kbps, %d keyframes",
              Double(steady.count) / max(span, 0.001), bitrate, steady.filter(\.keyframe).count))
-summarise("capture→decoded", steady.map(\.latency))
+let usableLatencies = steady.filter(\.latencyValid).map(\.latency)
+summarise("capture→decoded", usableLatencies)
+let unusable = steady.count - usableLatencies.count
+if unusable > 0 {
+    print("\(unusable) frames carried no usable latency (clock unsynced or capture time lost)")
+}
+
 summarise("decode", steady.map(\.decode))
 summarise("frame interval", steady.filter { $0.interval > 0 }.map(\.interval))
 
-let median = percentile(steady.map(\.latency), 0.5)
+let median = usableLatencies.isEmpty ? 0 : percentile(usableLatencies, 0.5)
 print("")
 print("GO/KILL reference (specs/wireless.md): GO needs a glass-to-glass median")
 let medianText = String(format: "%.0f", median)
