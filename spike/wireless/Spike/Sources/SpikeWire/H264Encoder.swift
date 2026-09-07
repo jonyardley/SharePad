@@ -105,9 +105,8 @@ public final class H264Encoder {
         session = created
         sessionWidth = width
         sessionHeight = height
-        print(
-            "[encoder] session \(width)x\(height) @ \(expectedFrameRate) fps, \(bitrate / 1000) kbps"
-        )
+        let summary = "\(width)x\(height) @ \(expectedFrameRate) fps, \(bitrate / 1000) kbps"
+        print("[encoder] session \(summary)")
         return created
     }
 

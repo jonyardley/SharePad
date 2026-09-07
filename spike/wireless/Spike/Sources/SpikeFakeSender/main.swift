@@ -36,9 +36,8 @@ struct Options {
                 options.seconds = value.flatMap(Double.init)
                 index += 1
             case "--help":
-                print(
-                    "spike-fakesender [--width n] [--height n] [--fps n] [--bitrate bps] [--seconds n]"
-                )
+                print("spike-fakesender [--width n] [--height n] [--fps n]")
+                print("                 [--bitrate bps] [--seconds n]")
                 exit(0)
             default:
                 break

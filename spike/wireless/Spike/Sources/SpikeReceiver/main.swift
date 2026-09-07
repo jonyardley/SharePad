@@ -98,8 +98,8 @@ final class Receiver {
             listener.onStateChange = { [weak self] state in
                 guard let self else { return }
                 if case .ready = state {
-                    print("[receiver] advertising \(SpikeService.type) as “\(options.serviceName)”" +
-                        " on port \(listener.port.map(String.init) ?? "?")")
+                    let port = listener.port.map(String.init) ?? "?"
+                    print("[receiver] advertising “\(options.serviceName)” on port \(port)")
                 }
                 if case let .failed(error) = state {
                     print("[receiver] listener failed: \(error)")
@@ -299,13 +299,20 @@ final class Receiver {
             )
             : "syncing…"
 
-        return """
-        \(peer) · \(dimensions) · frames \(frameCount)\(undecodableFrames > 0 ? " (\(undecodableFrames) pre-keyframe)" : "")
-        rate \(String(format: "%.1f", framesPerSecond)) fps · \(String(format: "%.0f", kilobitsPerSecond)) kbps
-        capture→decoded (ms): \(format(latencyMs))
-        frame interval (ms): \(format(intervalMs))
-        decode (ms): \(format(decodeMs)) · clock \(clockLine)
-        """
+        let pending = undecodableFrames > 0 ? " (\(undecodableFrames) pre-keyframe)" : ""
+        let rate = String(
+            format: "%.1f fps · %.0f kbps",
+            framesPerSecond,
+            kilobitsPerSecond
+        )
+
+        return [
+            "\(peer) · \(dimensions) · frames \(frameCount)\(pending)",
+            "rate \(rate)",
+            "capture→decoded (ms): \(format(latencyMs))",
+            "frame interval (ms): \(format(intervalMs))",
+            "decode (ms): \(format(decodeMs)) · clock \(clockLine)",
+        ].joined(separator: "\n")
     }
 
     private func write(csvLine line: String) {

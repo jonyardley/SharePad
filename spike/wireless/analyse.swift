@@ -83,9 +83,8 @@ func summarise(_ label: String, _ values: [Double], unit: String = "ms") {
 let span = (steady.last?.wall ?? 0) - (steady.first?.wall ?? 0)
 let bitrate = Double(steady.reduce(0) { $0 + $1.bytes }) * 8 / max(span, 0.001) / 1000
 
-print(
-    "\(path): \(rows.count) frames, \(steady.count) after warm-up, \(String(format: "%.1f", span)) s"
-)
+let elapsed = String(format: "%.1f", span)
+print("\(path): \(rows.count) frames, \(steady.count) after warm-up, \(elapsed) s")
 print(String(format: "rate                   %.1f fps, %.0f kbps, %d keyframes",
              Double(steady.count) / max(span, 0.001), bitrate, steady.filter(\.keyframe).count))
 summarise("capture→decoded", steady.map(\.latency))
@@ -95,8 +94,7 @@ summarise("frame interval", steady.filter { $0.interval > 0 }.map(\.interval))
 let median = percentile(steady.map(\.latency), 0.5)
 print("")
 print("GO/KILL reference (specs/wireless.md): GO needs a glass-to-glass median")
-print(
-    "under ~120 ms with low jitter. capture→decoded here is \(String(format: "%.0f", median)) ms, which"
-)
-print("EXCLUDES iPad touch-to-display and Mac present time. The camera measurement")
-print("is the number that decides it.")
+let medianText = String(format: "%.0f", median)
+print("under ~120 ms with low jitter. capture→decoded here is \(medianText) ms,")
+print("which EXCLUDES iPad touch-to-display and Mac present time. The camera")
+print("measurement is the number that decides it.")
