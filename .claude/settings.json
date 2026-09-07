@@ -17,6 +17,8 @@
       "Bash(just downloads)",
       "Bash(just appcast-stats)",
       "Bash(just appcast-stats:*)",
+      "Bash(just telemetry-stats)",
+      "Bash(just telemetry-stats:*)",
       "Bash(just build-site)",
       "Bash(just install-hooks)",
       "Bash(xcodegen generate:*)",
