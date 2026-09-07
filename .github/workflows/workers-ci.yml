@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        worker: [licenses, purchase-email, appcast, stats]
+        worker: [licenses, purchase-email, appcast, stats, telemetry]
     steps:
       - uses: actions/checkout@v7
 

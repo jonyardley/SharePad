@@ -1,0 +1,46 @@
+name: Deploy Telemetry Worker
+
+# Deploy the sharepad-telemetry Cloudflare Worker (the opt-in crash/diagnostic
+# sink, specs/telemetry.md) whenever its code changes on main, or on manual
+# dispatch. Like the appcast worker it has NO runtime secrets: it receives
+# anonymous JSON, writes aggregate stats to Analytics Engine, and stores raw
+# crash payloads (no user content) in R2.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "workers/telemetry/**"
+      - ".github/workflows/deploy-telemetry-worker.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy sharepad-telemetry Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      - name: Test
+        working-directory: workers/telemetry
+        run: npm test
+
+      # First deploy provisions the telemetry.sharepad.co custom domain
+      # (wrangler.toml routes) and the sharepad-diagnostics R2 bucket. The custom
+      # domain needs the CLOUDFLARE_API_TOKEN to carry Zone DNS + Workers Routes
+      # edit on the sharepad.co zone, not just Workers Scripts. If the token is
+      # workers-only, create the custom domain (and the R2 bucket) once in the
+      # dashboard first, then CI deploys reconcile cleanly. See specs/telemetry.md.
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: workers/telemetry
