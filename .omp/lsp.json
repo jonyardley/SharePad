@@ -1,0 +1,7 @@
+{
+  "servers": {
+    "sourcekit-lsp": {
+      "rootMarkers": ["project.yml", ".git"]
+    }
+  }
+}
