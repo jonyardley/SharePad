@@ -38,7 +38,13 @@ final class SparkleUpdater: NSObject, SoftwareUpdating {
 
 extension SparkleUpdater: SPUUpdaterDelegate {
     nonisolated func updater(_: SPUUpdater, didAbortWithError error: Error) {
-        guard Self.shouldReport(abortErrorCode: (error as NSError).code) else { return }
+        let nsError = error as NSError
+        // Only filter Sparkle's own benign codes; an error from any other domain is
+        // a real failure worth reporting even if its code happens to collide.
+        if nsError.domain == SUSparkleErrorDomain,
+           !Self.shouldReport(abortErrorCode: nsError.code) {
+            return
+        }
         // Sparkle invokes delegate callbacks on the main thread.
         MainActor.assumeIsolated { reporter.report(.updateCheckFailed) }
     }

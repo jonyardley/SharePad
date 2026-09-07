@@ -71,6 +71,11 @@ final class LicenseValidatorTests: XCTestCase {
         XCTAssertEqual(result, .malformedKey)
     }
 
+    func testCheckReturnsMalformedForTruncatedKey() throws {
+        let truncated = try String(key(for: "buyer@example.com").dropLast(12))
+        XCTAssertEqual(validator.check(key: truncated, email: "buyer@example.com"), .malformedKey)
+    }
+
     func testCheckReturnsMismatchForWrongEmail() throws {
         let result = try validator.check(
             key: key(for: "buyer@example.com"), email: "other@example.com"

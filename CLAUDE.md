@@ -269,7 +269,7 @@ before touching capture.
   page promises nothing leaves the machine bar the update check, so
   `Preferences.diagnosticsEnabled` defaults false and `DiagnosticsReporter` sends
   only when the user turns it on. It is first-party MetricKit (crashes/hangs) plus
-  four named non-fatals, never any content, licence, or device id. Never flip the
+  five named non-fatals, never any content, licence, or device id. Never flip the
   default to on without a privacy-page change and a deliberate decision.
 
 ## Workflow
