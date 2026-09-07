@@ -1,3 +1,4 @@
+import Foundation
 @testable import SharePad
 import XCTest
 
@@ -81,4 +82,90 @@ final class AppModelDiagnosticsTests: AppModelTestCase {
         let object = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         XCTAssertEqual((object["payload"] as? [String: Any])?["stack"] as? String, "top")
     }
+
+    func testDisabledReporterSendsNothing() throws {
+        let requested = expectation(description: "a request was issued")
+        requested.isInverted = true
+        RecordingURLProtocol.onRequest = { _ in requested.fulfill() }
+        defer { RecordingURLProtocol.onRequest = nil }
+        let prefs = try ephemeralPreferences()
+        prefs.diagnosticsEnabled = false
+        let reporter = DiagnosticsReporter(preferences: prefs, session: recordingSession())
+        reporter.report(.shareLost)
+        wait(for: [requested], timeout: 0.3)
+    }
+
+    func testEnabledReporterSendsOnePost() throws {
+        let requested = expectation(description: "a request was issued")
+        let box = RequestBox()
+        RecordingURLProtocol.onRequest = { request in
+            box.request = request
+            requested.fulfill()
+        }
+        defer { RecordingURLProtocol.onRequest = nil }
+        let prefs = try ephemeralPreferences()
+        prefs.diagnosticsEnabled = true
+        let reporter = DiagnosticsReporter(preferences: prefs, session: recordingSession())
+        reporter.report(.shareLost)
+        wait(for: [requested], timeout: 1.0)
+        XCTAssertEqual(box.request?.httpMethod, "POST")
+        XCTAssertEqual(box.request?.url?.absoluteString, "https://telemetry.sharepad.co/report")
+        let userAgent = box.request?.value(forHTTPHeaderField: "User-Agent")
+        XCTAssertTrue(userAgent?.contains("SharePad") ?? false)
+    }
+
+    func testSetDiagnosticsEnabledPersistsAndRefreshes() throws {
+        let spy = SpyDiagnosticsReporter()
+        let prefs = try ephemeralPreferences()
+        let model = makeModel(
+            capture: FakeCaptureController(),
+            window: FakeShareWindow(),
+            preferences: prefs,
+            reporter: spy
+        )
+        XCTAssertFalse(model.diagnosticsEnabled)
+        model.setDiagnosticsEnabled(true)
+        XCTAssertTrue(model.diagnosticsEnabled)
+        XCTAssertTrue(prefs.diagnosticsEnabled)
+        XCTAssertEqual(spy.refreshCount, 1)
+    }
+
+    private func recordingSession() -> URLSession {
+        let config = URLSessionConfiguration.ephemeral
+        config.protocolClasses = [RecordingURLProtocol.self]
+        return URLSession(configuration: config)
+    }
+}
+
+/// Carries a captured request from the URLProtocol callback back to the test.
+/// @unchecked Sendable: written once on the protocol's queue, read after `wait`.
+final class RequestBox: @unchecked Sendable {
+    var request: URLRequest?
+}
+
+/// Intercepts the reporter's POST so a test can assert whether, and what, it sent
+/// without touching the network.
+class RecordingURLProtocol: URLProtocol {
+    nonisolated(unsafe) static var onRequest: (@Sendable (URLRequest) -> Void)?
+
+    override class func canInit(with request: URLRequest) -> Bool {
+        onRequest?(request)
+        return true
+    }
+
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest {
+        request
+    }
+
+    override func startLoading() {
+        if let url = request.url,
+           let response = HTTPURLResponse(
+               url: url, statusCode: 204, httpVersion: nil, headerFields: nil
+           ) {
+            client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        }
+        client?.urlProtocolDidFinishLoading(self)
+    }
+
+    override func stopLoading() {}
 }

@@ -108,13 +108,20 @@ final class DiagnosticsReporter: NSObject, DiagnosticsReporting, @unchecked Send
 }
 
 extension DiagnosticsReporter: MXMetricManagerSubscriber {
+    // Required by MXMetricManagerSubscriber (the diagnostic method is the optional
+    // one). We want diagnostics only, so metric payloads are intentionally ignored.
     func didReceive(_: [MXMetricPayload]) {}
 
     func didReceive(_ payloads: [MXDiagnosticPayload]) {
         guard preferences.diagnosticsEnabled else { return }
         for payload in payloads {
             for crash in payload.crashDiagnostics ?? [] {
-                send(kind: "crash", name: crash.terminationReason ?? "crash",
+                // Never the raw terminationReason: it can embed a home-directory path
+                // (dyld/code-signing failures), which would put the account name into
+                // the anonymous time series. The full text still goes to R2.
+                let signal = crash.signal.map { "signal-\($0.intValue)" }
+                let exception = crash.exceptionType.map { "exception-\($0.intValue)" }
+                send(kind: "crash", name: signal ?? exception ?? "crash",
                      payloadJSON: crash.jsonRepresentation())
             }
             for hang in payload.hangDiagnostics ?? [] {

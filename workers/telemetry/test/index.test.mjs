@@ -83,9 +83,18 @@ test('a crash writes AE and one R2 object', async () => {
   assert.match(r2.puts[0].value, /"payload"/);
 });
 
-test('an oversized body is rejected with 400', async () => {
-  const big = 'x'.repeat(256 * 1024 + 1);
-  const res = await worker.fetch(post(JSON.stringify({ kind: 'event', name: big })), { AE: fakeAE(), DIAGNOSTICS: fakeR2() });
+test('a payload over the cap is still counted, without an R2 object', async () => {
+  const ae = fakeAE();
+  const r2 = fakeR2();
+  const big = { kind: 'crash', name: 'SIGSEGV', appVersion: '1.2.0', osVersion: '14.5', payload: { stack: 'x'.repeat(300 * 1024) } };
+  const res = await worker.fetch(post(big), { AE: ae, DIAGNOSTICS: r2 });
+  assert.equal(res.status, 204);
+  assert.equal(ae.points.length, 1); // the crash is still counted
+  assert.equal(r2.puts.length, 0); // but the oversized raw payload is dropped
+});
+
+test('a body over the hard cap is rejected with 400', async () => {
+  const res = await worker.fetch(post(JSON.stringify({ kind: 'event', name: 'x'.repeat(2 * 1024 * 1024 + 1) })), { AE: fakeAE(), DIAGNOSTICS: fakeR2() });
   assert.equal(res.status, 400);
 });
 

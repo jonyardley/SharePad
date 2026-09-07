@@ -5,7 +5,11 @@
 // A backend problem must NEVER surface in the app, so every write fails soft and
 // the handler always answers quickly.
 
-const MAX_BYTES = 256 * 1024;
+// Over this, drop the raw payload but still count the report (the biggest crash
+// and hang payloads are exactly the ones worth counting). Over the hard cap,
+// reject outright to bound memory against abuse.
+const PAYLOAD_MAX_BYTES = 256 * 1024;
+const HARD_MAX_BYTES = 2 * 1024 * 1024;
 const KINDS = new Set(['crash', 'hang', 'event']);
 
 // Pure: validate + normalise a request body into a report, or null if malformed.
@@ -50,12 +54,17 @@ export default {
     }
 
     const text = await request.text();
-    if (text.length > MAX_BYTES) {
+    const byteLength = new TextEncoder().encode(text).length;
+    if (byteLength > HARD_MAX_BYTES) {
       return new Response('Payload too large\n', { status: 400 });
     }
     const report = parseReport(text);
     if (!report) {
       return new Response('Bad request\n', { status: 400 });
+    }
+    // Count every report; only the oversized raw payload is dropped from R2.
+    if (byteLength > PAYLOAD_MAX_BYTES) {
+      report.payload = null;
     }
 
     const country = request.cf?.country ?? 'XX';

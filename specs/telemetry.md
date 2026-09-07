@@ -86,7 +86,7 @@ Grounded in the code, four events, each a bare name with no payload and no PII:
 
 ```json
 { "kind": "crash" | "hang" | "event",
-  "name": "<terminationReason | 'hang' | eventName>",
+  "name": "<signal-N / exception-N / 'crash' | 'hang' | eventName>",
   "appVersion": "1.2.0",
   "osVersion": "14.5",
   "payload": { /* MetricKit jsonRepresentation, crash/hang only */ } }
@@ -105,9 +105,13 @@ Grounded in the code, four events, each a bare name with no payload and no PII:
   `cf.country`, same as appcast). Nothing ties a report to a person or device.
 - **No content.** Never the drawing, the licence email/key, the device name, or any
   window content. Named events carry only their name.
-- Crash/hang payloads are Apple's standard MetricKit diagnostics (stack traces,
-  exception type, OS/app version) - the same data Xcode Organizer shows - with no
-  user content.
+- Crash/hang payloads are Apple's standard MetricKit diagnostics (call-stack tree,
+  exception/signal, and `metaData`: `deviceType`, `osVersion`, `platformArchitecture`,
+  `regionFormat`, `lowPowerModeEnabled`) - the same data Xcode Organizer shows. None
+  is a unique device id, but a call stack or termination reason can contain app and
+  system file paths, so the crash `name` sent to the time series is a bounded
+  signal/exception code (never the raw terminationReason); the raw payload with its
+  paths lives only in R2, and the privacy page says so.
 - `docs/privacy.html` gains a paragraph: optional, off-by-default, anonymous crash
   and diagnostic reporting; what it sends and what it never sends.
 
