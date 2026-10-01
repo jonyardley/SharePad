@@ -1,7 +1,7 @@
 # Wireless sharing (research spec)
 
-> Status: research spec. Tier 3 (touches the capture/window model). Not yet
-> decided; spike pending hardware. 2026-09-07.
+> Status: research spec. Tier 3 (touches the capture/window model). Spike
+> verdict **GO** (2026-10-01, see "Spike result"); product spec not yet written.
 
 ## Problem
 
@@ -231,9 +231,40 @@ fast, cheap answer.
   spec, and treat "no cable" as a rejected feature for the live-drawing use
   case — USB remains the only supported connection method.
 
+## Spike result
+
+**GO**, 2026-10-01. One run, iPad mini (A17 Pro) to Mac over home 5 GHz
+Wi-Fi, 626 s, PencilKit drawing throughout.
+
+| Measure | Result | GO bar |
+|---|---|---|
+| Glass to glass, camera method | median **~45 ms**, spread 25 to 125 ms (15 readings) | under ~120 ms |
+| capture→decoded (receiver CSV) | median 22.6 ms, p95 146.7 ms, max 240.9 ms | component only |
+| Frame rate | **60.0 fps**, 0 dropped, ~2.4 Mbps | |
+| Stroke feel, Mac window only | smooth | usable for live drawing |
+
+Readings are the delta between the iPad's millisecond counter and the same
+counter in the Mac window, filmed together at 30 fps (so about ±17 ms each).
+They exclude Pencil-to-iPad-display latency, which the USB path pays too.
+
+What changed against the research:
+
+- **The 15 fps ReplayKit cap did not apply.** In-app capture delivered a
+  steady 60 fps on this device. The main risk the stroke-feel
+  pass existed to judge did not materialise.
+- **The tail is the weak spot, not the median.** Roughly 1 in 7 camera
+  readings and the CSV p95 sit near 120 to 150 ms. First suspect: the spike
+  sends a keyframe every 0.5 s (1251 in 626 s), each a bitrate spike on the
+  radio. A longer keyframe interval with on-demand keyframes is the first
+  thing to try in the product build.
+
+Not covered by this run: a busy office network, a second device type, longer
+sessions on battery, and a real call app sharing the receiver window.
+
 ## Open questions
 
-- **Does 15 fps actually feel acceptable for pen strokes**, or does the cap
+- *Answered by the spike: capture ran at 60 fps, strokes felt smooth.*
+  **Does 15 fps actually feel acceptable for pen strokes**, or does the cap
   bite harder than the latency number alone suggests? This is exactly what
   the qualitative stroke-feel pass in the spike is for — it isn't answerable
   from documentation alone.

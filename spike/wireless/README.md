@@ -77,7 +77,7 @@ method below is the verdict.
 
 | Run | Glass-to-glass median (ms) | Spread (ms) | capture→decoded median (ms) | Stroke feel | Notes |
 |---|---|---|---|---|---|
-| | | | | | |
+| 1 (2026-10-01, iPad mini A17 Pro, home 5 GHz) | ~45 | 25 to 125 | 22.6 (p95 146.7) | smooth | 60 fps, 0 dropped, 2.4 Mbps, keyframe every 0.5 s. **GO** |
 
 ### GO / KILL
 
