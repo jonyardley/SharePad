@@ -54,14 +54,15 @@ same `project.yml`), bundle id `com.jonyardley.sharepad.ipad`, iPadOS 17+.
 
 ### What it shows
 
-1. **Pairing** (first run, or no paired Mac): one line of instruction, a **Scan
-   code** button (camera), and **Type the code instead**.
+1. **Pairing** (first run, or no paired Mac): a line saying the Mac app is needed
+   too (sharepad.co, plain text), one line of instruction, a **Scan code**
+   button (camera), and **Type the code instead**.
 2. **Canvas** (everything else): a full-screen PencilKit canvas with Apple's own
    tool picker (`PKToolPicker`: pens, eraser, lasso, ruler, colours), a slim top
    bar with the **connection pill**, undo, redo, **Clear**, and a paper menu
    (plain, grid, dots; light or dark paper).
-3. **Settings sheet**: paired Mac name, **Forget this Mac**, a short privacy line,
-   and the app version. Nothing else.
+3. **Settings sheet**: paired Mac name, **Forget this Mac**, "SharePad for Mac:
+   sharepad.co", a short privacy line, and the app version. Nothing else.
 
 The canvas is always usable, connected or not. Streaming starts automatically
 when the paired Mac is found and stops when the app leaves the foreground. There
@@ -219,9 +220,14 @@ happen:
    (24 characters, six groups of four, no ambiguous letters). It expires after
    **5 minutes** and is single use. The Mac starts advertising `_sharepad._tcp`
    only now.
-3. On the iPad: **Scan code**. The QR holds the Mac's pairing id, its name and a
-   256-bit secret. The iPad connects, and both sides store the secret against the
-   other's id in the Keychain.
+3. On the iPad: scan the code, either with **Scan code** in the app or with the
+   iPad's own Camera app. The QR is a link,
+   `https://sharepad.co/pair#<pairing id>.<secret>`, carrying the Mac's pairing
+   id, its name and a 256-bit secret. It is a universal link: with the app
+   installed it opens straight into pairing; without it, Safari opens a small
+   sharepad.co page that sends the user to the App Store (§9). The secret sits
+   after the `#`, which browsers never send to a server. The iPad connects, and
+   both sides store the secret against the other's id in the Keychain.
 4. Both screens confirm: "Paired with {Mac}" and "Paired with {iPad}". The
    pairing window closes itself after 2 seconds.
 
@@ -248,6 +254,9 @@ fail on the other, which then shows **Not paired**.
 - **Forward secrecy depends on the TLS mode.** TLS 1.3 PSK with (EC)DHE gives it;
   plain PSK does not. W2 confirms which mode Network.framework negotiates and
   forces the DHE mode if it can.
+- **A scan without the app installed leaves the link in Safari's history** on
+  that iPad. Single use and the 5-minute expiry make it worthless by the time
+  anyone could read it.
 - **The QR is on screen while pairing.** If the user is sharing their *whole*
   screen in a call at that moment, the code goes out with it. `WindowSharing`
   marks the pairing window as unshareable, but whether every capture path honours
@@ -371,6 +380,64 @@ PR. Text wireframes for review in the diff:
 └──────────────────────────────┘
 ```
 
+### Mac: what's new (after updating to the wireless release)
+
+```
+┌──────────── What's new in SharePad ────────────┐
+│                                                │
+│   Draw without the cable                       │
+│   Your iPad can now share over Wi-Fi. Install  │
+│   the SharePad iPad app, pair once, then just  │
+│   open it and draw.                            │
+│                                                │
+│   ▓▓▓▓▓▓▓▓   Scan with your iPad's camera      │
+│   ▓ QR   ▓   to get the iPad app and pair      │
+│   ▓▓▓▓▓▓▓▓   in one go.                        │
+│                                                │
+│   The cable still works exactly as before.     │
+│                                                │
+│              [ Not now ]  [ Pair an iPad… ]    │
+└────────────────────────────────────────────────┘
+```
+
+Rules:
+
+- **Our code, not Sparkle's.** Sparkle shows release notes before an update and
+  has no hook after the relaunch. On launch, `AppModel` compares the bundle
+  version with `Preferences.lastSeenVersion`; a pure, tested function decides
+  whether to show (`(lastSeen, current, featureReleases) → Bool`).
+- **Only for releases marked as features** in a small in-code list. Bug-fix
+  releases never show it.
+- **Never on a fresh install.** No `lastSeenVersion` means a new user, who gets
+  the normal first run instead; the version is then recorded silently.
+- **Never mid-call.** If the share window is up at launch (an update installed
+  while plugged in), the window waits until the share window closes.
+- **Shown once.** Either button, Esc or the close button marks it seen. It is
+  excluded from screen sharing like every non-feed window.
+- **The QR here is a live pairing code** (§6), so scanning it gets the app and
+  pairs in one go. It expires on the same 5-minute clock and is replaced with a
+  **Show a new code** button after that. "Pair an iPad…" opens the normal
+  pairing window.
+
+### Signposting between the two apps
+
+| From | Where | What it says |
+|---|---|---|
+| Mac | What's new window | QR to get the iPad app and pair (above) |
+| Mac | Popover, "Wireless" section, nothing paired | "Draw on your iPad without the cable." + **Pair an iPad…** |
+| Mac | Pairing window | The same QR; a line under it: "No iPad app yet? Scanning this with the Camera app takes you to it." |
+| Web | `sharepad.co/pair` (no app installed) | "Get SharePad for iPad" with the App Store badge, then "Back on your Mac, scan the code again." The page never reads the `#` part |
+| iPad | First-run pairing, step 0 | "You also need SharePad on your Mac: sharepad.co" as plain text |
+| iPad | Settings sheet | "SharePad for Mac: sharepad.co" as plain text |
+| App Store | iPad listing, first line of the description | "Requires SharePad for Mac." |
+
+**iPad wording rules (App Store guidelines 3.1.1 and 3.1.3(f)).** Outside the US
+storefront, a free companion app may not carry calls to action for purchasing
+elsewhere. So the iPad app names the Mac app and sharepad.co as plain text and
+never says "buy", "free", "trial" or "licence", and has no button that opens the
+site. The review notes explain the companion relationship and include a demo
+video.
+
 ### Copy rules
 
 - Name the network the way people do: **Wi-Fi**, never "LAN" or "Bonjour".
@@ -391,7 +458,7 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 | **W2: Pairing and encryption** | Pairing window with QR and typed code; `PairingStore`; TLS-PSK link; Forget on both sides; listener only runs once paired | An unpaired iPad cannot connect; a capture of the traffic shows no readable stream; Forget on either side stops the next connection; the pairing window does not appear in a Zoom or Meet window share |
 | **W3: iPad app** | Canvas, tool picker, paper menu, connection pill, settings, canvas-rectangle crop, auto start and stop; TestFlight beta | On two iPad models: toolbar never appears on the Mac; open app streams within 3 s of the Mac being found; an hour on battery without a drop; backgrounding stops capture |
 | **W4: Lifecycle** | Cable-wins switching, 5 s reconnect hold, Wi-Fi lost-share banner, `pause` while the cable is active, trial meter keyed to the paired iPad | Plugging the cable in mid-share switches with no window flicker; Wi-Fi off for 3 s recovers in place; off for 10 s hides and shows the banner; trial pause covers a wireless feed |
-| **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; a busy office network passes the W0 measurement |
+| **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app); `sharepad.co/pair` page and the universal-link association file; what's-new window with its tested show-once rule; signposting copy (§9); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; scanning the pairing QR with the Camera app on an iPad without the app reaches the App Store, and with it opens pairing; updating from 1.2 shows what's new once, a fresh install never shows it, and an update while sharing waits until the share ends; a busy office network passes the W0 measurement |
 | **W6: Whole screen** | Spike first: a Broadcast Upload Extension encoding inside the ~50 MB cap on the largest iPad Pro. On GO, add it as a second capture mode in the iPad app | Spike: steady frame rate, memory under the cap for 30 minutes, glass to glass within the W0 bar. Product: drawing in Notes or Procreate streams to the Mac |
 
 ## 11. Open questions
@@ -408,4 +475,7 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
    Confirm in W1.
 5. **Does the pairing window stay out of whole-screen shares** on current macOS
    (§6)? Test in W2.
-6. **Export of drawings** from the iPad app: not v1, revisit after launch.
+6. **Universal links and the Mac-made QR.** The pairing link has to open the iPad
+   app from the Camera app's QR reader. Universal links normally do; confirm in
+   W5 on a clean iPad.
+7. **Export of drawings** from the iPad app: not v1, revisit after launch.
