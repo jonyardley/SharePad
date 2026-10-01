@@ -36,8 +36,12 @@ sender-build: gen
 # Install and run on a connected iPad. Needs SPIKE_TEAM_ID and a trusted device.
 sender-run device: gen
     xcodebuild -project WirelessSpikeSender.xcodeproj -scheme WirelessSpikeSender \
-        -destination 'platform=iOS,name={{device}}' -configuration Debug \
+        -destination "platform=iOS,name={{device}}" -configuration Debug \
+        -derivedDataPath build/sender \
         -allowProvisioningUpdates DEVELOPMENT_TEAM="${SPIKE_TEAM_ID}" build
+    xcrun devicectl device install app --device "{{device}}" \
+        build/sender/Build/Products/Debug-iphoneos/WirelessSpikeSender.app
+    xcrun devicectl device process launch --device "{{device}}" com.jonyardley.sharepadspike.sender
 
 # Median/p95/jitter from a recorded CSV, ignoring the first two seconds of warm-up
 stats csv="/tmp/spike-latency.csv":

@@ -41,8 +41,8 @@ just stats              # median/p95/jitter from the CSV, warm-up discarded
 iPad side:
 
 ```bash
-export SPIKE_TEAM_ID=MN4C3MNXU2      # Apple Development: Jon Yardley
-just sender-run "Jon's iPad"         # or: just open, then run from Xcode
+export SPIKE_TEAM_ID=9S5FG4LQAF      # team ID, not the certificate ID
+just sender-run "iPad Mini"          # name from: xcrun devicectl list devices
 ```
 
 On first run the iPad asks for **local network** access and **screen recording**
