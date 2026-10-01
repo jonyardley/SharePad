@@ -1,7 +1,8 @@
 # Wireless sharing (research spec)
 
 > Status: research spec. Tier 3 (touches the capture/window model). Spike
-> verdict **GO** (2026-10-01, see "Spike result"); product spec not yet written.
+> verdict **GO** (2026-10-01, see "Spike result"). The product spec is
+> [`specs/wireless-product.md`](wireless-product.md).
 
 ## Problem
 
@@ -257,6 +258,10 @@ What changed against the research:
   sends a keyframe every 0.5 s (1251 in 626 s), each a bitrate spike on the
   radio. A longer keyframe interval with on-demand keyframes is the first
   thing to try in the product build.
+
+The 0.5 s interval turned out to be a spike bug: the keyframe cap was set in
+frames assuming 15 fps, so at 60 fps it fired four times as often as intended.
+The fix is in [`specs/wireless-product.md` §8](wireless-product.md#8-fixing-the-latency-tail).
 
 Not covered by this run: a busy office network, a second device type, longer
 sessions on battery, and a real call app sharing the receiver window.

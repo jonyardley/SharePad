@@ -28,6 +28,8 @@ displayed as full shared content (not a webcam tile).
 
 - **Not** a virtual camera (see [§2](#2-approach--rejected-alternatives)).
 - **No** iPad audio routing into the call.
+- **USB only.** Wireless sharing through an iPad companion app is specced, not
+  built: see `specs/wireless-product.md` (2026-10-01).
 - **No** annotation, recording, cropping, or multi-device mosaic.
 - ~~**No** distribution / App Store / notarization — personal local build.~~
   **Superseded (2026-06-05):** 1.0 ships as a notarized **direct download**
