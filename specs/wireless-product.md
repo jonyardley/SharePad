@@ -608,7 +608,7 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
    pairing, reconnect and keyframe rules in `SharePadWire` are written as
    event-in, effect-out reducers so a later port is translation, not redesign.
 8. **Export of drawings** from the iPad app: not v1, revisit after launch.
-9. **Typed code length. Proposed in W2a, waiting on Jon.** The QR and the typed
+9. **Typed code length. Decided (Jon, 2026-10-02): 24 characters.** The QR and the typed
    code are the same 24-character, 120-bit one-time code, and the code never
    becomes the long-lived key (§6 Flow, step 4). A short code is unsafe even when
    single use: anyone on the network can pose as the Mac to the iPad and test
@@ -620,7 +620,7 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
    `.tbd` with **no public header** in the macOS 27 SDK, so it is private API.
    Alternatives: a 52-character typed code carrying 256 bits (too long to type),
    or a short code (unsafe, as above).
-10. **Which id a re-pair replaces. Proposed in W2a, waiting on Jon.** A random
+10. **Which id a re-pair replaces. Decided (Jon, 2026-10-02): Keychain UUID.** A random
     UUID made once and kept in the Keychain beside the pairings, with the same
     after-first-unlock, this-device-only, never-synced class (`localDeviceID()`).
     Keychain items survive an app delete on iOS today, but Apple DTS calls that an
