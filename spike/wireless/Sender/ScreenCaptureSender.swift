@@ -16,6 +16,7 @@ final class ScreenCaptureSender {
     var kilobitsPerSecond: Double = 0
     var skippedFrames = 0
     var encodedFrames = 0
+    var interface = ""
     var errorText: String?
 
     @ObservationIgnored private lazy var sender = StreamSender(
@@ -29,6 +30,7 @@ final class ScreenCaptureSender {
             self?.kilobitsPerSecond = stats.kilobitsPerSecond
             self?.skippedFrames = stats.skippedFrames
             self?.encodedFrames = stats.encodedFrames
+            self?.interface = stats.interface
         }
     )
 

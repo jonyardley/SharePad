@@ -153,9 +153,9 @@ let sender = StreamSender(
     },
     onStats: { stats in
         print(String(
-            format: "[fakesender] %.1f fps, %.0f kbps, %d encoded, %d skipped, %d keyframes",
+            format: "[fakesender] %.1f fps, %.0f kbps, %d encoded, %d skipped, %d keyframes, path %@",
             stats.framesPerSecond, stats.kilobitsPerSecond, stats.encodedFrames,
-            stats.skippedFrames, stats.keyframes
+            stats.skippedFrames, stats.keyframes, stats.interface
         ))
     }
 )

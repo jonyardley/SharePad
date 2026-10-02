@@ -14,6 +14,7 @@ public final class StreamSender: @unchecked Sendable {
         public var encodedFrames = 0
         public var skippedFrames = 0
         public var keyframes = 0
+        public var interface = ""
     }
 
     private let onPhase: @Sendable (SenderLink.Phase) -> Void
@@ -268,6 +269,7 @@ public final class StreamSender: @unchecked Sendable {
         if meter.tick() {
             stats.framesPerSecond = meter.eventsPerSecond
             stats.kilobitsPerSecond = meter.bytesPerSecond * 8 / 1000
+            stats.interface = connection.interfaceSummary
             let snapshot = stats
             let onStats = onStats
             DispatchQueue.main.async { onStats(snapshot) }

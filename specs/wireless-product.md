@@ -345,6 +345,16 @@ product behind a debug-build flag, so W0 can re-run the spike method against the
 new settings. Target on the same home network: **capture-to-decoded p95 under
 60 ms** and **no camera reading above 100 ms** across 15 readings.
 
+#### W0 measurement (2026-10-02)
+
+iPad Mini to Mac over home Wi-Fi. Keyframes arrived every 10 s, as intended.
+Capture-to-decoded median was 24 ms but p95 was 149 ms, so the target is not yet
+met. The slow frames come in bursts every ~0.52 s: six or seven small frames
+(~2.5 KB) held for ~150 ms, then delivered together, unrelated to keyframes. The
+suspected cause is peer-to-peer Wi-Fi (AWDL) channel hopping, which may also
+explain the original spike's tail, since its 0.5 s keyframes had the same period.
+The `fix/wireless-no-p2p` branch turns peer-to-peer off to test that.
+
 ## 9. Design
 
 A clickable mockup of every screen below, in light and dark, is linked from the

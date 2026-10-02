@@ -46,11 +46,12 @@ struct SenderView: View {
                 .font(.callout.weight(.medium))
 
             Text(String(
-                format: "%.1f fps · %.0f kbps · %d sent · %d skipped",
+                format: "%.1f fps · %.0f kbps · %d sent · %d skipped · %@",
                 sender.framesPerSecond,
                 sender.kilobitsPerSecond,
                 sender.encodedFrames,
-                sender.skippedFrames
+                sender.skippedFrames,
+                sender.interface
             ))
             .font(.caption.monospaced())
             .foregroundStyle(.secondary)

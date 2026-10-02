@@ -84,6 +84,7 @@ final class Receiver {
     private var lastArrival: Double?
     private var dimensions = "—"
     private var peer = "waiting for a sender"
+    private var path = "no path"
     private var csv: FileHandle?
     private var snapshotWritten = false
     private var startedAt = Date().timeIntervalSince1970
@@ -199,6 +200,8 @@ final class Receiver {
                 }
                 startedAt = Date().timeIntervalSince1970
                 print("[receiver] streaming from \(peer)")
+                path = active?.interfaceSummary ?? "no path"
+                print("[receiver] path: \(path)")
                 request(keyframes.reduce(.connected(at: uptime)))
             case let .sendPause(id):
                 print("[receiver] a second sender is on standby")
@@ -405,7 +408,7 @@ final class Receiver {
         )
 
         return [
-            "\(peer) · \(dimensions) · frames \(frameCount)\(pending)",
+            "\(peer) · \(path) · \(dimensions) · frames \(frameCount)\(pending)",
             "rate \(rate)",
             "capture→decoded (ms): \(format(latencyMs))",
             "frame interval (ms): \(format(intervalMs))",

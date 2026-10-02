@@ -11,14 +11,16 @@ public enum WireParameters {
         options.keepaliveIdle = 2
 
         let parameters = NWParameters(tls: nil, tcp: options)
-        parameters.includePeerToPeer = true
+        // AWDL channel hopping stalled frames 150 ms every 0.5 s in W0 (specs/wireless-product.md
+        // §8).
+        parameters.includePeerToPeer = false
         parameters.serviceClass = .interactiveVideo
         return parameters
     }
 
     public static func browse() -> NWParameters {
         let parameters = NWParameters()
-        parameters.includePeerToPeer = true
+        parameters.includePeerToPeer = false
         return parameters
     }
 }
@@ -74,6 +76,23 @@ public final class WireConnection: @unchecked Sendable {
 
     public func cancel() {
         connection.cancel()
+    }
+
+    public var interfaceSummary: String {
+        guard let path = connection.currentPath else { return "no path" }
+        let interfaces = path.availableInterfaces.map { "\($0.name) (\(Self.label(for: $0.type)))" }
+        return interfaces.isEmpty ? "no interface" : interfaces.joined(separator: ", ")
+    }
+
+    private static func label(for type: NWInterface.InterfaceType) -> String {
+        switch type {
+        case .wifi: "wifi"
+        case .wiredEthernet: "wired"
+        case .cellular: "cellular"
+        case .loopback: "loopback"
+        case .other: "other"
+        @unknown default: "unknown"
+        }
     }
 
     public func send(_ message: WireMessage, whenSent: (@Sendable () -> Void)? = nil) {
