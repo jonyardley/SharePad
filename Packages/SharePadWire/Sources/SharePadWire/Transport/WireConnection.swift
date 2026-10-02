@@ -23,8 +23,8 @@ public enum WireParameters {
     }
 }
 
-// @unchecked: every stored property is read and written on `queue`, which is
-// also the queue Network.framework calls back on.
+// @unchecked: handlers are set before `start`; from then on everything runs on the
+// queue it was started on, which is also where Network.framework calls back.
 public final class WireConnection: @unchecked Sendable {
     public enum Event: Sendable {
         case ready
@@ -138,6 +138,8 @@ public final class WireConnection: @unchecked Sendable {
     }
 }
 
+// @unchecked: handlers are set before `start`; from then on everything runs on the
+// queue it was started on, which is also where Network.framework calls back.
 public final class WireListener: @unchecked Sendable {
     public var onConnection: (@Sendable (WireConnection) -> Void)?
     public var onStateChange: (@Sendable (NWListener.State) -> Void)?
@@ -171,6 +173,8 @@ public final class WireListener: @unchecked Sendable {
     }
 }
 
+// @unchecked: handlers are set before `start`; from then on everything runs on the
+// queue it was started on, which is also where Network.framework calls back.
 public final class WireBrowser: @unchecked Sendable {
     public var onResults: (@Sendable ([NWBrowser.Result]) -> Void)?
 

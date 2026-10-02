@@ -10,7 +10,7 @@ public final class H264Decoder: @unchecked Sendable {
     public struct DecodedFrame: @unchecked Sendable {
         public let pixelBuffer: CVPixelBuffer
         public let sequence: UInt32
-        public let captureWallClock: Double
+        public let captureWallClock: Double?
         public let decodeSeconds: Double
     }
 

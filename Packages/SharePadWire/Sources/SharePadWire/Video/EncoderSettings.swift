@@ -15,15 +15,17 @@ public struct EncoderSettings: Equatable, Sendable {
         self.keyframeIntervalSeconds = keyframeIntervalSeconds
     }
 
-    // kVTCompressionPropertyKey_DataRateLimits takes [bytes, seconds] pairs.
-    public var dataRateLimit: (bytes: Int, seconds: Double) {
-        (Int(Double(averageBitRate) * burstFactor / 8), 1)
+    public var dataRateLimits: [(bytes: Int, seconds: Double)] {
+        [1, 0.1].map { seconds in
+            (Int(Double(averageBitRate) * burstFactor / 8 * seconds), seconds)
+        }
     }
 }
 
 public struct FrameRateEstimator: Equatable, Sendable {
     public static let window: TimeInterval = 1
     public static let changeThreshold = 0.1
+    public static let applicableRates: ClosedRange<Double> = 15 ... 60
 
     private var captures: [TimeInterval] = []
     public private(set) var appliedRate: Double?
@@ -37,9 +39,7 @@ public struct FrameRateEstimator: Equatable, Sendable {
         return Double(captures.count - 1) / (last - first)
     }
 
-    // Returns a rate only when the encoder should be told about it: the first full
-    // window, then any shift beyond the threshold.
-    public mutating func record(captureAt now: TimeInterval) -> Double? {
+    public mutating func rateToApply(afterCaptureAt now: TimeInterval) -> Double? {
         captures.append(now)
         captures.removeAll { now - $0 > Self.window }
         guard let first = captures.first, now - first >= Self.window * 0.9,
@@ -48,8 +48,12 @@ public struct FrameRateEstimator: Equatable, Sendable {
         if let appliedRate, abs(rate - appliedRate) / appliedRate < Self.changeThreshold {
             return nil
         }
-        let rounded = rate.rounded()
-        appliedRate = rounded
-        return rounded
+        let clamped = min(
+            max(rate.rounded(), Self.applicableRates.lowerBound),
+            Self.applicableRates.upperBound
+        )
+        guard clamped != appliedRate else { return nil }
+        appliedRate = clamped
+        return clamped
     }
 }

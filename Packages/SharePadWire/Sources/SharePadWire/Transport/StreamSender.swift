@@ -16,8 +16,8 @@ public final class StreamSender: @unchecked Sendable {
         public var keyframes = 0
     }
 
-    public var onPhase: (@Sendable (SenderLink.Phase) -> Void)?
-    public var onStats: (@Sendable (Stats) -> Void)?
+    private let onPhase: @Sendable (SenderLink.Phase) -> Void
+    private let onStats: @Sendable (Stats) -> Void
 
     private let identity: Hello
     private let encoder: H264Encoder
@@ -42,8 +42,12 @@ public final class StreamSender: @unchecked Sendable {
         deviceID: UUID,
         deviceName: String,
         settings: EncoderSettings = EncoderSettings(),
-        lastPeer: String? = nil
+        lastPeer: String? = nil,
+        onPhase: @escaping @Sendable (SenderLink.Phase) -> Void = { _ in },
+        onStats: @escaping @Sendable (Stats) -> Void = { _ in }
     ) {
+        self.onPhase = onPhase
+        self.onStats = onStats
         identity = Hello(deviceID: deviceID, deviceName: deviceName)
         encoder = H264Encoder(settings: settings)
         link = SenderLink(lastPeer: lastPeer)
@@ -90,12 +94,14 @@ public final class StreamSender: @unchecked Sendable {
         let effects = link.reduce(event)
         effects.forEach(perform)
         let phase = link.phase
-        DispatchQueue.main.async { [weak self] in self?.onPhase?(phase) }
+        let onPhase = onPhase
+        DispatchQueue.main.async { onPhase(phase) }
     }
 
     private func perform(_ effect: SenderLink.Effect) {
         switch effect {
         case .startBrowsing:
+            browser?.cancel()
             let browser = WireBrowser()
             browser.onResults = { [weak self] results in self?.found(results) }
             browser.start(queue: queue)
@@ -109,11 +115,26 @@ public final class StreamSender: @unchecked Sendable {
                 return
             }
             open(WireConnection.outbound(to: endpoint, queue: queue))
+        case let .scheduleConnectTimeout(attempt, delay):
+            queue.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.send(.connectTimedOut(attempt: attempt))
+            }
+        case let .scheduleRetry(delay):
+            queue.asyncAfter(deadline: .now() + delay) { [weak self] in
+                self?.send(.retryElapsed)
+            }
         case .closeConnection:
             connection?.cancel()
             connection = nil
         case .sendHello:
             connection?.send(.hello(identity))
+        case .startStreaming, .pauseStreaming, .resumeStreaming, .stopStreaming:
+            performStreaming(effect)
+        }
+    }
+
+    private func performStreaming(_ effect: SenderLink.Effect) {
+        switch effect {
         case .startStreaming:
             isStreaming = true
             _ = rules.reduce(.linkStarted)
@@ -126,6 +147,8 @@ public final class StreamSender: @unchecked Sendable {
         case .stopStreaming:
             isStreaming = false
             encoder.invalidate()
+        default:
+            break
         }
     }
 
@@ -186,7 +209,7 @@ public final class StreamSender: @unchecked Sendable {
     ) {
         guard isStreaming else { return }
         let now = ProcessInfo.processInfo.systemUptime
-        if let rate = frameRate.record(captureAt: now) {
+        if let rate = frameRate.rateToApply(afterCaptureAt: now) {
             encoder.updateExpectedFrameRate(rate)
         }
         let effects = rules.reduce(.frameCaptured(at: now, encodesInFlight: encoder.pendingFrames))
@@ -226,7 +249,7 @@ public final class StreamSender: @unchecked Sendable {
             }
         }
 
-        let wallClock = captureTimes.removeValue(forKey: frame.presentationTime.seconds) ?? 0
+        let wallClock = captureTimes.removeValue(forKey: frame.presentationTime.seconds)
         sequence &+= 1
         nextHandoffID &+= 1
         let id = nextHandoffID
@@ -246,7 +269,8 @@ public final class StreamSender: @unchecked Sendable {
             stats.framesPerSecond = meter.eventsPerSecond
             stats.kilobitsPerSecond = meter.bytesPerSecond * 8 / 1000
             let snapshot = stats
-            DispatchQueue.main.async { [weak self] in self?.onStats?(snapshot) }
+            let onStats = onStats
+            DispatchQueue.main.async { onStats(snapshot) }
         }
     }
 }

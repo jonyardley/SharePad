@@ -123,15 +123,16 @@ public final class H264Encoder: @unchecked Sendable {
         // Frame reordering would add at least one frame of structural delay.
         // Keyframes come on demand; the duration cap is only a safety net, and
         // there is deliberately no frame-count cap (specs/wireless-product.md §8).
-        let limit = settings.dataRateLimit
         set(created, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue)
         set(created, kVTCompressionPropertyKey_AllowFrameReordering, kCFBooleanFalse)
         set(created, kVTCompressionPropertyKey_ProfileLevel, kVTProfileLevel_H264_High_AutoLevel)
         set(created, kVTCompressionPropertyKey_AverageBitRate, settings.averageBitRate as CFNumber)
+        // kVTCompressionPropertyKey_DataRateLimits takes flattened [bytes, seconds, ...] pairs.
         set(
             created,
             kVTCompressionPropertyKey_DataRateLimits,
-            [limit.bytes, limit.seconds] as CFArray
+            settings.dataRateLimits
+                .flatMap { [$0.bytes as NSNumber, $0.seconds as NSNumber] } as CFArray
         )
         set(created, kVTCompressionPropertyKey_ExpectedFrameRate, expectedFrameRate as CFNumber)
         set(

@@ -18,24 +18,21 @@ final class ScreenCaptureSender {
     var encodedFrames = 0
     var errorText: String?
 
-    private let sender: StreamSender
-    private let recorder = RPScreenRecorder.shared()
-
-    init() {
-        sender = StreamSender(
-            deviceID: UIDevice.current.identifierForVendor ?? UUID(),
-            deviceName: UIDevice.current.name
-        )
-        sender.onPhase = { [weak self] phase in
+    @ObservationIgnored private lazy var sender = StreamSender(
+        deviceID: UIDevice.current.identifierForVendor ?? UUID(),
+        deviceName: UIDevice.current.name,
+        onPhase: { [weak self] phase in
             self?.statusText = "\(phase)"
-        }
-        sender.onStats = { [weak self] stats in
+        },
+        onStats: { [weak self] stats in
             self?.framesPerSecond = stats.framesPerSecond
             self?.kilobitsPerSecond = stats.kilobitsPerSecond
             self?.skippedFrames = stats.skippedFrames
             self?.encodedFrames = stats.encodedFrames
         }
-    }
+    )
+
+    private let recorder = RPScreenRecorder.shared()
 
     func start() {
         guard !isCapturing else { return }

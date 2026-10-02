@@ -70,11 +70,11 @@ public struct EncodedVideoFrame: Equatable, Sendable {
     public let sequence: UInt32
     public let isKeyframe: Bool
     // Sender wall clock at capture, before encode; only comparable to the receiver's
-    // clock through ClockSync. Zero means unknown and yields no latency sample.
-    public let captureWallClock: Double
+    // clock through ClockSync.
+    public let captureWallClock: Double?
     public let avcc: Data
 
-    public init(sequence: UInt32, isKeyframe: Bool, captureWallClock: Double, avcc: Data) {
+    public init(sequence: UInt32, isKeyframe: Bool, captureWallClock: Double?, avcc: Data) {
         self.sequence = sequence
         self.isKeyframe = isKeyframe
         self.captureWallClock = captureWallClock
@@ -129,7 +129,7 @@ public enum WireMessage: Equatable, Sendable {
         case let .frame(frame):
             body.u32(frame.sequence)
             body.u8(frame.isKeyframe ? 1 : 0)
-            body.f64(frame.captureWallClock)
+            body.f64(frame.captureWallClock ?? 0)
             body.bytes(frame.avcc)
         case .requestKeyframe, .pause, .resume:
             break
@@ -175,7 +175,7 @@ public enum WireMessage: Equatable, Sendable {
             return .frame(EncodedVideoFrame(
                 sequence: sequence,
                 isKeyframe: isKeyframe,
-                captureWallClock: captureWallClock,
+                captureWallClock: captureWallClock == 0 ? nil : captureWallClock,
                 avcc: reader.rest()
             ))
         case 4:

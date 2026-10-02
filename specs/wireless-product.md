@@ -322,17 +322,21 @@ pattern.
    as a safety net only.
 2. **On-demand keyframes:** the Mac sends `requestKeyframe` on connect, after any
    decode error, after the display layer is flushed (sleep and wake, source
-   switch) and after a send-queue drop (below). The iPad forces the next frame
-   with `kVTEncodeFrameOptionKey_ForceKeyFrame`, at most one forced keyframe per
-   500 ms.
+   switch) and after the send queue backs up (below). The iPad forces the next
+   frame with `kVTEncodeFrameOptionKey_ForceKeyFrame`, at most one forced keyframe
+   per 500 ms.
 3. **Burst cap:** `DataRateLimits` at 1.5 × the average bitrate over one second,
-   so a keyframe is spread rather than dumped. Average bitrate 6 Mbps (the spike
-   measured 2.4 Mbps of real use against an 8 Mbps target).
-4. **Expected frame rate:** set from measured capture rate, not a constant.
-5. **Send-queue cap:** the sender tracks bytes handed to the connection but not yet
-   sent. Above ~150 ms worth of frames, it stops encoding, waits for the queue to
-   drain, then sends a keyframe. Latency stays bounded during a Wi-Fi stall,
-   at the cost of a visible skip. A skip reads better than a growing delay.
+   and again over a 100 ms window, so a keyframe is spread rather than dumped in
+   one burst. Average bitrate 6 Mbps (the spike measured 2.4 Mbps of real use
+   against an 8 Mbps target).
+4. **Expected frame rate:** set from measured capture rate, not a constant,
+   held between 15 and 60 fps so an idle canvas does not inflate the frame budget.
+5. **Send-queue cap:** the sender caps the send queue by the age of its oldest
+   frame handed to the connection but not yet sent. Above 150 ms, it stops
+   encoding, waits for the queue to drain, then forces a keyframe. Nothing already
+   encoded is dropped, so the decoder's reference chain stays intact. Latency
+   stays bounded during a Wi-Fi stall, at the cost of a visible skip. A skip reads
+   better than a growing delay.
 
 ### Measurement
 

@@ -70,6 +70,8 @@ public struct ReceiverLink: Equatable, Sendable {
         case .waiting:
             phase = .live(peer)
             return [.adopt(peer.connection)]
+        case let .live(current) where current.connection == peer.connection:
+            return []
         case let .live(current) where current.hello.deviceID == peer.hello.deviceID:
             // A Wi-Fi drop can leave the old socket half-open after the iPad has
             // already reconnected; the newer connection is the real one.
@@ -79,9 +81,19 @@ public struct ReceiverLink: Equatable, Sendable {
             phase = .live(peer)
             return [.adopt(peer.connection)]
         case .live, .holding:
+            return park(peer)
+        }
+    }
+
+    private mutating func park(_ peer: Peer) -> [Effect] {
+        let replaced = standby.firstIndex { $0.hello.deviceID == peer.hello.deviceID }
+        guard let replaced else {
             standby.append(peer)
             return [.sendPause(peer.connection)]
         }
+        let old = standby[replaced].connection
+        standby[replaced] = peer
+        return [.close(old, .replaced), .sendPause(peer.connection)]
     }
 
     private mutating func closed(_ id: ConnectionID, at now: TimeInterval) -> [Effect] {

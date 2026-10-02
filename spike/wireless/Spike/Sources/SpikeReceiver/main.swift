@@ -2,9 +2,9 @@ import AppKit
 import AVFoundation
 import SharePadWire
 
-// Mac receiver for the wireless spike (specs/wireless.md). Accepts one Bonjour
-// connection, decodes H.264, renders into a plain window, and reports the
-// latency numbers the go/kill call needs.
+// Mac receiver for the wireless spike (specs/wireless.md). Streams from one
+// sender at a time and parks others on standby, decodes H.264, renders into a
+// plain window, and reports the latency numbers the go/kill call needs.
 
 struct Options {
     var serviceName = Host.current().localizedName ?? "SharePad Spike"
@@ -295,13 +295,9 @@ final class Receiver {
     }
 
     private func record(frame: H264Decoder.DecodedFrame, arrivedAt now: Double) {
-        let captureInReceiverClock = frame.captureWallClock - clock.offset
-        let latency = (now - captureInReceiverClock) * 1000
-        // A zero capture time means the sender could not match the frame to a
-        // capture instant, so there is no latency to measure from it.
-        let isValid = clock.isSynced && frame.captureWallClock > 0
-            && latency > -50 && latency < 5000
-        if isValid {
+        let latency = frame.captureWallClock.map { (now - ($0 - clock.offset)) * 1000 }
+        let isValid = clock.isSynced && latency.map { $0 > -50 && $0 < 5000 } == true
+        if isValid, let latency {
             latencyMs.add(latency)
         }
         decodeMs.add(frame.decodeSeconds * 1000)
@@ -311,7 +307,7 @@ final class Receiver {
         write(csvLine: [
             "\(frame.sequence)",
             String(format: "%.6f", now),
-            String(format: "%.2f", latency),
+            String(format: "%.2f", latency ?? 0),
             isValid ? "1" : "0",
             String(format: "%.3f", frame.decodeSeconds * 1000),
             String(format: "%.2f", meta?.interval ?? 0),

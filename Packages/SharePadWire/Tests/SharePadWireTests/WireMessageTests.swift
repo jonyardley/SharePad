@@ -67,4 +67,34 @@ final class WireMessageTests: XCTestCase {
         XCTAssertThrowsError(try WireMessage.decode(typeCode: 200, payload: Data()))
         XCTAssertThrowsError(try WireMessage.decode(typeCode: 7, payload: Data([1, 2])))
     }
+
+    func testUnknownCaptureTimeRoundTripsAsNil() throws {
+        let frame = EncodedVideoFrame(
+            sequence: 7,
+            isKeyframe: false,
+            captureWallClock: nil,
+            avcc: Data([1, 2, 3])
+        )
+        XCTAssertEqual(try roundTrip(.frame(frame)), .frame(frame))
+    }
+
+    func testConfigDeclaringMoreSetsThanItCarriesIsTruncated() {
+        var body = ByteWriter()
+        for _ in 0 ..< 6 {
+            body.u32(0)
+        }
+        body.u8(3)
+        body.u32(2)
+        body.bytes(Data([0x67, 0x64]))
+        XCTAssertThrowsError(try WireMessage.decode(typeCode: 2, payload: body.data)) { error in
+            XCTAssertEqual(error as? WireError, .truncated)
+        }
+    }
+
+    func testHelloWithTrailingBytesStillDecodes() throws {
+        let hello = Hello(deviceID: UUID(), deviceName: "Jon’s iPad")
+        var data = WireMessage.hello(hello).encoded().dropFirst(WireService.headerLength)
+        data.append(contentsOf: [0xDE, 0xAD, 0xBE, 0xEF])
+        XCTAssertEqual(try WireMessage.decode(typeCode: 1, payload: Data(data)), .hello(hello))
+    }
 }

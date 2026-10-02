@@ -147,20 +147,18 @@ let source = FrameSource(width: options.width, height: options.height, fps: opti
 let sender = StreamSender(
     deviceID: UUID(),
     deviceName: "spike-fakesender",
-    settings: EncoderSettings(averageBitRate: options.bitrate)
+    settings: EncoderSettings(averageBitRate: options.bitrate),
+    onPhase: { phase in
+        print("[fakesender] \(phase)")
+    },
+    onStats: { stats in
+        print(String(
+            format: "[fakesender] %.1f fps, %.0f kbps, %d encoded, %d skipped, %d keyframes",
+            stats.framesPerSecond, stats.kilobitsPerSecond, stats.encodedFrames,
+            stats.skippedFrames, stats.keyframes
+        ))
+    }
 )
-
-sender.onPhase = { phase in
-    print("[fakesender] \(phase)")
-}
-
-sender.onStats = { stats in
-    print(String(
-        format: "[fakesender] %.1f fps, %.0f kbps, %d encoded, %d skipped, %d keyframes",
-        stats.framesPerSecond, stats.kilobitsPerSecond, stats.encodedFrames,
-        stats.skippedFrames, stats.keyframes
-    ))
-}
 
 sender.start()
 

@@ -16,7 +16,10 @@ final class SenderLinkTests: XCTestCase {
         var link = SenderLink()
         XCTAssertEqual(link.reduce(.start), [.startBrowsing])
         XCTAssertEqual(link.reduce(.found([])), [])
-        XCTAssertEqual(link.reduce(.found(["Studio"])), [.connect("Studio")])
+        XCTAssertEqual(
+            link.reduce(.found(["Studio"])),
+            [.connect("Studio"), .scheduleConnectTimeout(attempt: 1, after: 5)]
+        )
         XCTAssertEqual(link.reduce(.connectionReady), [.stopBrowsing, .sendHello])
         XCTAssertEqual(link.reduce(.helloReceived(mac)), [.startStreaming])
         XCTAssertEqual(link.phase, .live("Studio"))
@@ -26,7 +29,7 @@ final class SenderLinkTests: XCTestCase {
     func testPrefersTheMacUsedLast() {
         var link = SenderLink(lastPeer: "Office")
         _ = link.reduce(.start)
-        XCTAssertEqual(link.reduce(.found(["Home", "Office"])), [.connect("Office")])
+        XCTAssertEqual(link.reduce(.found(["Home", "Office"])).first, .connect("Office"))
     }
 
     func testIncompatibleVersionClosesAndStops() {
@@ -50,11 +53,107 @@ final class SenderLinkTests: XCTestCase {
         XCTAssertEqual(link.phase, .live("Studio"))
     }
 
-    func testLosingALiveLinkGoesBackToSearching() {
+    func testLosingALiveLinkBacksOffThenSearches() {
         var link = SenderLink()
         live(&link)
-        XCTAssertEqual(link.reduce(.connectionLost), [.stopStreaming, .startBrowsing])
+        XCTAssertEqual(
+            link.reduce(.connectionLost),
+            [.stopStreaming, .stopBrowsing, .scheduleRetry(after: 0.5)]
+        )
+        XCTAssertEqual(link.phase, .backingOff)
+        XCTAssertEqual(link.reduce(.retryElapsed), [.startBrowsing])
         XCTAssertEqual(link.phase, .searching)
+    }
+
+    func testLosingAConnectionWhileConnectingBacksOff() {
+        var link = SenderLink()
+        _ = link.reduce(.start)
+        _ = link.reduce(.found(["Studio"]))
+        XCTAssertEqual(link.reduce(.connectionLost), [.stopBrowsing, .scheduleRetry(after: 0.5)])
+        XCTAssertEqual(link.phase, .backingOff)
+    }
+
+    func testLosingAConnectionWhileHandshakingBacksOff() {
+        var link = SenderLink()
+        _ = link.reduce(.start)
+        _ = link.reduce(.found(["Studio"]))
+        _ = link.reduce(.connectionReady)
+        XCTAssertEqual(link.reduce(.connectionLost), [.stopBrowsing, .scheduleRetry(after: 0.5)])
+        XCTAssertEqual(link.phase, .backingOff)
+    }
+
+    func testBackoffDoublesToACapAndResetsOnceLive() {
+        var link = SenderLink()
+        _ = link.reduce(.start)
+        var delays: [TimeInterval] = []
+        for _ in 0 ..< 6 {
+            _ = link.reduce(.found(["Studio"]))
+            if case let .scheduleRetry(delay) = link.reduce(.connectionLost).last {
+                delays.append(delay)
+            }
+            _ = link.reduce(.retryElapsed)
+        }
+        XCTAssertEqual(delays, [0.5, 1, 2, 4, 5, 5])
+        _ = link.reduce(.found(["Studio"]))
+        _ = link.reduce(.connectionReady)
+        _ = link.reduce(.helloReceived(mac))
+        XCTAssertEqual(link.reduce(.connectionLost).last, .scheduleRetry(after: 0.5))
+    }
+
+    func testRetryElapsedOutsideBackoffIsIgnored() {
+        var link = SenderLink()
+        XCTAssertEqual(link.reduce(.retryElapsed), [])
+        live(&link)
+        XCTAssertEqual(link.reduce(.retryElapsed), [])
+        XCTAssertEqual(link.phase, .live("Studio"))
+    }
+
+    func testOnlyTheCurrentConnectTimeoutCounts() {
+        var link = SenderLink()
+        _ = link.reduce(.start)
+        _ = link.reduce(.found(["Studio"]))
+        _ = link.reduce(.connectionLost)
+        _ = link.reduce(.retryElapsed)
+        XCTAssertEqual(
+            link.reduce(.found(["Studio"])).last,
+            .scheduleConnectTimeout(attempt: 2, after: 5)
+        )
+        _ = link.reduce(.connectionReady)
+        XCTAssertEqual(link.reduce(.connectTimedOut(attempt: 1)), [])
+        XCTAssertEqual(link.phase, .handshaking("Studio"))
+        XCTAssertEqual(
+            link.reduce(.connectTimedOut(attempt: 2)),
+            [.closeConnection, .stopBrowsing, .scheduleRetry(after: 1)]
+        )
+        XCTAssertEqual(link.phase, .backingOff)
+    }
+
+    func testConnectTimeoutAfterGoingLiveIsIgnored() {
+        var link = SenderLink()
+        live(&link)
+        XCTAssertEqual(link.reduce(.connectTimedOut(attempt: 1)), [])
+        XCTAssertEqual(link.phase, .live("Studio"))
+    }
+
+    func testStopFromIncompatibleAndFromBackoffGoesIdle() {
+        var link = SenderLink()
+        _ = link.reduce(.start)
+        _ = link.reduce(.found(["Studio"]))
+        _ = link.reduce(.connectionReady)
+        _ = link.reduce(.helloReceived(Hello(
+            protocolVersion: 99,
+            deviceID: UUID(),
+            deviceName: "Mac"
+        )))
+        XCTAssertEqual(link.reduce(.stop), [.stopStreaming, .closeConnection, .stopBrowsing])
+        XCTAssertEqual(link.phase, .idle)
+
+        _ = link.reduce(.start)
+        _ = link.reduce(.found(["Studio"]))
+        _ = link.reduce(.connectionLost)
+        XCTAssertEqual(link.reduce(.stop), [.stopStreaming, .closeConnection, .stopBrowsing])
+        XCTAssertEqual(link.phase, .idle)
+        XCTAssertEqual(link.reduce(.retryElapsed), [])
     }
 
     func testStopTearsEverythingDown() {
@@ -139,5 +238,35 @@ final class ReceiverLinkTests: XCTestCase {
         _ = link.reduce(.helloReceived(2, otherPad))
         _ = link.reduce(.closed(2, at: 4))
         XCTAssertTrue(link.standby.isEmpty)
+    }
+
+    func testARepeatedHelloOnTheLiveConnectionChangesNothing() {
+        var link = ReceiverLink()
+        _ = link.reduce(.helloReceived(1, pad))
+        XCTAssertEqual(link.reduce(.helloReceived(1, pad)), [])
+        XCTAssertEqual(link.phase, .live(.init(connection: 1, hello: pad)))
+    }
+
+    func testAStandbyIPadReconnectingReplacesItsOldEntry() {
+        var link = ReceiverLink()
+        _ = link.reduce(.helloReceived(1, pad))
+        _ = link.reduce(.helloReceived(2, otherPad))
+        XCTAssertEqual(
+            link.reduce(.helloReceived(3, otherPad)),
+            [.close(2, .replaced), .sendPause(3)]
+        )
+        XCTAssertEqual(link.standby.map(\.connection), [3])
+    }
+
+    func testAStaleHoldCheckAfterARehold() {
+        var link = ReceiverLink()
+        _ = link.reduce(.helloReceived(1, pad))
+        _ = link.reduce(.closed(1, at: 10))
+        _ = link.reduce(.helloReceived(2, pad))
+        _ = link.reduce(.closed(2, at: 12))
+        XCTAssertEqual(link.reduce(.holdElapsed(at: 15)), [])
+        XCTAssertEqual(link.phase, .holding(.init(connection: 2, hello: pad), since: 12))
+        XCTAssertEqual(link.reduce(.holdElapsed(at: 17)), [.endShare])
+        XCTAssertEqual(link.phase, .waiting)
     }
 }
