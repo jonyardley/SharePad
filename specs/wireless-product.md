@@ -478,4 +478,9 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 6. **Universal links and the Mac-made QR.** The pairing link has to open the iPad
    app from the Camera app's QR reader. Universal links normally do; confirm in
    W5 on a clean iPad.
-7. **Export of drawings** from the iPad app: not v1, revisit after launch.
+7. **Crux shared core: deferred (Jon, 2026-10-02).** Not worth a Rust toolchain
+   and an `AppModel` rewrite while both apps are Apple only. Revisit if an
+   Android tablet sender or a Windows receiver reaches the roadmap. Meanwhile,
+   pairing, reconnect and keyframe rules in `SharePadWire` are written as
+   event-in, effect-out reducers so a later port is translation, not redesign.
+8. **Export of drawings** from the iPad app: not v1, revisit after launch.
