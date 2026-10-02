@@ -307,6 +307,10 @@
   .panel li svg { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 2px; color: var(--periwinkle); }
   .panel li b { color: var(--ink); font-weight: 600; }
   .panel.note { background: linear-gradient(165deg, #fff, #f4f6ff); }
+  .panel p { color: var(--ink-soft); font-size: 0.97rem; }
+  .panel p b { color: var(--ink); font-weight: 600; }
+  .wireless-note { margin-top: 22px; }
+  .wireless-note h3 { margin-bottom: 8px; }
 
   /* FAQ */
   .faq-list { display: grid; gap: 14px; max-width: 760px; }
@@ -417,7 +421,7 @@
       "name": "Do I need to install anything on the iPad?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "No. There's nothing to install on the iPad and no app to open, just connect it to your Mac over USB. Everything runs on the Mac side."
+        "text": "Not for the cable. Connect the iPad to your Mac over USB and everything runs on the Mac side. To draw without the cable, install the free SharePad app for iPad and pair it with your Mac once."
       }
     },
     {
@@ -441,7 +445,7 @@
       "name": "What do I need to run SharePad?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "A Mac running macOS 14 (Sonoma) or later, and a USB cable to connect your iPad. That's it."
+        "text": "A Mac running macOS 14 (Sonoma) or later, and either a USB cable to connect your iPad or, to draw without the cable, the free SharePad app for iPad on the same Wi-Fi as your Mac."
       }
     },
     {
@@ -457,7 +461,7 @@
       "name": "Which drawing or notes apps does it work with?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Any of them. SharePad shows your iPad’s whole screen, so you can use Procreate, GoodNotes, Freeform, Notability, Apple Notes, whatever you already draw or write in. There’s nothing to integrate."
+        "text": "Over the cable, any of them. SharePad shows your iPad’s whole screen, so you can use Procreate, GoodNotes, Freeform, Notability, Apple Notes, whatever you already draw or write in. There’s nothing to integrate. Without the cable, you draw in the SharePad app for iPad."
       }
     },
     {
@@ -465,7 +469,7 @@
       "name": "Do I need a cable, or does it work wirelessly?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "You connect the iPad to your Mac with a USB cable. SharePad uses the same wired connection macOS already exposes for a plugged-in iPad, the one QuickTime uses, so there’s no wireless pairing or network involved."
+        "text": "Both. Over a USB cable, SharePad uses the same wired connection macOS already exposes for a plugged-in iPad, the one QuickTime uses, and that works exactly as before. To go without the cable, install the free SharePad app for iPad, pair it once by scanning a code on your Mac, then just open it and draw: your drawing streams to your Mac over Wi-Fi. The iPad app shares its own canvas, so to show another app such as Procreate or GoodNotes, use the cable."
       }
     },
     {
@@ -505,7 +509,7 @@
       "name": "Is my data private?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. SharePad just shows the iPad in a window on your Mac. There's no account, no sign-in, and no tracking or analytics in the app. The only network request it makes is an automatic check for a new version. It never sends your data or anything about what you share."
+        "text": "Yes. SharePad just shows the iPad in a window on your Mac. There's no account, no sign-in, and no tracking or analytics in the app. The only network request it makes is an automatic check for a new version. It never sends your data or anything about what you share. Drawing without the cable goes from your iPad to your Mac over your Wi-Fi, encrypted, and nowhere else."
       }
     }
   ]
@@ -622,6 +626,10 @@
         <p>Pick it from the “Share window” list in Zoom, Meet or Teams, open your favourite app, and you’re ready to go.</p>
       </div>
     </div>
+    <div class="panel note wireless-note">
+      <h3>New: draw without the cable</h3>
+      <p>Install the free <b>SharePad app for iPad</b>, pair it with your Mac once by scanning a code, then just open it and draw. Your drawing appears in the same SharePad window over Wi-Fi. The cable still works exactly as before.</p>
+    </div>
     <figure class="menubar-demo">
       <img src="assets/popover.png" loading="lazy" alt="The SharePad menu-bar popover, showing a live preview of the connected iPad, the device name, a Hide window button, and toggles for auto-show on connect, keep window on top, and launch at login." />
       <figcaption><b>The whole app lives in your menu bar</b>: a live preview of exactly what you’re sharing, with show/hide and keep-on-top controls a click away.</figcaption>
@@ -687,7 +695,7 @@
       <details class="faq-item">
         <summary>Do I need to install anything on the iPad?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">No. There’s nothing to install on the iPad and no app to open, just connect it to your Mac over USB. Everything runs on the Mac side.</div>
+        <div class="faq-body">Not for the cable. Connect the iPad to your Mac over USB and everything runs on the Mac side. To draw without the cable, install the free SharePad app for iPad and pair it with your Mac once.</div>
       </details>
       <details class="faq-item">
         <summary>Is SharePad a virtual camera?
@@ -702,7 +710,7 @@
       <details class="faq-item">
         <summary>What do I need to run SharePad?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">A Mac running macOS 14 (Sonoma) or later, and a USB cable to connect your iPad. That’s it.</div>
+        <div class="faq-body">A Mac running macOS 14 (Sonoma) or later, and either a USB cable to connect your iPad or, to draw without the cable, the free SharePad app for iPad on the same Wi-Fi as your Mac.</div>
       </details>
       <details class="faq-item">
         <summary>Why isn’t SharePad on the Mac App Store?
@@ -712,12 +720,12 @@
       <details class="faq-item">
         <summary>Which drawing or notes apps does it work with?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">Any of them. SharePad shows your iPad’s whole screen, so you can use Procreate, GoodNotes, Freeform, Notability, Apple Notes, whatever you already draw or write in. There’s nothing to integrate.</div>
+        <div class="faq-body">Over the cable, any of them. SharePad shows your iPad’s whole screen, so you can use Procreate, GoodNotes, Freeform, Notability, Apple Notes, whatever you already draw or write in. There’s nothing to integrate. Without the cable, you draw in the SharePad app for iPad.</div>
       </details>
       <details class="faq-item">
         <summary>Do I need a cable, or does it work wirelessly?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">You connect the iPad to your Mac with a USB cable. SharePad uses the same wired connection macOS already exposes for a plugged-in iPad, the one QuickTime uses, so there’s no wireless pairing or network involved.</div>
+        <div class="faq-body">Both. Over a USB cable, SharePad uses the same wired connection macOS already exposes for a plugged-in iPad, the one QuickTime uses, and that works exactly as before. To go without the cable, install the free SharePad app for iPad, pair it once by scanning a code on your Mac, then just open it and draw: your drawing streams to your Mac over Wi-Fi. The iPad app shares its own canvas, so to show another app such as Procreate or GoodNotes, use the cable.</div>
       </details>
       <details class="faq-item">
         <summary>Is there any lag?
@@ -742,7 +750,7 @@
       <details class="faq-item">
         <summary>Is my data private?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">Yes. SharePad just shows the iPad in a window on your Mac. There’s no account, no sign-in, and no tracking or analytics in the app. The only network request it makes is an automatic check for a new version. It never sends your data or anything about what you share.</div>
+        <div class="faq-body">Yes. SharePad just shows the iPad in a window on your Mac. There’s no account, no sign-in, and no tracking or analytics in the app. The only network request it makes is an automatic check for a new version. It never sends your data or anything about what you share. Drawing without the cable goes from your iPad to your Mac over your Wi-Fi, encrypted, and nowhere else.</div>
       </details>
     </div>
   </div>
