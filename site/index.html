@@ -4,11 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>SharePad: Share your iPad on any call, in an instant</title>
-<meta name="description" content="Turn your iPad into a live whiteboard and share it in any call. Connect it to your Mac and it’s right there in the share list, without the faff. Free 7-day trial, then a one-time {{price}} licence." />
+<meta name="description" content="Turn your iPad into a live whiteboard and share it in any call. Connect it to your Mac with a cable or over Wi-Fi and it’s right there in the share list, without the faff. Free 7-day trial, then a one-time {{price}} licence." />
 <link rel="canonical" href="https://sharepad.co/" />
 
 <meta property="og:title" content="SharePad: Share your iPad on any call, in an instant" />
-<meta property="og:description" content="Share your thinking, not just your screen. Turn your iPad into a live whiteboard you can share in any video call. Connect it to your Mac and it’s there in the share list. Free for 7 days, then {{price}} once." />
+<meta property="og:description" content="Share your thinking, not just your screen. Turn your iPad into a live whiteboard you can share in any video call. Connect it to your Mac with a cable or over Wi-Fi and it’s there in the share list. Free for 7 days, then {{price}} once." />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="SharePad" />
 <meta property="og:image" content="https://sharepad.co/assets/demo.jpg" />
@@ -241,24 +241,22 @@
   h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.9rem, 4vw, 2.9rem); letter-spacing: -0.03em; line-height: 1.05; }
   h2 + p { color: var(--ink-soft); font-size: 1.08rem; margin-top: 16px; max-width: 54ch; }
 
-  /* Steps */
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-  .step {
+  /* Two routes: cable and Wi-Fi */
+  .routes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+  .route {
     background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-lg);
-    padding: 30px 28px 32px; position: relative; overflow: hidden;
-    transition: transform .25s, box-shadow .25s;
+    padding: 30px 28px 32px; display: flex; flex-direction: column; gap: 22px;
   }
-  .step:hover { transform: translateY(-4px); box-shadow: 0 24px 48px rgba(40,48,120,0.14); }
-  .step .num {
-    font-family: var(--font-display); font-weight: 800; font-size: 2.6rem; line-height: 1;
-    margin-bottom: 22px; color: var(--indigo-deep);
-    text-shadow:
-      1px 1px 0 #4654bb, 2px 2px 0 #4250b7, 3px 3px 0 #3e4cb3,
-      4px 4px 0 #3a48af, 5px 5px 0 #3644ab, 6px 6px 12px rgba(40,48,120,0.30);
-  }
-  .step h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.22rem; letter-spacing: -0.01em; margin-bottom: 9px; }
-  .step p { color: var(--ink-soft); font-size: 0.97rem; }
-  .step .glyph { position: absolute; top: 22px; right: 22px; width: 30px; height: 30px; color: var(--sky); opacity: .85; }
+  .route-head { display: flex; align-items: center; gap: 14px; }
+  .route-glyph { flex: 0 0 auto; width: 44px; height: 44px; padding: 10px; border-radius: 13px; color: #fff; background: linear-gradient(135deg, var(--periwinkle-2), var(--indigo) 75%, var(--indigo-deep)); box-shadow: 0 8px 18px rgba(62,76,179,0.34); }
+  .route h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.35rem; letter-spacing: -0.01em; }
+  .route-steps { list-style: none; display: grid; gap: 14px; }
+  .route-steps li { display: flex; align-items: baseline; gap: 14px; color: var(--ink-soft); font-size: 1.02rem; }
+  .rnum { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; display: inline-grid; place-items: center; font-family: var(--font-display); font-weight: 800; font-size: 0.95rem; color: var(--indigo-deep); background: rgba(91,107,232,0.12); transform: translateY(-1px); }
+  /* Apple's badge guidelines: at least 40px tall on screen, with clear space of a quarter of its height. */
+  .app-store-badge { display: inline-block; align-self: flex-start; margin-top: auto; padding: 12px 0 0; }
+  .app-store-badge img { display: block; height: 50px; width: auto; }
+  .nowrap { white-space: nowrap; }
 
   /* Menu-bar popover shot */
   .menubar-demo { margin-top: 64px; display: flex; flex-direction: column; align-items: center; text-align: center; }
@@ -372,7 +370,7 @@
   @media (max-width: 880px) {
     .hero-grid { grid-template-columns: 1fr; gap: 56px; }
     .stage { order: 2; }
-    .steps, .privacy-grid, .features, .honest { grid-template-columns: 1fr; }
+    .routes, .privacy-grid, .features, .honest { grid-template-columns: 1fr; }
     .nav-links .muted { display: none; }
     header.hero { padding: 60px 0 20px; }
     .float-chip.tl { left: 2%; } .float-chip.br { right: 2%; }
@@ -432,7 +430,7 @@
       "name": "How do I share my iPad screen on Zoom, Google Meet or Teams?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Plug your iPad into your Mac over USB and SharePad opens a clean window showing its screen. There’s nothing to install on the iPad and no app to open: everything runs on the Mac. In your call, choose “Share window” and pick SharePad from the list, the same way you’d share any app. There’s no mid-call setup, and it works in Zoom, Google Meet and Microsoft Teams. See the full step-by-step guide."
+        "text": "Plug your iPad into your Mac over USB and SharePad opens a clean window showing its screen. Over the cable there’s nothing to install on the iPad: everything runs on the Mac. In your call, choose “Share window” and pick SharePad from the list, the same way you’d share any app. There’s no mid-call setup, and it works in Zoom, Google Meet and Microsoft Teams. To draw without the cable, get the free SharePad app for iPad and pair it with your Mac once. See the full step-by-step guide."
       }
     },
     {
@@ -448,7 +446,7 @@
       "name": "Which drawing apps and pens work?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Any of them. SharePad shows your iPad’s whole screen, so you can use Procreate, GoodNotes, Freeform, Notability, Apple Notes, whatever you already draw or write in. There’s nothing to integrate, and your Apple Pencil strokes appear live in the call as you make them."
+        "text": "Over the cable, any of them. SharePad shows your iPad’s whole screen, so you can use Procreate, GoodNotes, Freeform, Notability, Apple Notes, whatever you already draw or write in. There’s nothing to integrate, and your Apple Pencil strokes appear live in the call as you make them. Over Wi-Fi, you draw in the SharePad app’s own canvas."
       }
     },
     {
@@ -456,7 +454,7 @@
       "name": "What do I need, and why not the App Store?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "A Mac running macOS 14 (Sonoma) or later, and a USB cable to connect your iPad. That’s it. SharePad isn’t on the Mac App Store because macOS only treats a plugged-in iPad as a camera for apps that run outside Apple’s sandbox, and App Store apps must be sandboxed. It’s still signed and notarised by Apple, so it opens with a normal double-click. You just download it directly rather than from the store."
+        "text": "A Mac running macOS 14 (Sonoma) or later, and either a USB cable to connect your iPad or, to draw without the cable, the free SharePad app for iPad on the same Wi-Fi network as your Mac. SharePad isn’t on the Mac App Store because macOS only treats a plugged-in iPad as a camera for apps that run outside Apple’s sandbox, and App Store apps must be sandboxed. It’s still signed and notarised by Apple, so it opens with a normal double-click. You just download it directly rather than from the store."
       }
     },
     {
@@ -464,7 +462,7 @@
       "name": "Do I need a cable, or does it work wirelessly?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "You connect the iPad to your Mac with a USB cable. SharePad uses the same wired connection macOS already exposes for a plugged-in iPad, the one QuickTime uses, so there’s no wireless pairing or network involved."
+        "text": "Both. Over a USB cable, SharePad uses the same wired connection macOS already exposes for a plugged-in iPad, the one QuickTime uses, and any drawing app works. To go without the cable, get the free SharePad app for iPad, pair it once by scanning a code on your Mac, then open it and draw: your drawing appears in the same SharePad window over Wi-Fi. The iPad app shares its own canvas, so to show another app such as Procreate or GoodNotes, use the cable."
       }
     },
     {
@@ -496,7 +494,7 @@
       "name": "Is my data private?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Yes. SharePad shows your iPad in a window on your Mac. There’s no account, no sign-in and no tracking. SharePad goes online to check for updates, and sends crash reports if you switch them on in the app (they’re off until you do). What you draw or share never leaves your Mac. The privacy policy has the details."
+        "text": "Yes. SharePad shows your iPad in a window on your Mac. There’s no account, no sign-in and no tracking. SharePad goes online to check for updates, and sends crash reports if you switch them on in the app (they’re off until you do). What you draw or share never leaves your Mac. Without the cable, your drawing goes straight from your iPad to your Mac on your local network, encrypted, and never through a server. The privacy policy has the details."
       }
     }
   ]
@@ -541,7 +539,7 @@
       </h1>
       <p class="lede reveal d3">
         Turn the iPad into a <b>live whiteboard</b> using your favourite drawing or
-        writing app. Connect it to your Mac and share in any call, without the faff.
+        writing app. Connect it to your Mac with a cable or over Wi&#8209;Fi and share in any call, without the faff.
       </p>
       <div class="hero-cta reveal d4">
         <div class="mac-note">
@@ -608,27 +606,32 @@
   <div class="wrap">
     <div class="section-head">
       <div class="kicker">How it works</div>
-      <h2>Ready the moment you plug in.</h2>
-      <p>SharePad lives in your menu bar and finds your iPad as soon as it connects to your Mac. Use your iPad as a whiteboard on Zoom, Google Meet and Microsoft Teams.</p>
+      <h2>Ready the moment you plug in, or without the cable.</h2>
+      <p>SharePad lives in your menu bar and finds your iPad as soon as it connects to your Mac, by cable or over Wi&#8209;Fi. Use your iPad as a whiteboard on Zoom, Google Meet and Microsoft Teams.</p>
     </div>
-    <div class="steps">
-      <div class="step">
-        <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="5" width="20" height="14" rx="2"/></svg>
-        <div class="num">1</div>
-        <h3>Plug in the iPad</h3>
-        <p>Connect it over USB. There’s nothing to install on the iPad.</p>
+    <div class="routes">
+      <div class="route">
+        <div class="route-head">
+          <svg class="route-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="17" rx="2"/><path d="M12 19v3"/></svg>
+          <h3>With a cable</h3>
+        </div>
+        <ol class="route-steps">
+          <li><span class="rnum">1</span><span>Plug the iPad into your Mac.</span></li>
+          <li><span class="rnum">2</span><span>The window appears by itself.</span></li>
+          <li><span class="rnum">3</span><span>Share it in your call. Any drawing app works.</span></li>
+        </ol>
       </div>
-      <div class="step">
-        <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 20h8"/></svg>
-        <div class="num">2</div>
-        <h3>The window appears</h3>
-        <p>A clean window opens automatically, matched to your iPad’s shape so nothing looks squished. Show or hide it whenever you like.</p>
-      </div>
-      <div class="step">
-        <svg class="glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 5h16v11H4z"/><path d="M8 21h8M2 9h20"/></svg>
-        <div class="num">3</div>
-        <h3>Share it in the call</h3>
-        <p>Pick it from the “Share window” list in Zoom, Meet or Teams, open your favourite app, and you’re ready to go.</p>
+      <div class="route">
+        <div class="route-head">
+          <svg class="route-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5.5 12.5a10 10 0 0 1 13 0"/><path d="M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1"/></svg>
+          <h3>Over <span class="nowrap">Wi-Fi</span></h3>
+        </div>
+        <ol class="route-steps">
+          <li><span class="rnum">1</span><span>Get SharePad for iPad, free.</span></li>
+          <li><span class="rnum">2</span><span>Scan the code on your Mac, once.</span></li>
+          <li><span class="rnum">3</span><span>Open it and draw in the SharePad canvas.</span></li>
+        </ol>
+        <a class="app-store-badge" href="{{appStoreUrl}}"><img src="assets/app-store-badge.svg" width="150" height="50" alt="Download on the App Store" /></a>
       </div>
     </div>
     <figure class="menubar-demo">
@@ -645,7 +648,7 @@
         <div class="kicker">Privacy</div>
         <h2>Your drawing never leaves your desk.</h2>
         <p style="color:rgba(255,255,255,0.82); max-width:54ch; margin-top:14px;">
-          SharePad shows your iPad in a window on your Mac. No account, no sign-in, no tracking. SharePad goes online to check for updates, and sends crash reports only if you switch them on. What you draw or share never leaves your Mac.
+          SharePad shows your iPad in a window on your Mac. No account, no sign-in, no tracking. SharePad goes online to check for updates, and sends crash reports only if you switch them on. What you draw or share never leaves your Mac. Over Wi&#8209;Fi, your drawing goes straight from your iPad to your Mac on your local network, encrypted, and never through a server.
         </p>
       </div>
     </div>
@@ -691,7 +694,7 @@
       <details class="faq-item">
         <summary>How do I share my iPad screen on Zoom, Google Meet or Teams?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">Plug your iPad into your Mac over USB and SharePad opens a clean window showing its screen. There’s nothing to install on the iPad and no app to open: everything runs on the Mac. In your call, choose “Share window” and pick SharePad from the list, the same way you’d share any app. There’s no mid-call setup, and it works in Zoom, Google Meet and Microsoft Teams. <a href="share-ipad-on-zoom-google-meet-teams.html">See the full step-by-step guide</a>.</div>
+        <div class="faq-body">Plug your iPad into your Mac over USB and SharePad opens a clean window showing its screen. Over the cable there’s nothing to install on the iPad: everything runs on the Mac. In your call, choose “Share window” and pick SharePad from the list, the same way you’d share any app. There’s no mid-call setup, and it works in Zoom, Google Meet and Microsoft Teams. To draw without the cable, get the free SharePad app for iPad and pair it with your Mac once. <a href="share-ipad-on-zoom-google-meet-teams.html">See the full step-by-step guide</a>.</div>
       </details>
       <details class="faq-item">
         <summary>How does it show the iPad?
@@ -701,17 +704,17 @@
       <details class="faq-item">
         <summary>Which drawing apps and pens work?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">Any of them. SharePad shows your iPad’s whole screen, so you can use Procreate, GoodNotes, Freeform, Notability, Apple Notes, whatever you already draw or write in. There’s nothing to integrate, and your Apple Pencil strokes appear live in the call as you make them.</div>
+        <div class="faq-body">Over the cable, any of them. SharePad shows your iPad’s whole screen, so you can use Procreate, GoodNotes, Freeform, Notability, Apple Notes, whatever you already draw or write in. There’s nothing to integrate, and your Apple Pencil strokes appear live in the call as you make them. Over Wi-Fi, you draw in the SharePad app’s own canvas.</div>
       </details>
       <details class="faq-item">
         <summary>What do I need, and why not the App Store?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">A Mac running macOS 14 (Sonoma) or later, and a USB cable to connect your iPad. That’s it. SharePad isn’t on the Mac App Store because macOS only treats a plugged-in iPad as a camera for apps that run outside Apple’s sandbox, and App Store apps must be sandboxed. It’s still <a href="https://github.com/jonyardley/SharePad">signed and notarised</a> by Apple, so it opens with a normal double-click. You just download it directly rather than from the store.</div>
+        <div class="faq-body">A Mac running macOS 14 (Sonoma) or later, and either a USB cable to connect your iPad or, to draw without the cable, the free SharePad app for iPad on the same Wi-Fi network as your Mac. SharePad isn’t on the Mac App Store because macOS only treats a plugged-in iPad as a camera for apps that run outside Apple’s sandbox, and App Store apps must be sandboxed. It’s still <a href="https://github.com/jonyardley/SharePad">signed and notarised</a> by Apple, so it opens with a normal double-click. You just download it directly rather than from the store.</div>
       </details>
       <details class="faq-item">
         <summary>Do I need a cable, or does it work wirelessly?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">You connect the iPad to your Mac with a USB cable. SharePad uses the same wired connection macOS already exposes for a plugged-in iPad, the one QuickTime uses, so there’s no wireless pairing or network involved.</div>
+        <div class="faq-body">Both. Over a USB cable, SharePad uses the same wired connection macOS already exposes for a plugged-in iPad, the one QuickTime uses, and any drawing app works. To go without the cable, get the free SharePad app for iPad, pair it once by scanning a code on your Mac, then open it and draw: your drawing appears in the same SharePad window over Wi-Fi. The iPad app shares its own canvas, so to show another app such as Procreate or GoodNotes, use the cable.</div>
       </details>
       <details class="faq-item">
         <summary>The shared window is black, what can I do?
@@ -731,7 +734,7 @@
       <details class="faq-item">
         <summary>Is my data private?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">Yes. SharePad shows your iPad in a window on your Mac. There’s no account, no sign-in and no tracking. SharePad goes online to check for updates, and sends crash reports if you switch them on in the app (they’re off until you do). What you draw or share never leaves your Mac. The <a href="privacy.html">privacy policy</a> has the details.</div>
+        <div class="faq-body">Yes. SharePad shows your iPad in a window on your Mac. There’s no account, no sign-in and no tracking. SharePad goes online to check for updates, and sends crash reports if you switch them on in the app (they’re off until you do). What you draw or share never leaves your Mac. Without the cable, your drawing goes straight from your iPad to your Mac on your local network, encrypted, and never through a server. The <a href="privacy.html">privacy policy</a> has the details.</div>
       </details>
     </div>
   </div>

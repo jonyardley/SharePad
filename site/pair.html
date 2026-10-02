@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pair your iPad · SharePad</title>
+<meta name="description" content="Get SharePad for iPad, then open it and point it at the code on your Mac to pair." />
+<meta name="robots" content="noindex" />
+<meta name="referrer" content="no-referrer" />
+<link rel="canonical" href="https://sharepad.co/pair" />
+
+<!-- This page must never read or send the part of the link after the #, which carries a one-time pairing code (specs/wireless-product.md §6). Keep it free of scripts, analytics included. -->
+
+<link rel="icon" type="image/png" href="/assets/icon-256.png" />
+<link rel="apple-touch-icon" href="/assets/icon-256.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" />
+
+<style>
+  :root {
+    --indigo-deep:  #2C3690;
+    --indigo:       #3E4CB3;
+    --periwinkle:   #5B6BE8;
+    --sky:          #89B0E8;
+    --ink:        #181C44;
+    --ink-soft:   #4A4F78;
+    --paper:      #F3F4FB;
+    --card:       #FFFFFF;
+    --line:       rgba(46, 56, 144, 0.12);
+    --radius-xl: 32px;
+    --maxw: 560px;
+    --font-display: "Bricolage Grotesque", ui-serif, Georgia, serif;
+    --font-body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  :focus-visible { outline: 2px solid var(--periwinkle); outline-offset: 3px; border-radius: 4px; }
+  h1 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  body {
+    font-family: var(--font-body); color: var(--ink);
+    background:
+      radial-gradient(1200px 700px at 85% -10%, rgba(91,107,232,0.18), transparent 60%),
+      radial-gradient(900px 600px at -10% 10%, rgba(137,176,232,0.20), transparent 55%),
+      var(--paper);
+    line-height: 1.6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    min-height: 100dvh; display: flex; flex-direction: column;
+  }
+  a { color: var(--indigo); text-decoration: none; font-weight: 600; }
+  a:hover { text-decoration: underline; }
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  nav {
+    border-bottom: 1px solid var(--line);
+    background: rgba(243,244,251,0.72);
+  }
+  nav .wrap { display: flex; align-items: center; height: 70px; max-width: 1080px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 700; font-size: 1.22rem; letter-spacing: -0.02em; color: var(--ink); }
+  .brand img { width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 4px 12px rgba(46,56,144,0.28); }
+  main { flex: 1; padding: 56px 0 72px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-xl);
+    padding: clamp(28px, 6vw, 48px); box-shadow: 0 30px 60px rgba(20,26,80,0.08);
+    text-align: center;
+  }
+  .card .icon { width: 88px; height: 88px; border-radius: 22px; box-shadow: 0 10px 28px rgba(46,56,144,0.28); margin-bottom: 22px; }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 6vw, 2.4rem); letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 12px; }
+  .lede { color: var(--ink-soft); font-size: 1.05rem; margin-bottom: 26px; }
+  /* Apple's badge guidelines: at least 40px tall on screen, with clear space of a quarter of its height. */
+  .badge { display: inline-block; padding: 13px; }
+  .badge img { display: block; height: 50px; width: auto; }
+  .nowrap { white-space: nowrap; }
+  .step { margin-top: 30px; padding-top: 26px; border-top: 1px solid var(--line); }
+  .step h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; letter-spacing: -0.01em; margin-bottom: 6px; }
+  .step p { color: var(--ink-soft); }
+  .aside { margin-top: 22px; color: var(--ink-soft); font-size: 0.92rem; text-align: center; }
+  footer { padding: 32px 0; text-align: center; color: var(--ink-soft); font-size: 0.86rem; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a class="brand" href="/"><img src="/assets/icon-256.png" alt="" /> SharePad</a>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+    <article class="card">
+      <img class="icon" src="/assets/icon-256.png" alt="SharePad icon" />
+      <h1>Get SharePad for iPad</h1>
+      <p class="lede">Draw on your iPad and share it from your Mac over <span class="nowrap">Wi-Fi</span>, without the cable.</p>
+
+      <a class="badge" href="{{appStoreUrl}}"><img src="/assets/app-store-badge.svg" width="150" height="50" alt="Download on the App Store" /></a>
+
+      <div class="step">
+        <h2>Then pair it</h2>
+        <p>Open SharePad on this iPad and point it at the code on your Mac.</p>
+      </div>
+    </article>
+    <p class="aside">You also need SharePad on your Mac. <a href="/">Get it at sharepad.co</a></p>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="/">sharepad.co</a> · <a href="/privacy.html">Privacy</a>
+  </div>
+</footer>
+</body>
+</html>
