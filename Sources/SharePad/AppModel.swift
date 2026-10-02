@@ -210,6 +210,7 @@ final class AppModel {
             window.hide()
             setWindowVisible(false, "toggle")
             suspendTrialSession()
+            presentWhatsNewIfDue()
         } else if isConnected {
             presentWindow()
         }
@@ -250,6 +251,7 @@ final class AppModel {
         shareLostDismissTask?.cancel()
         shareLostDismissTask = nil
         shareLostSignal = false
+        presentWhatsNewIfDue()
     }
 
     /// Raise the lost-share signal and auto-expire it, so a stale popover banner doesn't
@@ -263,6 +265,7 @@ final class AppModel {
             guard !Task.isCancelled else { return }
             shareLostSignal = false
             shareLostDismissTask = nil
+            presentWhatsNewIfDue()
         }
     }
 
@@ -307,8 +310,6 @@ extension AppModel {
     }
 
     #if DEBUG
-        // `SHAREPAD_FEATURE_RELEASE=1.0.0` marks the Debug build's version as a feature
-        // release so the what's-new window can be checked by hand.
         private static var debugFeatureReleases: [String] {
             ProcessInfo.processInfo.environment["SHAREPAD_FEATURE_RELEASE"].map { [$0] } ?? []
         }
@@ -718,7 +719,6 @@ extension AppModel {
             """)
         #endif
         isWindowVisible = visible
-        if !visible { presentWhatsNewIfDue() }
     }
 
     // Once per link, level-triggered: the first frame can land before the wireless
@@ -822,8 +822,11 @@ extension AppModel {
         preferences.lastSeenVersion = appVersion
     }
 
+    // A share that ends by accident (cable pulled, Wi-Fi dropped) is likely mid-call,
+    // so it waits out the share-lost notice rather than popping up on the meeting.
     private func presentWhatsNewIfDue() {
-        guard isWhatsNewDue, !isWindowVisible, !window.isShowing else { return }
+        guard isWhatsNewDue, !isWindowVisible, !window.isShowing, !shareLostSignal
+        else { return }
         isWhatsNewDue = false
         onWhatsNewRequested?()
     }

@@ -543,7 +543,9 @@ Rules:
   install from before this window existed has none, and those are exactly the
   people it is for, so they see it. (Built in W5a, 2026-10-02.)
 - **Never mid-call.** If the share window is up at launch (an update installed
-  while plugged in), the window waits until the share window closes.
+  while plugged in), the window waits until the share window closes. A share that
+  ends by accident (cable pulled, Wi-Fi dropped) is likely mid-call, so it also
+  waits out the lost-share notice before showing.
 - **Shown once.** Either button, Esc or the close button marks it seen. It is
   excluded from screen sharing like every non-feed window. The record only moves
   forward: a downgrade leaves the newer version in place, so going back up never

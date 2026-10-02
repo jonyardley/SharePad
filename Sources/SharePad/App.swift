@@ -44,6 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         model.onWhatsNewRequested = { [weak model] in
             guard let model else { return }
+            // HACK(#170): pass the pairing provider once wireless pairing lands.
             WhatsNewWindow.present(model: model, pairing: nil)
         }
         model.start()

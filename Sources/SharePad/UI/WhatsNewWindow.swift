@@ -11,21 +11,25 @@ enum WhatsNewWindow {
         guard window == nil else { return }
         pairing?.requestNewOffer()
         let win = WhatsNewPanel()
+        var handedOffToPairing = false
         win.onClose = {
-            pairing?.endOffer()
+            if !handedOffToPairing { pairing?.endOffer() }
             model.markWhatsNewSeen()
             window = nil
         }
-        win.contentViewController = NSHostingController(
+        let hosting = NSHostingController(
             rootView: WhatsNewView(
                 pairing: pairing,
                 onDismiss: { [weak win] in win?.close() },
                 onPair: { [weak win] in
-                    win?.close()
+                    handedOffToPairing = true
                     pairing?.openPairingWindow()
+                    win?.close()
                 }
             )
         )
+        win.contentViewController = hosting
+        win.setContentSize(hosting.view.fittingSize)
         win.center()
         window = win
         NSApp.activate(ignoringOtherApps: true)
@@ -38,7 +42,7 @@ private final class WhatsNewPanel: NSWindow {
 
     init() {
         super.init(
-            contentRect: NSRect(x: 0, y: 0, width: 440, height: 300),
+            contentRect: NSRect(x: 0, y: 0, width: WhatsNewView.width, height: 300),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -67,6 +71,8 @@ struct WhatsNewView: View {
     let pairing: (any PairingOffering)?
     let onDismiss: () -> Void
     let onPair: () -> Void
+
+    static let width: CGFloat = 440
 
     var body: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.section) {
@@ -101,7 +107,7 @@ struct WhatsNewView: View {
             }
         }
         .padding(Theme.Spacing.window)
-        .frame(width: 440)
+        .frame(width: Self.width)
     }
 }
 

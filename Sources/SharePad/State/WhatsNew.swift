@@ -5,9 +5,10 @@ struct AppVersion: Comparable {
 
     init?(_ text: String) {
         let parts = text.split(separator: ".", omittingEmptySubsequences: false)
-        let numbers = parts.compactMap { Int($0) }
-        guard !parts.isEmpty, numbers.count == parts.count, numbers.allSatisfy({ $0 >= 0 })
-        else { return nil }
+        let numbers = parts.compactMap { part in
+            part.allSatisfy { ("0" ... "9").contains($0) } ? Int(part) : nil
+        }
+        guard !parts.isEmpty, numbers.count == parts.count else { return nil }
         components = numbers
     }
 
@@ -33,8 +34,8 @@ enum WhatsNew {
         case leave
     }
 
-    // The releases whose what's-new window is worth an interruption. Bug-fix releases
-    // never go here. Empty until the wireless release has a version (W5b, #170).
+    // HACK(#170): empty until the wireless release has a version. Bug-fix releases
+    // never go here.
     static let featureReleases: [String] = []
 
     static func decide(
@@ -45,13 +46,13 @@ enum WhatsNew {
     ) -> Decision {
         guard let currentVersion = AppVersion(current) else { return .leave }
         if lastSeen == nil, isFreshInstall { return .recordSilently }
-        // An install from before `lastSeenVersion` existed has no record, so every
-        // feature release up to this one is news to it.
         let seen = lastSeen.flatMap(AppVersion.init)
         if lastSeen != nil, seen == nil { return .recordSilently }
         // A downgrade keeps the newer record, so going back up never re-shows it.
         if let seen, currentVersion <= seen { return .leave }
         let isNews = featureReleases.compactMap(AppVersion.init).contains { release in
+            // An install from before `lastSeenVersion` existed has no record, so every
+            // feature release up to this one is news to it.
             release <= currentVersion && seen.map { release > $0 } ?? true
         }
         return isNews ? .show : .recordSilently

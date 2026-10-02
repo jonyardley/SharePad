@@ -19,11 +19,11 @@ struct PairingOffer: Equatable {
     }
 }
 
-// The seam the what's-new window pairs through; W2b supplies the conforming type (#170).
 @MainActor
 protocol PairingOffering: AnyObject {
     var currentOffer: PairingOffer? { get }
     func requestNewOffer()
     func endOffer()
+    // Takes over the live offer, so `endOffer` is not called on this path.
     func openPairingWindow()
 }

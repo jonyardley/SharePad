@@ -36,6 +36,9 @@ final class WhatsNewTests: XCTestCase {
         XCTAssertNil(AppVersion("1.3-beta"))
         XCTAssertNil(AppVersion("1..3"))
         XCTAssertNil(AppVersion("v1.3"))
+        XCTAssertNil(AppVersion("+1.3"))
+        XCTAssertNil(AppVersion("1.-3"))
+        XCTAssertNil(AppVersion("1.3."))
     }
 
     // ── Decision ──

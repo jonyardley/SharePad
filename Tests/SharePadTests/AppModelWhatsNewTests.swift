@@ -89,14 +89,30 @@ final class AppModelWhatsNewTests: AppModelTestCase {
         XCTAssertFalse(model.isWhatsNewDue)
     }
 
-    func testWaitsUntilTheIPadIsUnplugged() async throws {
+    func testALostShareWaitsOutTheShareLostNotice() async throws {
         let prefs = try upgradedPreferences(lastSeen: "1.2")
         let model = model(prefs)
         await model.reconcile(devices: [device("a")])
         await model.checkWhatsNew()
-        XCTAssertEqual(requests, 0)
 
         await model.reconcile(devices: [])
+        XCTAssertTrue(model.shareLostSignal)
+        XCTAssertEqual(requests, 0, "a pulled cable is likely mid-call")
+
+        await model.shareLostDismissTask?.value
+        XCTAssertFalse(model.shareLostSignal)
+        XCTAssertEqual(requests, 1)
+    }
+
+    func testDismissingTheShareLostNoticeShowsIt() async throws {
+        let prefs = try upgradedPreferences(lastSeen: "1.2")
+        let model = model(prefs)
+        await model.reconcile(devices: [device("a")])
+        await model.checkWhatsNew()
+        await model.reconcile(devices: [])
+        XCTAssertEqual(requests, 0)
+
+        model.dismissShareLost()
         XCTAssertEqual(requests, 1)
     }
 

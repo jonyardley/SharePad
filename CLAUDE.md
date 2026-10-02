@@ -302,9 +302,9 @@ before touching capture.
 - **What's new shows only for versions in `WhatsNew.featureReleases`**
   (`specs/wireless-product.md` §9). A fresh install is `firstLaunchDate == nil`,
   not a missing `lastSeenVersion` (no install before W5a has one). It waits while
-  the share window is up and fires from `setWindowVisible(false)`. To see it in a
-  Debug build: `open --env SHAREPAD_FEATURE_RELEASE=1.0.0` plus an older
-  `lastSeenVersion` in the defaults.
+  the share window is up, then shows on a hide or once a lost-share notice clears.
+  To see it in a Debug build: `open --env SHAREPAD_FEATURE_RELEASE=1.0.0` plus an
+  older `lastSeenVersion` in the defaults.
 - **Wireless TLS-PSK is TLS 1.2 only, and the suite must be pinned**
   (`specs/wireless-product.md` §6, open question 3). Network.framework's default
   PSK suite has no forward secrecy, so `LinkSecurity` pins ECDHE-PSK and a loopback
