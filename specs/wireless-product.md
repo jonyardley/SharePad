@@ -88,9 +88,9 @@ not v1.
 
 ### Licence of the source code
 
-Open (see §11, decision for Jon). The Mac app is GPLv3, which the App Store's
-usage rules are widely held to conflict with. Jon owns the copyright, so the iPad
-target can carry different terms.
+GPLv3 with an App Store additional permission (§11, item 1). The Mac app is
+GPLv3, which the App Store's usage rules are widely held to conflict with; the
+added permission resolves that while keeping the code open.
 
 ## 5. How a wireless feed fits the Mac app
 
@@ -463,10 +463,12 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 
 ## 11. Open questions
 
-1. **Licence for the iPad source (Jon).** Options: GPLv3 with an added App Store
-   permission (still open source, a known pattern), a permissive licence for the
-   iPad target only, or closed. Lean: GPLv3 with the added permission, so the
-   "open source, pay for the convenience" story holds on both platforms.
+1. ~~**Licence for the iPad source.**~~ **Decided (2026-10-02): GPLv3 plus an
+   App Store additional permission** (GPLv3 §7) on the iPad target and
+   `SharePadWire`. The code stays open source, matching the Mac app, and the
+   added permission lets the App Store build ship under Apple's usage rules.
+   Contributions are taken under the same terms, so the permission covers them.
+   Lands with W3.
 2. **ReplayKit consent prompt frequency.** In-app capture asks the user to allow
    recording; how often it re-asks across launches decides whether "open the app
    and it streams" holds. Measure in W3.
