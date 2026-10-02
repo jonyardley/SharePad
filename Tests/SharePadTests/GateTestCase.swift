@@ -37,7 +37,6 @@ class GateTestCase: XCTestCase {
             preferences: preferences,
             capture: capture,
             window: window,
-            thumbnailLayer: AVSampleBufferDisplayLayer(),
             sleep: sleep,
             validator: validator(),
             now: now,

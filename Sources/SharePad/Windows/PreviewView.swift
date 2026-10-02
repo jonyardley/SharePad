@@ -12,7 +12,13 @@ struct PreviewView: NSViewRepresentable {
         return view
     }
 
-    func updateNSView(_: PreviewNSView, context _: Context) {}
+    func updateNSView(_ view: PreviewNSView, context _: Context) {
+        guard view.hostedLayer !== layer else { return }
+        view.hostedLayer?.removeFromSuperlayer()
+        view.hostedLayer = layer
+        layer.frame = view.bounds
+        view.layer?.addSublayer(layer)
+    }
 }
 
 final class PreviewNSView: NSView {

@@ -1,0 +1,106 @@
+@testable import SharePad
+import XCTest
+
+@MainActor
+final class AppModelWirelessTests: AppModelTestCase {
+    private let peer = WirelessPeer(id: UUID(), name: "Jon's iPad")
+
+    private func makeWirelessModel(
+        window: FakeShareWindow = FakeShareWindow(),
+        wireless: FakeWirelessFeed = FakeWirelessFeed()
+    ) throws -> AppModel {
+        try makeModel(
+            capture: FakeCaptureController(),
+            window: window,
+            preferences: ephemeralPreferences(),
+            wireless: wireless
+        )
+    }
+
+    func testFirstWirelessFrameHostsTheWirelessLayerAndShowsTheWindow() throws {
+        let window = FakeShareWindow()
+        let wireless = FakeWirelessFeed()
+        let model = try makeWirelessModel(window: window, wireless: wireless)
+
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+
+        XCTAssertEqual(model.state, .live(.wireless))
+        XCTAssertTrue(model.isSharing)
+        XCTAssertTrue(model.isWindowVisible)
+        XCTAssertTrue(window.feedLayers.last === wireless.hostedLayer)
+        XCTAssertTrue(model.thumbnailLayer === wireless.thumbnailLayer)
+    }
+
+    func testConnectedPeerWithoutFramesWaitsWithTheWindowHidden() throws {
+        let model = try makeWirelessModel()
+
+        model.applyWireless(WirelessStatus(peer: peer))
+
+        XCTAssertEqual(model.state, .starting(.wireless))
+        XCTAssertTrue(model.isConnected)
+        XCTAssertFalse(model.isWindowVisible)
+    }
+
+    func testLosingTheWirelessPeerWhileSharingRaisesShareLost() throws {
+        let window = FakeShareWindow()
+        let model = try makeWirelessModel(window: window)
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+
+        model.applyWireless(WirelessStatus())
+
+        XCTAssertFalse(model.isWindowVisible)
+        XCTAssertEqual(window.hideCount, 1)
+        XCTAssertTrue(model.shareLostSignal)
+        XCTAssertFalse(model.isConnected)
+    }
+
+    func testReconnectingKeepsTheWindowUp() throws {
+        let model = try makeWirelessModel()
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true, isReconnecting: true))
+
+        XCTAssertTrue(model.isWindowVisible)
+        XCTAssertEqual(model.state, .live(.wireless))
+    }
+
+    func testPopoverDrivesTheWirelessThumbnail() throws {
+        let wireless = FakeWirelessFeed()
+        let model = try makeWirelessModel(wireless: wireless)
+
+        model.popoverDidAppear()
+        XCTAssertEqual(wireless.thumbnailActive, true)
+        model.popoverDidDisappear()
+        XCTAssertEqual(wireless.thumbnailActive, false)
+    }
+
+    func testSourceLabelsNameTheLinkOnlyWhenWirelessIsThere() async throws {
+        let model = try makeWirelessModel()
+        await model.reconcile(devices: [device("a")])
+        XCTAssertEqual(model.sourceOptions.map(\.label), ["Device a"])
+
+        model.applyWireless(WirelessStatus(peer: peer))
+
+        XCTAssertEqual(
+            model.sourceOptions,
+            [
+                SourceOption(id: "a", label: "Device a · Cable"),
+                SourceOption(id: AppModel.wirelessSourceID, label: "Jon's iPad · Wi-Fi"),
+            ]
+        )
+    }
+
+    func testUSBOnlyNeverSwapsTheWindowLayer() async throws {
+        let window = FakeShareWindow()
+        let model = try makeModel(
+            capture: FakeCaptureController(),
+            window: window,
+            preferences: ephemeralPreferences()
+        )
+
+        await model.reconcile(devices: [device("a")])
+        await model.reconcile(devices: [])
+
+        XCTAssertTrue(window.feedLayers.isEmpty)
+    }
+}

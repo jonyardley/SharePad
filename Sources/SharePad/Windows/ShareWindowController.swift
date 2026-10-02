@@ -5,11 +5,10 @@ import SwiftUI
 @MainActor
 final class ShareWindowController: ShareWindowControlling {
     private var window: NSWindow?
-    private let previewLayer: AVCaptureVideoPreviewLayer
     private let preferences: Preferences
     private var keepOnTop = false
     private var isObserving = false
-    private let overlayModel = ShareOverlayModel()
+    private let overlayModel: ShareOverlayModel
 
     /// The frame as we last set it ourselves. The move/resize observers persist only
     /// when the live frame differs from this, so a programmatic restore/resize never
@@ -19,8 +18,12 @@ final class ShareWindowController: ShareWindowControlling {
     private static let defaultLongSide: CGFloat = 900
 
     init(previewLayer: AVCaptureVideoPreviewLayer, preferences: Preferences) {
-        self.previewLayer = previewLayer
         self.preferences = preferences
+        overlayModel = ShareOverlayModel(feedLayer: previewLayer)
+    }
+
+    func setFeedLayer(_ layer: CALayer) {
+        overlayModel.feedLayer = layer
     }
 
     func setKeepOnTop(_ enabled: Bool) {
@@ -131,7 +134,7 @@ final class ShareWindowController: ShareWindowControlling {
             defer: false
         )
         window.contentViewController = NSHostingController(
-            rootView: ShareRootView(previewLayer: previewLayer, overlay: overlayModel)
+            rootView: ShareRootView(overlay: overlayModel)
         )
         window.isMovableByWindowBackground = true
         window.backgroundColor = .black
@@ -151,19 +154,23 @@ final class ShareWindowController: ShareWindowControlling {
 @MainActor
 @Observable
 final class ShareOverlayModel {
+    var feedLayer: CALayer
     var trialOverlayVisible = false
     var sessionEndsAt: Date?
     var onBuy: (() -> Void)?
     var onEnterLicense: () -> Void = {}
+
+    init(feedLayer: CALayer) {
+        self.feedLayer = feedLayer
+    }
 }
 
 private struct ShareRootView: View {
-    let previewLayer: AVCaptureVideoPreviewLayer
     let overlay: ShareOverlayModel
 
     var body: some View {
         ZStack {
-            PreviewView(layer: previewLayer)
+            PreviewView(layer: overlay.feedLayer)
             if overlay.trialOverlayVisible {
                 TrialOverlayView(onBuy: overlay.onBuy, onEnterLicense: overlay.onEnterLicense)
             } else if let endsAt = overlay.sessionEndsAt {

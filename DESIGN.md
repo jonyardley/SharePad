@@ -28,8 +28,9 @@ displayed as full shared content (not a webcam tile).
 
 - **Not** a virtual camera (see [§2](#2-approach--rejected-alternatives)).
 - **No** iPad audio routing into the call.
-- **USB only.** Wireless sharing through an iPad companion app is specced, not
-  built: see `specs/wireless-product.md` (2026-10-01).
+- **USB only in Release.** Wireless sharing through an iPad companion app is
+  specced in `specs/wireless-product.md` (2026-10-01). The Mac side of W1
+  (unauthenticated receiver) exists in **Debug builds only** (2026-10-02).
 - **No** annotation, recording, cropping, or multi-device mosaic.
 - ~~**No** distribution / App Store / notarization — personal local build.~~
   **Superseded (2026-06-05):** 1.0 ships as a notarized **direct download**
@@ -157,6 +158,11 @@ From the design Q&A (2026-06-03):
 - **`CaptureController`** — sole owner of the single `AVCaptureSession`. Builds
   inputs, owns the preview connection, starts/stops. Fronted by a protocol so
   `AppModel` logic is testable with a fake.
+- **`FeedSource`** (2026-10-02): the protocol both sources sit behind: the layer
+  the share window hosts, the popover thumbnail layer, frame sizes, stop,
+  `awaitFrame`, thumbnail gating. `CaptureControlling` refines it for USB;
+  `WirelessFeeding` for the Debug-only `WirelessReceiver`, which alone owns the
+  listener, the link and the decoder (`specs/wireless-product.md` §5).
 - **`DeviceMonitor`** — performs the CMIO opt-in once, runs the
   `AVCaptureDevice.DiscoverySession`, KVO-observes its `devices`, and emits
   connect/disconnect into `AppModel`.
@@ -204,6 +210,12 @@ GPU, so it's cheap.
 States: `checkingPermission`, `permissionDenied`, `noDevice`, `starting`,
 `live`, `failed`. Transitions are pure functions of (permission, device list,
 session status) — kept in a testable reducer.
+
+Since W1 (2026-10-02) the reducer takes one `SourceInput` per source (USB and
+wireless), local network access and the preferred source. `starting`, `live` and
+`failed` carry the active source (`.live(.wireless)`), and `localNetworkDenied`
+is new. Camera permission gates only the USB source. With wireless absent (every
+Release build) the outputs are the USB states above, unchanged.
 
 ---
 
@@ -308,8 +320,11 @@ ipad-share/
     AppModel.swift            # @Observable @MainActor state machine
     State/
       AppState.swift          # enum + pure reducer (unit-tested)
+      WirelessStatus.swift    # what the wireless source reports to AppModel
     Capture/
+      FeedSource.swift         # protocol both sources sit behind
       CaptureController.swift  # owns AVCaptureSession (protocol-fronted)
+      WirelessReceiver.swift   # Debug only: listener, link, decoder (W1)
       DeviceMonitor.swift      # CMIO opt-in + DiscoverySession KVO
       CMIO.swift               # the opt-in helper (§6.1)
     Windows/

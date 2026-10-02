@@ -2,7 +2,9 @@
 
 > Status: **draft, Tier 3. W0 done** (`Packages/SharePadWire`, spike rebuilt on
 > it; measured on home Wi-Fi 2026-10-02). The latency tail is accepted for v1 as a
-> known gap ([#160](https://github.com/jonyardley/SharePad/issues/160)). Follows the GO verdict in
+> known gap ([#160](https://github.com/jonyardley/SharePad/issues/160)). **W1 built,
+> Debug builds only** (2026-10-02); its hardware check (§10) is still to run.
+> Follows the GO verdict in
 > [`specs/wireless.md`](wireless.md#spike-result) (2026-10-01). Touches the
 > capture pipeline, the state reducer, permissions and the share-window model, so
 > every phase below gets Plan mode before code. Reference code is the throwaway
@@ -116,10 +118,13 @@ added permission resolves that while keeping the code open.
           ShareWindow (PreviewView hosts whichever layer is active)
 ```
 
-- **`FeedSource` protocol** generalises today's `CaptureControlling`: `start`,
-  `stop`, `resume`, `awaitFrame(timeout:)`, `setThumbnailActive`, plus the
-  layer to host and the current frame size. `CaptureController` conforms with no
-  behaviour change.
+- **`FeedSource` protocol** generalises today's `CaptureControlling`: `stop`,
+  `awaitFrame(timeout:)`, `setThumbnailActive`, the layer to host, the thumbnail
+  layer and a stream of frame sizes. `CaptureControlling` refines it with the
+  USB-only `start(deviceID:)`, `resume` and `restarts`; `WirelessFeeding` with a
+  plain `start` and a status stream. `CaptureController` conforms with no
+  behaviour change. (As built in W1: `start` and `resume` don't fit both sources,
+  so they moved to the refinements.)
 - **`WirelessReceiver`** is the only code that touches the network or the
   decoder. It renders into one `AVSampleBufferDisplayLayer` it owns, and fans the
   same decoded buffers to the popover thumbnail through the existing
@@ -173,8 +178,9 @@ static func reduce(camera: CameraAccess,
 - New state **`localNetworkDenied`**, reachable only when wireless is set up.
   macOS 15+ asks for local-network access the first time the listener starts.
   The denial surfaces in the popover with an **Open System Settings** button
-  (Non-Negotiable 6). Detecting it relies on the listener failing with a
-  policy-denied error: to be confirmed in W1.
+  (Non-Negotiable 6). Detecting it: see §11, item 4. Camera states outrank it
+  (`checkingPermission`, `permissionDenied`, `permissionRestricted` show first,
+  since the cable is the shipping path), and any active source outranks both.
 - The bounded first-connect retry (`specs/first-connect-retry.md`) stays
   USB-only. Wireless has its own reconnect hold (above).
 
@@ -197,7 +203,9 @@ source.
 
 - Mac: add `NSLocalNetworkUsageDescription` and `NSBonjourServices`
   (`_sharepad._tcp`). The app is not sandboxed, so no network entitlement.
-  `SharePad.entitlements` stays camera only.
+  `SharePad.entitlements` stays camera only. Until pairing ships, both keys are
+  added to Debug products only, by a post-build script in `project.yml`;
+  `just verify-app` fails a Release product that carries either.
 - iPad: `NSLocalNetworkUsageDescription`, `NSBonjourServices`,
   `NSCameraUsageDescription` (QR scan only). No microphone key: ReplayKit is
   started with the microphone off.
@@ -534,6 +542,14 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 | **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app); `sharepad.co/pair` page and the universal-link association file; what's-new window with its tested show-once rule; signposting copy (§9); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; scanning the pairing QR with the Camera app on an iPad without the app reaches the App Store, and with it opens pairing; updating from 1.2 shows what's new once, a fresh install never shows it, and an update while sharing waits until the share ends; on a busy office network: about one keyframe per 10 s, capture-to-decoded median under 30 ms, p95 under 60 ms and no camera reading over 100 ms in 15 |
 | **W6: Whole screen** | Spike first: a Broadcast Upload Extension encoding inside the ~50 MB cap on the largest iPad Pro. On GO, add it as a second capture mode in the iPad app | Spike: steady frame rate, memory under the cap for 30 minutes, glass to glass within the latency bar (§8). Product: drawing in Notes or Procreate streams to the Mac |
 
+**W1 status (2026-10-02):** built, Debug builds only; unit tests cover the reducer,
+the local network probe and the wireless paths through `AppModel`. The verify-by
+line still needs Jon with the iPad. Left for W4 on purpose: no `pause` to the iPad
+while the cable is active; a cable plugged in mid-share swaps straight to the USB
+preview, which may still be starting; the source pick is held in memory, not
+remembered across launches; the 5 s hold keeps the last frame and says
+**Reconnecting…**, but the lost-share banner has no Wi-Fi variant yet.
+
 ## 11. Open questions
 
 1. ~~**Licence for the iPad source.**~~ **Decided (2026-10-02): GPLv3 plus an
@@ -547,7 +563,21 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
    and it streams" holds. Measure in W3.
 3. **Forward secrecy mode** of Network.framework's PSK TLS (§6). Confirm in W2.
 4. **Detecting local-network denial on macOS** reliably enough to drive a state.
-   Confirm in W1.
+   **Researched in W1 (2026-10-02), hardware check pending.** Apple's
+   [TN3179](https://developer.apple.com/documentation/technotes/tn3179-understanding-local-network-privacy)
+   says there is no API that returns whether a process has local network access
+   (FB8711182). Listening for and accepting TCP is *not* gated; registering a
+   Bonjour service is. So the listener itself binds, and the denial shows as the
+   operation waiting with `kDNSServiceErr_PolicyDenied` (-65570), the check
+   TN3179 recommends for Bonjour. `WirelessReceiver` maps a listener `.waiting`
+   or `.failed` with that error to `localNetworkDenied` (`LocalNetworkProbe`,
+   unit-tested) and clears it on `.ready`. Caveats from TN3179: the system may
+   deny the first operation while its alert is still up, so the popover can show
+   the denial briefly during the very first prompt; macOS can't reset the choice
+   for an app (FB14944392), so retesting needs a VM or a different bundle id;
+   macOS 15.0 had local network privacy bugs fixed in 15.1. Whether the listener
+   reports the wait on its own state (rather than only failing to advertise) is
+   the part only the W1 hardware check confirms.
 5. **Does the pairing window stay out of whole-screen shares** on current macOS
    (§6)? Test in W2.
 6. **Universal links and the Mac-made QR.** The pairing link has to open the iPad

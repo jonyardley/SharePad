@@ -75,6 +75,14 @@ verify-app app=".build/Build/Products/Debug/SharePad.app":
     case "$ENT" in *com.apple.security.app-sandbox*) note "app-sandbox entitlement present — must stay un-sandboxed" ;; esac
     case "$ENT" in *com.apple.security.device.audio-input*) note "audio-input entitlement present — must stay mic-free" ;; esac
     case "$ENT" in *com.apple.security.device.camera*) : ;; *) note "camera entitlement missing" ;; esac
+    # Wireless is Debug only until pairing ships (specs/wireless-product.md §10).
+    case "$APP" in *Release*)
+        for key in NSLocalNetworkUsageDescription NSBonjourServices; do
+            if plutil -extract "$key" raw "$PLIST" >/dev/null 2>&1 || plutil -extract "$key" json -o - "$PLIST" >/dev/null 2>&1; then
+                note "$key present in a Release build: wireless must stay Debug only"
+            fi
+        done ;;
+    esac
     if [ "$fail" -eq 0 ]; then echo "verify-app OK: $APP"; else echo "verify-app FAILED" >&2; exit 1; fi
 
 # post-notarization smoke check (CI runs it before publishing): the signed+stapled

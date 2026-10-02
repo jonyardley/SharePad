@@ -268,6 +268,19 @@ before touching capture.
   subview added on top of the hosting view: that does **not** reliably composite
   above the layer-backed preview (the overlay silently never renders). Keep new
   share-window chrome inside this root, not as added subviews.
+- **Wireless is Debug only until pairing ships** (`specs/wireless-product.md` §10,
+  W1). `WirelessReceiver` is wrapped in `#if DEBUG`, and its Info.plist keys
+  (`NSLocalNetworkUsageDescription`, `NSBonjourServices`) are added by a
+  Debug-only post-build script in `project.yml`, because `info:` applies to every
+  configuration. `just verify-app` on a Release product fails if either key
+  appears. The `SharePadWire` package is still linked into Release (xcodegen has
+  no per-configuration package link) but nothing there calls it.
+- **Local network denial has no API on macOS** (TN3179). The only signal is the
+  listener's Bonjour registration waiting with `kDNSServiceErr_PolicyDenied`
+  (`LocalNetworkProbe`); the receiver takes the latest listener state as the
+  truth (that wait means denied, `.ready` clears it). Unconfirmed on macOS 15
+  hardware until the W1 manual check. macOS can't reset an app's Local Network
+  choice, so never trigger the prompt on a machine whose answer you don't own.
 - **Telemetry is opt-in and off by default** (`specs/telemetry.md`). The privacy
   page promises nothing leaves the machine bar the update check, so
   `Preferences.diagnosticsEnabled` defaults false and `DiagnosticsReporter` sends
