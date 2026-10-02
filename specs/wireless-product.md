@@ -17,7 +17,7 @@ a LAN stream is good enough for live drawing (median ~45 ms glass to glass, 60 f
 smooth strokes) but has a tail of 120 to 150 ms readings, and it streamed only its
 own canvas. This spec settles how wireless ships: the iPad app, how the Mac app
 takes a second kind of feed without breaking its non-negotiables, how the link is
-secured on a shared network, how the tail is fixed, and in what order it is built.
+secured on a shared network, how the tail is handled, and in what order it is built.
 
 ## 2. Scope
 
@@ -43,7 +43,7 @@ companion app's own canvas only.
 | 6 | USB versus wireless | **Cable wins** when both are present, unless the user picks otherwise in the source picker (remembered, as today) | The cable is lower latency and needs no radio. Plugging in mid-call must not lose the share |
 | 7 | Pairing | **QR code** shown on the Mac, scanned by the iPad, carrying a 256-bit secret. A typed code is the fallback | Physical presence to pair, no weak short code to brute force |
 | 8 | Link security | **TLS with that secret as a pre-shared key** (Network.framework), pinned per pair | Only paired iPads can feed the share window; the drawing is encrypted on the network |
-| 9 | Keyframes | **Every 10 s as a safety net, plus on demand** from the Mac; burst-capped bitrate; a send-queue cap that drops and recovers instead of queuing | Fixes the 0.5 s keyframe bug and bounds the tail (§8) |
+| 9 | Keyframes | **Every 10 s as a safety net, plus on demand** from the Mac; burst-capped bitrate; a send-queue cap that drops and recovers instead of queuing | Fixes the 0.5 s keyframe bug; the remaining tail is a Wi-Fi stall, accepted for v1 (§8, [#160](https://github.com/jonyardley/SharePad/issues/160)) |
 | 10 | Wireless is opt-in on the Mac | The listener only runs once the user has paired an iPad (or opened the pairing window) | USB-only users never see a local-network prompt and nothing new listens on their network |
 
 ## 4. The iPad app
@@ -361,20 +361,23 @@ Certain:
 - p95 is 143 to 149 ms in every run, with 22 to 27% of frames over 60 ms.
 - The slow frames come in bursts every 0.52 s: 6 to 8 small frames (~2.5 KB) held
   ~150 ms, then delivered together. Unrelated to keyframes or frame size.
-- Turning peer-to-peer off on the link made no difference, so it stays on.
+- Turning peer-to-peer off on the link made no difference (the link was on en0
+  Wi-Fi at both ends), so it stays on.
 - Pinging the iPad from the Mac while streaming shows slow replies (41 to 152 ms)
   every 0.45 to 0.5 s. The stall is in the Wi-Fi link to the iPad, not in the
   encoder or the send queue.
 
 Likely (medium confidence): the iPad's AWDL (peer-to-peer Wi-Fi) channel hopping,
 which apps cannot switch off on iPadOS. Taking the Mac's own AWDL interface down
-steadied its ping to the router but left the stream bursts unchanged.
+steadied its ping to the router (max 74 ms down to 8.6 ms) but left the stream
+bursts unchanged.
 
 #### Known gaps, accepted for v1
 
 - **The iPad's Wi-Fi link stalls ~150 ms every 0.5 s** on home Wi-Fi, so p95 sits
-  near 150 ms while the median is under 25 ms. Accepted for v1; follow-ups (a
-  5 GHz channel test, routing over AWDL deliberately) are tracked in
+  near 150 ms while the median is under 25 ms. Accepted for v1; follow-ups (putting
+  the 5 GHz network on channel 149 or 44, the channels AWDL parks on, untested;
+  routing the link over AWDL deliberately, as Sidecar does) are tracked in
   [#160](https://github.com/jonyardley/SharePad/issues/160).
 
 ## 9. Design
@@ -528,7 +531,7 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 | **W2: Pairing and encryption** | Pairing window with QR and typed code; `PairingStore`; TLS-PSK link; Forget on both sides; listener only runs once paired | An unpaired iPad cannot connect; a capture of the traffic shows no readable stream; Forget on either side stops the next connection; the pairing window does not appear in a Zoom or Meet window share |
 | **W3: iPad app** | Canvas, tool picker, paper menu, connection pill, settings, canvas-rectangle crop, auto start and stop; TestFlight beta | On two iPad models: toolbar never appears on the Mac; open app streams within 3 s of the Mac being found; an hour on battery without a drop; backgrounding stops capture |
 | **W4: Lifecycle** | Cable-wins switching, 5 s reconnect hold, Wi-Fi lost-share banner, `pause` while the cable is active, trial meter keyed to the paired iPad | Plugging the cable in mid-share switches with no window flicker; Wi-Fi off for 3 s recovers in place; off for 10 s hides and shows the banner; trial pause covers a wireless feed |
-| **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app); `sharepad.co/pair` page and the universal-link association file; what's-new window with its tested show-once rule; signposting copy (§9); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; scanning the pairing QR with the Camera app on an iPad without the app reaches the App Store, and with it opens pairing; updating from 1.2 shows what's new once, a fresh install never shows it, and an update while sharing waits until the share ends; a busy office network passes the W0 measurement; capture-to-decoded p95 under 60 ms and no camera reading over 100 ms in 15 |
+| **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app); `sharepad.co/pair` page and the universal-link association file; what's-new window with its tested show-once rule; signposting copy (§9); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; scanning the pairing QR with the Camera app on an iPad without the app reaches the App Store, and with it opens pairing; updating from 1.2 shows what's new once, a fresh install never shows it, and an update while sharing waits until the share ends; on a busy office network: about one keyframe per 10 s, capture-to-decoded median under 30 ms, p95 under 60 ms and no camera reading over 100 ms in 15 |
 | **W6: Whole screen** | Spike first: a Broadcast Upload Extension encoding inside the ~50 MB cap on the largest iPad Pro. On GO, add it as a second capture mode in the iPad app | Spike: steady frame rate, memory under the cap for 30 minutes, glass to glass within the latency bar (§8). Product: drawing in Notes or Procreate streams to the Mac |
 
 ## 11. Open questions
