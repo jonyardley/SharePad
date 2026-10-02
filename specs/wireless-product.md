@@ -61,7 +61,7 @@ same `project.yml`), bundle id `com.jonyardley.sharepad.ipad`, iPadOS 17+.
    tool picker (`PKToolPicker`: pens, eraser, lasso, ruler, colours), a slim top
    bar with the **connection pill**, undo, redo, **Clear**, and a paper menu
    (plain, grid, dots; light or dark paper).
-3. **Settings sheet**: paired Mac name, **Forget this Mac**, "SharePad for Mac:
+3. **Settings sheet**: paired Macs (name, last used, **Forget**), "SharePad for Mac:
    sharepad.co", a short privacy line, and the app version. Nothing else.
 
 The canvas is always usable, connected or not. Streaming starts automatically
@@ -234,6 +234,39 @@ happen:
 Unpairing works from either side (Mac popover › paired iPads › **Forget**; iPad
 settings › **Forget this Mac**). Forgetting on one side makes the next connection
 fail on the other, which then shows **Not paired**.
+
+### Pairings are long-lived
+
+Pairing happens once per iPad and Mac. The 5-minute limit applies only to the
+one-time code, never to the pairing. After that:
+
+- **No expiry and no secret rotation.** A pairing lasts until Forget. A lost
+  iPad is handled by Forget on the Mac.
+- **Not synced through iCloud.** A new Mac or a reinstalled iPad pairs again,
+  once.
+- **An iPad remembers every Mac it has paired with** (home and work) and streams
+  to whichever it finds. If two are on the same network it picks the one used
+  last; the settings sheet lists them, with Forget on each.
+- **Mac switch: "Allow wireless iPads"** in the popover, on once something is
+  paired. Off stops the listener (a café, hotel Wi-Fi) without unpairing.
+- **The Mac lists paired iPads** with name, last connected and Forget.
+
+### Repairing a broken pairing
+
+A pairing breaks when one side loses its secret: Forget on one side only, the
+iPad app reinstalled, or a Mac restored without its Keychain. The TLS handshake
+then fails, and both sides say so instead of failing silently
+(Non-Negotiable 6):
+
+- **iPad:** the pill reads **Not paired with {Mac}** with **Pair again…**, which
+  opens the pairing screen.
+- **Mac:** the iPad's row in the paired list reads **Needs pairing again** with
+  **Pair again…**, which opens the pairing window.
+- Re-pairing replaces the old entry for that device instead of adding a second
+  one. Nothing else changes: preferences and the trial meter carry over.
+- A handshake can also fail for a passing reason (a network blip mid-handshake).
+  Both sides only mark a pairing broken after **three** failed handshakes in a
+  row, so one bad moment never asks the user to re-pair.
 
 ### The link
 
