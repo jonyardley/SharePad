@@ -51,8 +51,8 @@ targets:
         # which the user-script sandbox would block.
         Debug:
           ENABLE_USER_SCRIPT_SANDBOXING: "NO"
-    # Wireless is Debug only until pairing ships (specs/wireless-product.md §10,
-    # W1), so its Info.plist keys are added to Debug products only. `info:` below
+    # Wireless is Debug only until the iPad app ships (specs/wireless-pairing-ui.md,
+    # decision 1), so its Info.plist keys are added to Debug products only. `info:` below
     # applies to every configuration and can't express that.
     postBuildScripts:
       - name: Debug-only wireless Info.plist keys

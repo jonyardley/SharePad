@@ -39,6 +39,8 @@ struct PopoverView: View {
 
             Divider()
 
+            wirelessSection
+
             Toggle("Auto-show on connect", isOn: Binding(
                 get: { model.autoShowOnConnect },
                 set: { model.setAutoShow($0) }
@@ -120,6 +122,52 @@ struct PopoverView: View {
                 Button("Enter licence…") { LicenseWindow.present(model: model) }
             }
             Divider()
+        }
+    }
+
+    @ViewBuilder private var wirelessSection: some View {
+        if model.isWirelessAvailable {
+            TimelineView(.periodic(from: .now, by: 60)) { context in
+                wirelessRows(model.wirelessSection(now: context.date))
+            }
+            Divider()
+        }
+    }
+
+    private func wirelessRows(_ section: WirelessSection) -> some View {
+        VStack(alignment: .leading, spacing: Theme.Spacing.row) {
+            Text("Wireless")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            if section.showsIntro {
+                Text(WirelessSection.intro)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            ForEach(section.rows) { row in
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading) {
+                        Text(row.name)
+                        Text(row.detail)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if row.offersPairAgain {
+                        Button("Pair again…") { PairingPanel.present(model: model) }
+                            .buttonStyle(.link)
+                    }
+                    Button("Forget") { model.forgetIPad(id: row.id) }
+                        .buttonStyle(.link)
+                }
+            }
+            Button("Pair an iPad…") { PairingPanel.present(model: model) }
+            if section.showsAllowToggle {
+                Toggle("Allow wireless iPads", isOn: Binding(
+                    get: { model.allowWireless },
+                    set: { model.setAllowWireless($0) }
+                ))
+            }
         }
     }
 
@@ -228,6 +276,8 @@ struct PopoverView: View {
     // briefly on a healthy connect). The app can't tell "locked" from "still trusting".
     private var statusHint: String? {
         switch model.state {
+        case .noDevice where model.wirelessStatus.pairingStoreFailed:
+            "Couldn’t read paired iPads from the Keychain. The cable still works."
         case .noDevice where model.wirelessStatus.listenerFailed:
             "Wi-Fi sharing couldn't start; SharePad keeps retrying. The cable still works."
         case .noDevice: "Plug your iPad in with its cable to begin."

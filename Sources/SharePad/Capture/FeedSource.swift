@@ -14,4 +14,8 @@ protocol FeedSource: AnyObject, Sendable {
 protocol WirelessFeeding: FeedSource {
     var statuses: AsyncStream<WirelessStatus> { get }
     func start()
+    func setAllowWireless(_ allowed: Bool)
+    func openPairing()
+    func closePairing()
+    func forget(iPad id: UUID)
 }

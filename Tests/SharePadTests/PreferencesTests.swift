@@ -19,6 +19,13 @@ final class PreferencesTests: XCTestCase {
         XCTAssertTrue(reloaded.keepOnTop)
     }
 
+    func testWirelessIPadsAreAllowedUntilTurnedOff() throws {
+        let defaults = try makeEphemeralDefaults()
+        XCTAssertTrue(Preferences(defaults: defaults).allowWirelessIPads)
+        Preferences(defaults: defaults).allowWirelessIPads = false
+        XCTAssertFalse(Preferences(defaults: defaults).allowWirelessIPads)
+    }
+
     func testLastDeviceIDDefaultsToNil() throws {
         let prefs = try Preferences(defaults: makeEphemeralDefaults())
         XCTAssertNil(prefs.lastDeviceID)

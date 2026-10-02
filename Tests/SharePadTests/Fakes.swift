@@ -61,8 +61,28 @@ final class FakeWirelessFeed: WirelessFeeding, @unchecked Sendable {
     let videoSizes = AsyncStream<CGSize> { _ in }
     let statuses = AsyncStream<WirelessStatus> { _ in }
     private(set) var thumbnailActive: Bool?
+    private(set) var allowWireless: [Bool] = []
+    private(set) var pairingOpened = 0
+    private(set) var pairingClosed = 0
+    private(set) var forgotten: [UUID] = []
 
     func start() {}
+
+    func setAllowWireless(_ allowed: Bool) {
+        allowWireless.append(allowed)
+    }
+
+    func openPairing() {
+        pairingOpened += 1
+    }
+
+    func closePairing() {
+        pairingClosed += 1
+    }
+
+    func forget(iPad id: UUID) {
+        forgotten.append(id)
+    }
 
     func stop() async {}
 

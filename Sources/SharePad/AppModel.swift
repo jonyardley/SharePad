@@ -30,6 +30,7 @@ final class AppModel {
     private(set) var launchAtLogin: Bool
     private(set) var launchAtLoginFailed = false
     private(set) var diagnosticsEnabled: Bool
+    private(set) var allowWireless: Bool
 
     private(set) var entitlement: Entitlement = .trial(daysLeft: EntitlementClock.trialDays)
     private(set) var isTrialOverlayShown = false
@@ -162,6 +163,7 @@ final class AppModel {
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
         diagnosticsEnabled = preferences.diagnosticsEnabled
+        allowWireless = preferences.allowWirelessIPads
         launchAtLogin = LaunchAtLogin.isEnabled
         if preferences.firstLaunchDate == nil {
             preferences.firstLaunchDate = now()
@@ -187,6 +189,7 @@ final class AppModel {
         Task { await observeRestarts() }
         Task { await observeWake() }
         if let wireless {
+            wireless.setAllowWireless(allowWireless)
             wireless.start()
             Task { await observeWireless(wireless) }
             Task { await observeWirelessSizes(wireless) }
@@ -586,8 +589,8 @@ extension AppModel {
         category: "wireless"
     )
 
-    // Wireless W1 is unauthenticated, so it never ships: Debug builds only until
-    // pairing lands (specs/wireless-product.md §10, W2).
+    // Debug only until the iPad app ships in W5: a release offering "Pair an iPad…"
+    // with nothing to pair would be a dead end (specs/wireless-pairing-ui.md, decision 1).
     fileprivate static func debugWirelessSource() -> WirelessFeeding? {
         #if DEBUG
             WirelessReceiver()
@@ -756,5 +759,42 @@ extension AppModel {
             armOrResumeTrialSession()
         }
         autoShowWirelessIfDue()
+    }
+}
+
+/// ── Wireless pairing: the pairing window, the paired list, Allow wireless iPads ──
+extension AppModel {
+    var isWirelessAvailable: Bool {
+        wireless != nil
+    }
+
+    func wirelessSection(now: Date) -> WirelessSection {
+        WirelessSection(
+            paired: wirelessStatus.paired,
+            liveIPad: wirelessStatus.peer?.id,
+            now: now
+        )
+    }
+
+    func pairingPanel(now: Date) -> PairingPanelContent {
+        PairingPanelContent(wirelessStatus.pairing, now: now)
+    }
+
+    func pairIPad() {
+        wireless?.openPairing()
+    }
+
+    func closePairing() {
+        wireless?.closePairing()
+    }
+
+    func forgetIPad(id: UUID) {
+        wireless?.forget(iPad: id)
+    }
+
+    func setAllowWireless(_ allowed: Bool) {
+        allowWireless = allowed
+        preferences.allowWirelessIPads = allowed
+        wireless?.setAllowWireless(allowed)
     }
 }

@@ -25,6 +25,11 @@ struct Preferences {
         nonmutating set { defaults.set(newValue, forKey: Key.diagnosticsEnabled) }
     }
 
+    var allowWirelessIPads: Bool {
+        get { defaults.object(forKey: Key.allowWirelessIPads) as? Bool ?? true }
+        nonmutating set { defaults.set(newValue, forKey: Key.allowWirelessIPads) }
+    }
+
     var lastDeviceID: String? {
         get { defaults.string(forKey: Key.lastDeviceID) }
         nonmutating set { defaults.set(newValue, forKey: Key.lastDeviceID) }
@@ -83,6 +88,7 @@ struct Preferences {
         static let keepOnTop = "keepOnTop"
         static let diagnosticsEnabled = "diagnosticsEnabled"
         static let lastDeviceID = "lastDeviceID"
+        static let allowWirelessIPads = "allowWirelessIPads"
         static let windowOriginX = "windowOriginX"
         static let windowOriginY = "windowOriginY"
         static let windowLongSide = "windowLongSide"

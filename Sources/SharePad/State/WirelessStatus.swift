@@ -11,6 +11,9 @@ struct WirelessStatus: Equatable, Sendable {
     var isReconnecting = false
     var localNetwork: LocalNetworkAccess = .notRequested
     var listenerFailed = false
+    var pairing = PairingProgress.closed
+    var paired: [PairedIPad] = []
+    var pairingStoreFailed = false
 
     var input: SourceInput {
         SourceInput(available: peer != nil, running: isReceiving, failed: false)
