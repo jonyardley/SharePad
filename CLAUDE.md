@@ -39,6 +39,8 @@ CLAUDE.md                   # this file
 specs/                      # per-feature specs, Tier 3 only (see Workflow)
 Sources/SharePad/         # app code (see DESIGN.md §8 for the module map)
 Tests/SharePadTests/      # pure-logic tests (reducer, preferences)
+Packages/SharePadWire/      # local Swift package: wireless wire format, codec, link + rules
+spike/wireless/             # throwaway wireless spike, now built on SharePadWire
 workers/licenses/           # Cloudflare Worker: licence key issuance (Stripe, trial gate)
 workers/purchase-email/     # Cloudflare Worker: post-purchase licence + download email (Resend)
 workers/appcast/            # Cloudflare Worker: appcast logging-proxy (active-install + version stats)
@@ -66,6 +68,7 @@ just build         # xcodebuild, debug
 just run           # build + launch the app
 just open          # open the generated project in Xcode
 just test          # run the unit tests
+just wire-test     # run the SharePadWire package tests
 just fmt           # swiftformat .   (must pass before commit)
 just lint          # swiftlint + swiftformat --lint (must pass before push)
 just scan          # gitleaks secret scan over full history (same check CI runs)

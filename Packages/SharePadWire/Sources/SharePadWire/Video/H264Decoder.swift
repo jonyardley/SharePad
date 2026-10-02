@@ -1,17 +1,23 @@
 import CoreMedia
 import CoreVideo
 import Foundation
+import os
 import VideoToolbox
 
-public final class H264Decoder {
-    public struct DecodedFrame {
+// @unchecked: driven from the caller's queue; VideoToolbox's thread only reads
+// the callbacks, which are set once before the first decode.
+public final class H264Decoder: @unchecked Sendable {
+    public struct DecodedFrame: @unchecked Sendable {
         public let pixelBuffer: CVPixelBuffer
         public let sequence: UInt32
         public let captureWallClock: Double
         public let decodeSeconds: Double
     }
 
-    public var onDecodedFrame: ((DecodedFrame) -> Void)?
+    public var onDecodedFrame: (@Sendable (DecodedFrame) -> Void)?
+    public var onDecodeFailed: (@Sendable (OSStatus) -> Void)?
+
+    private let log = Logger(subsystem: "co.sharepad.wire", category: "decoder")
 
     private var format: CMVideoFormatDescription?
     private var session: VTDecompressionSession?
@@ -29,8 +35,8 @@ public final class H264Decoder {
         format != nil
     }
 
-    /// Idempotent: repeated identical config messages (sent on every keyframe so a
-    /// late receiver can join) are ignored rather than rebuilding the session.
+    // Config is resent with every keyframe that changes parameter sets, so an
+    // identical one must not tear down a working session.
     public func configure(parameterSets: [Data]) {
         guard !parameterSets.isEmpty, parameterSets != configuredSets else { return }
 
@@ -62,7 +68,8 @@ public final class H264Decoder {
         }
 
         guard status == noErr, let created else {
-            print("[decoder] format description failed: \(status)")
+            log.error("format description failed: \(status)")
+            onDecodeFailed?(status)
             return
         }
 
@@ -70,12 +77,16 @@ public final class H264Decoder {
         format = created
         configuredSets = parameterSets
         let dimensions = CMVideoFormatDescriptionGetDimensions(created)
-        print("[decoder] configured \(dimensions.width)x\(dimensions.height)")
+        log.info("configured \(dimensions.width)x\(dimensions.height)")
     }
 
-    public func decode(frame: SpikeFrame) {
-        guard let format, let session = prepareSession(format: format) else { return }
-        guard let sampleBuffer = makeSampleBuffer(avcc: frame.avcc, format: format) else { return }
+    public func decode(frame: EncodedVideoFrame) {
+        guard let format, let session = prepareSession(format: format),
+              let sampleBuffer = makeSampleBuffer(avcc: frame.avcc, format: format)
+        else {
+            onDecodeFailed?(kVTInvalidSessionErr)
+            return
+        }
 
         let start = CFAbsoluteTimeGetCurrent()
         let status = VTDecompressionSessionDecodeFrame(
@@ -86,7 +97,8 @@ public final class H264Decoder {
         ) { [weak self] status, _, imageBuffer, _, _ in
             guard let self else { return }
             guard status == noErr, let imageBuffer else {
-                print("[decoder] frame \(frame.sequence) failed: \(status)")
+                log.error("frame \(frame.sequence) failed: \(status)")
+                onDecodeFailed?(status)
                 return
             }
             onDecodedFrame?(DecodedFrame(
@@ -98,8 +110,9 @@ public final class H264Decoder {
         }
 
         if status != noErr {
-            print("[decoder] submit \(frame.sequence) failed: \(status)")
+            log.error("submit \(frame.sequence) failed: \(status)")
             teardownSession()
+            onDecodeFailed?(status)
         }
     }
 
@@ -122,7 +135,7 @@ public final class H264Decoder {
             decompressionSessionOut: &created
         )
         guard status == noErr, let created else {
-            print("[decoder] VTDecompressionSessionCreate failed: \(status)")
+            log.error("VTDecompressionSessionCreate failed: \(status)")
             return nil
         }
         VTSessionSetProperty(

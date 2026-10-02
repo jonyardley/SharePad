@@ -1,0 +1,252 @@
+import CoreMedia
+import CoreVideo
+import Foundation
+import Network
+import os
+
+// @unchecked: all state lives on `queue`. The browser and connection are started
+// on it, so Network.framework's callbacks (send completions included) land there
+// too; only the encoder's output hops in explicitly.
+public final class StreamSender: @unchecked Sendable {
+    public struct Stats: Sendable {
+        public var framesPerSecond: Double = 0
+        public var kilobitsPerSecond: Double = 0
+        public var encodedFrames = 0
+        public var skippedFrames = 0
+        public var keyframes = 0
+    }
+
+    public var onPhase: (@Sendable (SenderLink.Phase) -> Void)?
+    public var onStats: (@Sendable (Stats) -> Void)?
+
+    private let identity: Hello
+    private let encoder: H264Encoder
+    private let queue = DispatchQueue(label: "co.sharepad.wire.sender")
+    private let log = Logger(subsystem: "co.sharepad.wire", category: "sender")
+    private var link: SenderLink
+    private var rules = SenderRules()
+    private var frameRate = FrameRateEstimator()
+    private var browser: WireBrowser?
+    private var connection: WireConnection?
+    private var endpoints: [String: NWEndpoint] = [:]
+    private var isStreaming = false
+    private var canvas: CanvasRect?
+    private var lastConfig: StreamConfig?
+    private var sequence: UInt32 = 0
+    private var nextHandoffID: UInt64 = 0
+    private var captureTimes: [Double: Double] = [:]
+    private var meter = RateMeter()
+    private var stats = Stats()
+
+    public init(
+        deviceID: UUID,
+        deviceName: String,
+        settings: EncoderSettings = EncoderSettings(),
+        lastPeer: String? = nil
+    ) {
+        identity = Hello(deviceID: deviceID, deviceName: deviceName)
+        encoder = H264Encoder(settings: settings)
+        link = SenderLink(lastPeer: lastPeer)
+        encoder.onEncodedFrame = { [weak self] frame in
+            guard let self else { return }
+            queue.async { self.handleEncoded(frame) }
+        }
+    }
+
+    public func start() {
+        queue.async { [weak self] in self?.send(.start) }
+    }
+
+    public func stop() {
+        queue.async { [weak self] in self?.send(.stop) }
+    }
+
+    public func setCanvas(_ rect: CanvasRect?) {
+        queue.async { [weak self] in
+            guard let self, rect != canvas else { return }
+            canvas = rect
+            _ = rules.reduce(.keyframeRequested)
+        }
+    }
+
+    public func submit(
+        pixelBuffer: CVPixelBuffer,
+        presentationTime: CMTime,
+        captureWallClock: Double
+    ) {
+        nonisolated(unsafe) let pixelBuffer = pixelBuffer
+        queue.async { [weak self] in
+            self?.capture(
+                pixelBuffer,
+                presentationTime: presentationTime,
+                wallClock: captureWallClock
+            )
+        }
+    }
+
+    // ── Link ──
+
+    private func send(_ event: SenderLink.Event) {
+        let effects = link.reduce(event)
+        effects.forEach(perform)
+        let phase = link.phase
+        DispatchQueue.main.async { [weak self] in self?.onPhase?(phase) }
+    }
+
+    private func perform(_ effect: SenderLink.Effect) {
+        switch effect {
+        case .startBrowsing:
+            let browser = WireBrowser()
+            browser.onResults = { [weak self] results in self?.found(results) }
+            browser.start(queue: queue)
+            self.browser = browser
+        case .stopBrowsing:
+            browser?.cancel()
+            browser = nil
+        case let .connect(name):
+            guard let endpoint = endpoints[name] else {
+                send(.connectionLost)
+                return
+            }
+            open(WireConnection.outbound(to: endpoint, queue: queue))
+        case .closeConnection:
+            connection?.cancel()
+            connection = nil
+        case .sendHello:
+            connection?.send(.hello(identity))
+        case .startStreaming:
+            isStreaming = true
+            _ = rules.reduce(.linkStarted)
+            lastConfig = nil
+            captureTimes = [:]
+        case .pauseStreaming:
+            _ = rules.reduce(.paused)
+        case .resumeStreaming:
+            _ = rules.reduce(.resumed)
+        case .stopStreaming:
+            isStreaming = false
+            encoder.invalidate()
+        }
+    }
+
+    private func found(_ results: [NWBrowser.Result]) {
+        endpoints = Dictionary(
+            results.map { ($0.serviceName, $0.endpoint) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        send(.found(results.map(\.serviceName)))
+    }
+
+    private func open(_ connection: WireConnection) {
+        self.connection = connection
+        connection.onEvent = { [weak self, weak connection] event in
+            guard let self, let connection, connection === self.connection else { return }
+            handle(event)
+        }
+        connection.start()
+    }
+
+    private func handle(_ event: WireConnection.Event) {
+        switch event {
+        case .ready:
+            send(.connectionReady)
+        case let .message(message):
+            handle(message)
+        case let .waiting(error):
+            log.info("waiting: \(String(describing: error))")
+        case .failed, .cancelled:
+            connection = nil
+            send(.connectionLost)
+        }
+    }
+
+    private func handle(_ message: WireMessage) {
+        switch message {
+        case let .hello(hello):
+            send(.helloReceived(hello))
+        case .requestKeyframe:
+            _ = rules.reduce(.keyframeRequested)
+        case .pause:
+            send(.pauseReceived)
+        case .resume:
+            send(.resumeReceived)
+        case let .ping(t1):
+            connection?.send(.pong(t1: t1, t2: Date().timeIntervalSince1970))
+        case .config, .frame, .pong:
+            break
+        }
+    }
+
+    // ── Frames ──
+
+    private func capture(
+        _ pixelBuffer: CVPixelBuffer,
+        presentationTime: CMTime,
+        wallClock: Double
+    ) {
+        guard isStreaming else { return }
+        let now = ProcessInfo.processInfo.systemUptime
+        if let rate = frameRate.record(captureAt: now) {
+            encoder.updateExpectedFrameRate(rate)
+        }
+        let effects = rules.reduce(.frameCaptured(at: now, encodesInFlight: encoder.pendingFrames))
+        for effect in effects {
+            switch effect {
+            case let .encode(forceKeyframe):
+                captureTimes[presentationTime.seconds] = wallClock
+                if captureTimes.count > 240 {
+                    let cutoff = presentationTime.seconds - 4
+                    captureTimes = captureTimes.filter { $0.key > cutoff }
+                }
+                encoder.encode(
+                    pixelBuffer: pixelBuffer,
+                    presentationTime: presentationTime,
+                    forceKeyframe: forceKeyframe
+                )
+            case .skip:
+                stats.skippedFrames += 1
+            }
+        }
+    }
+
+    private func handleEncoded(_ frame: H264Encoder.EncodedFrame) {
+        guard isStreaming, let connection else { return }
+        if frame.isKeyframe {
+            _ = rules.reduce(.keyframeEncoded)
+            stats.keyframes += 1
+            let config = StreamConfig(
+                width: frame.width,
+                height: frame.height,
+                canvas: canvas ?? .whole(width: frame.width, height: frame.height),
+                parameterSets: frame.parameterSets
+            )
+            if !frame.parameterSets.isEmpty, config != lastConfig {
+                connection.send(.config(config))
+                lastConfig = config
+            }
+        }
+
+        let wallClock = captureTimes.removeValue(forKey: frame.presentationTime.seconds) ?? 0
+        sequence &+= 1
+        nextHandoffID &+= 1
+        let id = nextHandoffID
+        _ = rules.reduce(.frameHandedOff(id: id, at: ProcessInfo.processInfo.systemUptime))
+        connection.send(.frame(EncodedVideoFrame(
+            sequence: sequence,
+            isKeyframe: frame.isKeyframe,
+            captureWallClock: wallClock,
+            avcc: frame.avcc
+        ))) { [weak self] in
+            _ = self?.rules.reduce(.frameSent(id: id))
+        }
+
+        stats.encodedFrames += 1
+        meter.record(bytes: frame.avcc.count)
+        if meter.tick() {
+            stats.framesPerSecond = meter.eventsPerSecond
+            stats.kilobitsPerSecond = meter.bytesPerSecond * 8 / 1000
+            let snapshot = stats
+            DispatchQueue.main.async { [weak self] in self?.onStats?(snapshot) }
+        }
+    }
+}

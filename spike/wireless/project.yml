@@ -15,8 +15,8 @@ configs:
   Release: release
 
 packages:
-  Spike:
-    path: Spike
+  SharePadWire:
+    path: ../../Packages/SharePadWire
 
 settings:
   base:
@@ -33,8 +33,8 @@ targets:
     sources:
       - Sender
     dependencies:
-      - package: Spike
-        product: SpikeWire
+      - package: SharePadWire
+        product: SharePadWire
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.jonyardley.sharepadspike.sender

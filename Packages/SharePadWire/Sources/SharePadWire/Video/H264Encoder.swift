@@ -1,10 +1,13 @@
 import CoreMedia
 import CoreVideo
 import Foundation
+import os
 import VideoToolbox
 
-public final class H264Encoder {
-    public struct EncodedFrame {
+// @unchecked: the session is touched only from the caller's queue; the in-flight
+// count is the one value VideoToolbox's thread writes, and it sits behind a lock.
+public final class H264Encoder: @unchecked Sendable {
+    public struct EncodedFrame: @unchecked Sendable {
         public let avcc: Data
         public let isKeyframe: Bool
         public let parameterSets: [Data]
@@ -13,23 +16,20 @@ public final class H264Encoder {
         public let presentationTime: CMTime
     }
 
-    public var onEncodedFrame: ((EncodedFrame) -> Void)?
+    public var onEncodedFrame: (@Sendable (EncodedFrame) -> Void)?
 
-    private let bitrate: Int
-    private let expectedFrameRate: Int
+    private let settings: EncoderSettings
+    private let log = Logger(subsystem: "co.sharepad.wire", category: "encoder")
+    private var expectedFrameRate: Double = 60
     private var session: VTCompressionSession?
     private var sessionWidth: Int32 = 0
     private var sessionHeight: Int32 = 0
-    // Submitted-but-unreturned frames. The encoder owns this rather than its
-    // caller because only it sees every path a frame can die on: a refused
-    // session, a rejected submission, an error status in the handler. A count
-    // that leaks on those paths would stall the stream for good.
-    private let pendingLock = NSLock()
-    private var pending = 0
+    // Owned here rather than by the caller because only the encoder sees every
+    // path a frame can die on; a count that leaks would stall the stream for good.
+    private let pending = OSAllocatedUnfairLock(initialState: 0)
 
-    public init(bitrate: Int = 8_000_000, expectedFrameRate: Int = 15) {
-        self.bitrate = bitrate
-        self.expectedFrameRate = expectedFrameRate
+    public init(settings: EncoderSettings = EncoderSettings()) {
+        self.settings = settings
     }
 
     deinit {
@@ -39,26 +39,37 @@ public final class H264Encoder {
     }
 
     public var pendingFrames: Int {
-        pendingLock.lock()
-        defer { pendingLock.unlock() }
-        return pending
+        pending.withLock { $0 }
     }
 
-    public func encode(pixelBuffer: CVPixelBuffer, presentationTime: CMTime) {
+    public func updateExpectedFrameRate(_ rate: Double) {
+        expectedFrameRate = rate
+        if let session {
+            set(session, kVTCompressionPropertyKey_ExpectedFrameRate, rate as CFNumber)
+        }
+    }
+
+    public func encode(
+        pixelBuffer: CVPixelBuffer,
+        presentationTime: CMTime,
+        forceKeyframe: Bool
+    ) {
         let width = Int32(CVPixelBufferGetWidth(pixelBuffer))
         let height = Int32(CVPixelBufferGetHeight(pixelBuffer))
-        // iPad rotation changes the capture dimensions mid-stream; VideoToolbox
-        // cannot be resized, so the session is rebuilt and the next frame carries
-        // fresh parameter sets.
+        // VideoToolbox sessions cannot be resized, and iPad rotation changes the
+        // capture size mid-stream, so a new size rebuilds the session.
         guard let session = prepareSession(width: width, height: height) else { return }
 
+        let properties: CFDictionary? = forceKeyframe
+            ? [kVTEncodeFrameOptionKey_ForceKeyFrame: kCFBooleanTrue] as CFDictionary
+            : nil
         addPending(1)
         let status = VTCompressionSessionEncodeFrame(
             session,
             imageBuffer: pixelBuffer,
             presentationTimeStamp: presentationTime,
             duration: .invalid,
-            frameProperties: nil,
+            frameProperties: properties,
             infoFlagsOut: nil
         ) { [weak self] status, _, sampleBuffer in
             self?.addPending(-1)
@@ -67,7 +78,7 @@ public final class H264Encoder {
         }
         if status != noErr {
             addPending(-1)
-            print("[encoder] submit failed: \(status)")
+            log.error("submit failed: \(status)")
         }
     }
 
@@ -78,19 +89,11 @@ public final class H264Encoder {
         self.session = nil
         sessionWidth = 0
         sessionHeight = 0
-        resetPending()
+        pending.withLock { $0 = 0 }
     }
 
     private func addPending(_ delta: Int) {
-        pendingLock.lock()
-        pending = max(0, pending + delta)
-        pendingLock.unlock()
-    }
-
-    private func resetPending() {
-        pendingLock.lock()
-        pending = 0
-        pendingLock.unlock()
+        pending.withLock { $0 = max(0, $0 + delta) }
     }
 
     private func prepareSession(width: Int32, height: Int32) -> VTCompressionSession? {
@@ -113,38 +116,43 @@ public final class H264Encoder {
             compressionSessionOut: &created
         )
         guard status == noErr, let created else {
-            print("[encoder] VTCompressionSessionCreate failed: \(status)")
+            log.error("VTCompressionSessionCreate failed: \(status)")
             return nil
         }
 
-        // Latency-first configuration: real-time mode, no B-frames (frame
-        // reordering would add at least one frame of structural delay), and a
-        // 2 s keyframe interval so a mid-stream receiver recovers quickly.
-        set(created, kVTCompressionPropertyKey_RealTime, true as CFBoolean)
-        set(created, kVTCompressionPropertyKey_AllowFrameReordering, false as CFBoolean)
+        // Frame reordering would add at least one frame of structural delay.
+        // Keyframes come on demand; the duration cap is only a safety net, and
+        // there is deliberately no frame-count cap (specs/wireless-product.md §8).
+        let limit = settings.dataRateLimit
+        set(created, kVTCompressionPropertyKey_RealTime, kCFBooleanTrue)
+        set(created, kVTCompressionPropertyKey_AllowFrameReordering, kCFBooleanFalse)
         set(created, kVTCompressionPropertyKey_ProfileLevel, kVTProfileLevel_H264_High_AutoLevel)
-        set(created, kVTCompressionPropertyKey_AverageBitRate, bitrate as CFNumber)
+        set(created, kVTCompressionPropertyKey_AverageBitRate, settings.averageBitRate as CFNumber)
+        set(
+            created,
+            kVTCompressionPropertyKey_DataRateLimits,
+            [limit.bytes, limit.seconds] as CFArray
+        )
         set(created, kVTCompressionPropertyKey_ExpectedFrameRate, expectedFrameRate as CFNumber)
         set(
             created,
-            kVTCompressionPropertyKey_MaxKeyFrameInterval,
-            (expectedFrameRate * 2) as CFNumber
+            kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration,
+            settings.keyframeIntervalSeconds as CFNumber
         )
-        set(created, kVTCompressionPropertyKey_MaxKeyFrameIntervalDuration, 2 as CFNumber)
         VTCompressionSessionPrepareToEncodeFrames(created)
 
         session = created
         sessionWidth = width
         sessionHeight = height
-        let summary = "\(width)x\(height) @ \(expectedFrameRate) fps, \(bitrate / 1000) kbps"
-        print("[encoder] session \(summary)")
+        let rate = expectedFrameRate
+        log.info("session \(width)x\(height) at \(rate) fps")
         return created
     }
 
     private func set(_ session: VTCompressionSession, _ key: CFString, _ value: CFTypeRef) {
         let status = VTSessionSetProperty(session, key: key, value: value)
         if status != noErr {
-            print("[encoder] property \(key) rejected: \(status)")
+            log.error("property \(key as String) rejected: \(status)")
         }
     }
 
@@ -156,8 +164,7 @@ public final class H264Encoder {
         let attachments = CMSampleBufferGetSampleAttachmentsArray(
             sampleBuffer,
             createIfNecessary: false
-        )
-            as? [[String: Any]]
+        ) as? [[String: Any]]
         let notSync = attachments?
             .first?[kCMSampleAttachmentKey_NotSync as String] as? Bool ?? false
         let isKeyframe = !notSync

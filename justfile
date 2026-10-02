@@ -42,6 +42,10 @@ preview-site: build-site
 test: gen
     xcodebuild -project SharePad.xcodeproj -scheme SharePad -configuration Debug -destination 'platform=macOS' -derivedDataPath .build -enableCodeCoverage YES test
 
+# run the SharePadWire package tests (wire format and the wireless rules)
+wire-test:
+    cd Packages/SharePadWire && swift test
+
 # print the per-target coverage summary from the latest `just test` run
 coverage:
     #!/usr/bin/env bash

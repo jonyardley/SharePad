@@ -1,11 +1,9 @@
 import Foundation
 
-/// NTP-style offset between the two devices' wall clocks, so a sender-stamped
-/// capture time can be compared against the receiver's clock. Without this, the
-/// per-frame latency figure is just the unknown clock skew between an iPad and a
-/// Mac, which is routinely tens of milliseconds and sometimes seconds.
-public final class ClockSync {
-    /// senderClock ≈ receiverClock + offset
+// Without an NTP-style offset, a per-frame latency figure is just the clock skew
+// between iPad and Mac, routinely tens of milliseconds and sometimes seconds.
+public struct ClockSync: Sendable {
+    // senderClock ≈ receiverClock + offset
     public private(set) var offset: Double = 0
     public private(set) var roundTrip: Double = 0
     public private(set) var sampleCount = 0
@@ -18,7 +16,7 @@ public final class ClockSync {
         sampleCount > 0
     }
 
-    public func handlePong(t1: Double, t2: Double, t3: Double) {
+    public mutating func handlePong(t1: Double, t2: Double, t3: Double) {
         let rtt = t3 - t1
         guard rtt >= 0, rtt < 2 else { return }
         offsets.append(t2 - (t1 + rtt / 2))
@@ -29,7 +27,7 @@ public final class ClockSync {
     }
 }
 
-public struct RollingStats {
+public struct RollingStats: Sendable {
     private var samples: [Double] = []
     private let capacity: Int
 
@@ -62,9 +60,7 @@ public struct RollingStats {
         samples.max()
     }
 
-    /// Median absolute deviation: jitter that a single outlier cannot dominate,
-    /// which matters because the go/kill call is about consistency, not just the
-    /// median (specs/wireless.md).
+    // Jitter that a single outlier cannot dominate.
     public var medianAbsoluteDeviation: Double? {
         guard let median else { return nil }
         var deviations = RollingStats(capacity: capacity)
@@ -82,7 +78,7 @@ public struct RollingStats {
     }
 }
 
-public struct RateMeter {
+public struct RateMeter: Sendable {
     private var windowStart = CFAbsoluteTimeGetCurrent()
     private var events = 0
     private var bytes = 0
@@ -97,7 +93,6 @@ public struct RateMeter {
         bytes += byteCount
     }
 
-    /// Returns true when a new window was published, i.e. once a second.
     public mutating func tick() -> Bool {
         let now = CFAbsoluteTimeGetCurrent()
         let elapsed = now - windowStart

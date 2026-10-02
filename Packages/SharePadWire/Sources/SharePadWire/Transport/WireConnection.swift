@@ -1,11 +1,11 @@
 import Foundation
 import Network
+import os
 
-public enum SpikeParameters {
-    public static func tcp() -> NWParameters {
+public enum WireParameters {
+    public static func stream() -> NWParameters {
         let options = NWProtocolTCP.Options()
-        // Nagle would coalesce small frames and add tens of milliseconds to the
-        // thing this spike exists to measure.
+        // Nagle would hold small frames back by tens of milliseconds.
         options.noDelay = true
         options.enableKeepalive = true
         options.keepaliveIdle = 2
@@ -23,36 +23,31 @@ public enum SpikeParameters {
     }
 }
 
-public final class SpikeConnection {
-    public enum Event {
+// @unchecked: every stored property is read and written on `queue`, which is
+// also the queue Network.framework calls back on.
+public final class WireConnection: @unchecked Sendable {
+    public enum Event: Sendable {
         case ready
-        case waiting(Error)
-        case failed(Error?)
+        case waiting(NWError)
+        case failed(NWError?)
         case cancelled
-        case message(SpikeMessage)
+        case message(WireMessage)
     }
 
-    /// Frames are dropped rather than queued once this much data is unacknowledged
-    /// by the transport. Queuing behind a congested Wi-Fi link turns a latency
-    /// problem into an unbounded one: better to lose a frame than to fall behind.
-    public var backlogLimitBytes = 512 * 1024
-
-    public var onEvent: ((Event) -> Void)?
-    public private(set) var droppedFrames = 0
-    public private(set) var sentBytes = 0
+    public var onEvent: (@Sendable (Event) -> Void)?
 
     private let connection: NWConnection
     private let queue: DispatchQueue
-    private var inFlightBytes = 0
+    private let log = Logger(subsystem: "co.sharepad.wire", category: "link")
 
     public init(connection: NWConnection, queue: DispatchQueue) {
         self.connection = connection
         self.queue = queue
     }
 
-    public static func outbound(to endpoint: NWEndpoint, queue: DispatchQueue) -> SpikeConnection {
-        SpikeConnection(
-            connection: NWConnection(to: endpoint, using: SpikeParameters.tcp()),
+    public static func outbound(to endpoint: NWEndpoint, queue: DispatchQueue) -> WireConnection {
+        WireConnection(
+            connection: NWConnection(to: endpoint, using: WireParameters.stream()),
             queue: queue
         )
     }
@@ -63,7 +58,7 @@ public final class SpikeConnection {
             switch state {
             case .ready:
                 onEvent?(.ready)
-                readMessage()
+                readHeader()
             case let .waiting(error):
                 onEvent?(.waiting(error))
             case let .failed(error):
@@ -81,37 +76,33 @@ public final class SpikeConnection {
         connection.cancel()
     }
 
-    public func send(_ message: SpikeMessage, droppable: Bool = false) {
-        let data = message.encoded()
-        if droppable, inFlightBytes + data.count > backlogLimitBytes {
-            droppedFrames += 1
-            return
-        }
-        inFlightBytes += data.count
-        sentBytes += data.count
-        connection.send(content: data, completion: .contentProcessed { [weak self] _ in
-            self?.inFlightBytes -= data.count
+    public func send(_ message: WireMessage, whenSent: (@Sendable () -> Void)? = nil) {
+        connection.send(content: message.encoded(), completion: .contentProcessed { _ in
+            whenSent?()
         })
     }
 
-    private func readMessage() {
+    private func readHeader() {
         connection.receive(
-            minimumIncompleteLength: SpikeService.headerLength,
-            maximumLength: SpikeService.headerLength
+            minimumIncompleteLength: WireService.headerLength,
+            maximumLength: WireService.headerLength
         ) { [weak self] header, _, isComplete, error in
             guard let self else { return }
             if let error {
                 onEvent?(.failed(error))
                 return
             }
-            guard let header, header.count == SpikeService.headerLength else {
+            guard let header, header.count == WireService.headerLength else {
                 if isComplete { onEvent?(.failed(nil)) }
                 return
             }
-
-            let typeCode = header[header.startIndex]
-            let length = header.dropFirst().reduce(UInt32(0)) { ($0 << 8) | UInt32($1) }
-            readPayload(typeCode: typeCode, length: Int(length))
+            do {
+                let (typeCode, length) = try WireMessage.header(header)
+                readPayload(typeCode: typeCode, length: length)
+            } catch {
+                log.error("bad header: \(String(describing: error))")
+                connection.cancel()
+            }
         }
     }
 
@@ -120,8 +111,10 @@ public final class SpikeConnection {
             deliver(typeCode: typeCode, payload: Data())
             return
         }
-        connection.receive(minimumIncompleteLength: length, maximumLength: length) {
-            [weak self] payload, _, isComplete, error in
+        connection.receive(
+            minimumIncompleteLength: length,
+            maximumLength: length
+        ) { [weak self] payload, _, isComplete, error in
             guard let self else { return }
             if let error {
                 onEvent?(.failed(error))
@@ -137,24 +130,24 @@ public final class SpikeConnection {
 
     private func deliver(typeCode: UInt8, payload: Data) {
         do {
-            try onEvent?(.message(SpikeMessage.decode(typeCode: typeCode, payload: payload)))
+            try onEvent?(.message(WireMessage.decode(typeCode: typeCode, payload: payload)))
         } catch {
-            print("[link] undecodable message type \(typeCode): \(error)")
+            log.error("undecodable message \(typeCode): \(String(describing: error))")
         }
-        readMessage()
+        readHeader()
     }
 }
 
-public final class SpikeListener {
-    public var onConnection: ((SpikeConnection) -> Void)?
-    public var onStateChange: ((NWListener.State) -> Void)?
+public final class WireListener: @unchecked Sendable {
+    public var onConnection: (@Sendable (WireConnection) -> Void)?
+    public var onStateChange: (@Sendable (NWListener.State) -> Void)?
 
     private let listener: NWListener
     private let queue: DispatchQueue
 
     public init(serviceName: String, queue: DispatchQueue) throws {
-        listener = try NWListener(using: SpikeParameters.tcp())
-        listener.service = NWListener.Service(name: serviceName, type: SpikeService.type)
+        listener = try NWListener(using: WireParameters.stream())
+        listener.service = NWListener.Service(name: serviceName, type: WireService.type)
         self.queue = queue
     }
 
@@ -168,7 +161,7 @@ public final class SpikeListener {
         }
         listener.newConnectionHandler = { [weak self] connection in
             guard let self else { return }
-            onConnection?(SpikeConnection(connection: connection, queue: queue))
+            onConnection?(WireConnection(connection: connection, queue: queue))
         }
         listener.start(queue: queue)
     }
@@ -178,15 +171,15 @@ public final class SpikeListener {
     }
 }
 
-public final class SpikeBrowser {
-    public var onResults: (([NWBrowser.Result]) -> Void)?
+public final class WireBrowser: @unchecked Sendable {
+    public var onResults: (@Sendable ([NWBrowser.Result]) -> Void)?
 
     private let browser: NWBrowser
 
     public init() {
         browser = NWBrowser(
-            for: .bonjour(type: SpikeService.type, domain: nil),
-            using: SpikeParameters.browse()
+            for: .bonjour(type: WireService.type, domain: nil),
+            using: WireParameters.browse()
         )
     }
 
@@ -203,7 +196,7 @@ public final class SpikeBrowser {
 }
 
 public extension NWBrowser.Result {
-    var displayName: String {
+    var serviceName: String {
         if case let .service(name, _, _, _) = endpoint {
             return name
         }

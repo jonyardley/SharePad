@@ -26,7 +26,7 @@
 	<string>Finds your Mac on the local network so the iPad screen can be streamed to it.</string>
 	<key>NSBonjourServices</key>
 	<array>
-		<string>_sharepadspike._tcp</string>
+		<string>_sharepad._tcp</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

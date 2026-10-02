@@ -1,6 +1,7 @@
 # Wireless sharing (product spec)
 
-> Status: **draft, Tier 3.** Follows the GO verdict in
+> Status: **draft, Tier 3. W0 code landed** (`Packages/SharePadWire`, spike
+> rebuilt on it); the W0 home Wi-Fi measurement is still to run. Follows the GO verdict in
 > [`specs/wireless.md`](wireless.md#spike-result) (2026-10-01). Touches the
 > capture pipeline, the state reducer, permissions and the share-window model, so
 > every phase below gets Plan mode before code. Reference code is the throwaway
@@ -519,3 +520,12 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
    pairing, reconnect and keyframe rules in `SharePadWire` are written as
    event-in, effect-out reducers so a later port is translation, not redesign.
 8. **Export of drawings** from the iPad app: not v1, revisit after launch.
+9. **Typed code length.** §6 says the typed code is "the same secret" as the QR,
+   but 24 characters from a 32-letter alphabet carry 120 bits, not 256. Either
+   the typed code is longer (52 characters), or it is a separate, shorter code
+   that is safe only because it is single use and expires in 5 minutes. Decide
+   in W2.
+10. **Which id a re-pair replaces.** `PairedDevices` replaces by the iPad's
+    device id, but `identifierForVendor` changes when the iPad app is
+    reinstalled, which is one of the ways §6 says a pairing breaks. W2 needs an
+    id that survives a reinstall (a Keychain-held UUID) or a different match.

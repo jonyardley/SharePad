@@ -1,9 +1,11 @@
 included:
   - Sources
   - Tests
+  - Packages
 excluded:
   - .build
   - DerivedData
+  - Packages/SharePadWire/.build
 
 opt_in_rules:
   - force_unwrapping
@@ -12,6 +14,11 @@ opt_in_rules:
 # with it rather than having the two tools fight.
 trailing_comma:
   mandatory_comma: true
+
+# `at:` reads as English in reducer events; t1/t2/t3 are the NTP names for the
+# ping/pong timestamps. The rest of the list is SwiftLint's default.
+identifier_name:
+  excluded: [id, x, y, at, t1, t2, t3]
 
 line_length:
   warning: 100

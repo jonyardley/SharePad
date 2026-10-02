@@ -1,6 +1,6 @@
 import AppKit
 import AVFoundation
-import SpikeWire
+import SharePadWire
 
 // Mac receiver for the wireless spike (specs/wireless.md). Accepts one Bonjour
 // connection, decodes H.264, renders into a plain window, and reports the
@@ -59,10 +59,19 @@ final class Receiver {
 
     private let options: Options
     private let decoder = H264Decoder()
-    private let clock = ClockSync()
+    private var clock = ClockSync()
     private let queue = DispatchQueue(label: "spike.receiver")
-    private var listener: SpikeListener?
-    private var connection: SpikeConnection?
+    private let identity = Hello(
+        deviceID: UUID(),
+        deviceName: Host.current().localizedName ?? "Mac"
+    )
+    private var listener: WireListener?
+    private var connections: [ConnectionID: WireConnection] = [:]
+    private var nextConnectionID = 0
+    private var link = ReceiverLink()
+    private var keyframes = KeyframeRequester()
+    private var keyframeRequests = 0
+    private var keyframesReceived = 0
 
     private var latencyMs = RollingStats()
     private var decodeMs = RollingStats()
@@ -86,6 +95,13 @@ final class Receiver {
         decoder.onDecodedFrame = { [weak self] frame in
             self?.handleDecoded(frame)
         }
+        decoder.onDecodeFailed = { [weak self] _ in
+            guard let self else { return }
+            queue.async { [weak self] in
+                guard let self else { return }
+                request(keyframes.reduce(.decodeFailed(at: uptime)))
+            }
+        }
         if let path = options.csvPath {
             FileManager.default.createFile(atPath: path, contents: nil)
             csv = FileHandle(forWritingAtPath: path)
@@ -96,7 +112,7 @@ final class Receiver {
 
     func start() {
         do {
-            let listener = try SpikeListener(serviceName: options.serviceName, queue: queue)
+            let listener = try WireListener(serviceName: options.serviceName, queue: queue)
             listener.onStateChange = { [weak self] state in
                 guard let self else { return }
                 if case .ready = state {
@@ -108,7 +124,7 @@ final class Receiver {
                 }
             }
             listener.onConnection = { [weak self] connection in
-                self?.adopt(connection)
+                self?.accept(connection)
             }
             listener.start()
             self.listener = listener
@@ -129,43 +145,107 @@ final class Receiver {
         }
     }
 
-    private func adopt(_ connection: SpikeConnection) {
-        guard self.connection == nil else {
-            print("[receiver] refusing a second sender")
-            connection.cancel()
-            return
-        }
-        self.connection = connection
+    private var uptime: TimeInterval {
+        ProcessInfo.processInfo.systemUptime
+    }
+
+    private var active: WireConnection? {
+        guard case let .live(current) = link.phase else { return nil }
+        return connections[current.connection]
+    }
+
+    private func accept(_ connection: WireConnection) {
+        nextConnectionID += 1
+        let id = nextConnectionID
+        connections[id] = connection
         connection.onEvent = { [weak self] event in
-            self?.handle(event)
+            self?.handle(event, from: id)
         }
         connection.start()
     }
 
-    private func handle(_ event: SpikeConnection.Event) {
+    private func handle(_ event: WireConnection.Event, from id: ConnectionID) {
         switch event {
         case .ready:
-            peer = "sender connected"
-            startedAt = Date().timeIntervalSince1970
-            print("[receiver] sender connected")
+            apply(link.reduce(.opened(id)))
         case let .message(message):
-            handle(message)
+            handle(message, from: id)
         case let .failed(error):
-            peer = "disconnected (\(error?.localizedDescription ?? "closed"))"
-            print("[receiver] \(peer)")
-            connection = nil
+            print("[receiver] connection \(id) closed (\(error?.localizedDescription ?? "eof"))")
+            drop(id)
         case .cancelled:
-            connection = nil
+            drop(id)
         case let .waiting(error):
             peer = "waiting (\(error.localizedDescription))"
         }
     }
 
-    private func handle(_ message: SpikeMessage) {
+    private func drop(_ id: ConnectionID) {
+        guard connections.removeValue(forKey: id) != nil else { return }
+        apply(link.reduce(.closed(id, at: uptime)))
+    }
+
+    private func apply(_ effects: [ReceiverLink.Effect]) {
+        for effect in effects {
+            switch effect {
+            case let .sendHello(id):
+                connections[id]?.send(.hello(identity))
+            case let .close(id, reason):
+                print("[receiver] closing connection \(id): \(reason)")
+                connections.removeValue(forKey: id)?.cancel()
+            case .adopt:
+                if case let .live(current) = link.phase {
+                    peer = current.hello.deviceName
+                }
+                startedAt = Date().timeIntervalSince1970
+                print("[receiver] streaming from \(peer)")
+                request(keyframes.reduce(.connected(at: uptime)))
+            case let .sendPause(id):
+                print("[receiver] a second sender is on standby")
+                connections[id]?.send(.pause)
+            case let .sendResume(id):
+                connections[id]?.send(.resume)
+            case let .scheduleHoldCheck(after):
+                peer = "reconnecting…"
+                print("[receiver] link lost, holding for \(after)s")
+                queue.asyncAfter(deadline: .now() + after) { [weak self] in
+                    guard let self else { return }
+                    apply(link.reduce(.holdElapsed(at: uptime)))
+                }
+            case .endShare:
+                peer = "waiting for a sender"
+                print("[receiver] hold expired, share ended")
+            }
+        }
+    }
+
+    @discardableResult
+    private func request(_ effects: [KeyframeRequester.Effect]) -> Bool {
+        var shouldDecode = false
+        for effect in effects {
+            switch effect {
+            case .sendRequest:
+                keyframeRequests += 1
+                active?.send(.requestKeyframe)
+            case .decode:
+                shouldDecode = true
+            case .discard:
+                undecodableFrames += 1
+            }
+        }
+        return shouldDecode
+    }
+
+    private func handle(_ message: WireMessage, from id: ConnectionID) {
+        if case let .hello(hello) = message {
+            apply(link.reduce(.helloReceived(id, hello)))
+            return
+        }
+        guard case let .live(current) = link.phase, current.connection == id else { return }
         switch message {
-        case let .config(width, height, parameterSets):
-            dimensions = "\(width)x\(height)"
-            decoder.configure(parameterSets: parameterSets)
+        case let .config(config):
+            dimensions = "\(config.width)x\(config.height)"
+            decoder.configure(parameterSets: config.parameterSets)
         case let .frame(frame):
             let arrival = Date().timeIntervalSince1970
             var interval: Double = 0
@@ -179,24 +259,25 @@ final class Receiver {
                 framesPerSecond = meter.eventsPerSecond
                 kilobitsPerSecond = meter.bytesPerSecond * 8 / 1000
             }
-            guard decoder.isConfigured else {
-                undecodableFrames += 1
-                return
+            if frame.isKeyframe {
+                keyframesReceived += 1
             }
+            let arrived = keyframes.reduce(.frameArrived(isKeyframe: frame.isKeyframe, at: uptime))
+            guard request(arrived), decoder.isConfigured else { return }
             pendingMeta[frame.sequence] = (frame.avcc.count, frame.isKeyframe, interval)
             if pendingMeta.count > 240 {
-                pendingMeta = pendingMeta.filter { $0.key > frame.sequence - 120 }
+                pendingMeta = pendingMeta.filter { $0.key > frame.sequence &- 120 }
             }
             decoder.decode(frame: frame)
         case let .pong(t1, t2):
             clock.handlePong(t1: t1, t2: t2, t3: Date().timeIntervalSince1970)
-        case .ping:
+        case .hello, .ping, .requestKeyframe, .pause, .resume:
             break
         }
     }
 
     private func sendPing() {
-        connection?.send(.ping(t1: Date().timeIntervalSince1970))
+        active?.send(.ping(t1: Date().timeIntervalSince1970))
         queue.asyncAfter(deadline: .now() + 1) { [weak self] in self?.sendPing() }
     }
 
@@ -249,6 +330,10 @@ final class Receiver {
         guard !options.headless else { return }
         if displayLayer.status == .failed {
             displayLayer.flush()
+            queue.async { [weak self] in
+                guard let self else { return }
+                request(keyframes.reduce(.layerFlushed(at: uptime)))
+            }
         }
         var format: CMVideoFormatDescription?
         guard CMVideoFormatDescriptionCreateForImageBuffer(
@@ -359,6 +444,14 @@ final class Receiver {
                     latencyMs.medianAbsoluteDeviation ?? 0
                 ))
             }
+            let elapsed = Date().timeIntervalSince1970 - startedAt
+            print(String(
+                format: "keyframes %d in %.0f s (one per %.1f s), %d requested by the receiver",
+                keyframesReceived,
+                elapsed,
+                keyframesReceived > 0 ? elapsed / Double(keyframesReceived) : 0,
+                keyframeRequests
+            ))
             print("NOTE: this is capture→decoded, not glass-to-glass. Add iPad touch/display")
             print("      and Mac present time; the camera method in specs/wireless.md is the")
             print("      number the go/kill call uses.")

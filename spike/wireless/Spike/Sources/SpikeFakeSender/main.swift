@@ -1,7 +1,7 @@
 import AppKit
 import CoreMedia
 import CoreVideo
-import SpikeWire
+import SharePadWire
 
 // Stand-in for the iPad, so the transport, encode, decode and render path can be
 // proved on one Mac without hardware. It draws the same millisecond counter the
@@ -10,8 +10,8 @@ import SpikeWire
 struct Options {
     var width = 1280
     var height = 800
-    var fps = 15
-    var bitrate = 8_000_000
+    var fps = 60
+    var bitrate = 6_000_000
     var seconds: Double?
 
     static func parse(_ arguments: [String]) -> Options {
@@ -144,16 +144,25 @@ final class FrameSource {
 
 let options = Options.parse(Array(CommandLine.arguments.dropFirst()))
 let source = FrameSource(width: options.width, height: options.height, fps: options.fps)
-let sender = SpikeStreamSender(bitrate: options.bitrate, expectedFrameRate: options.fps)
+let sender = StreamSender(
+    deviceID: UUID(),
+    deviceName: "spike-fakesender",
+    settings: EncoderSettings(averageBitRate: options.bitrate)
+)
+
+sender.onPhase = { phase in
+    print("[fakesender] \(phase)")
+}
 
 sender.onStats = { stats in
     print(String(
-        format: "[fakesender] %.1f fps, %.0f kbps, %d encoded, %d dropped",
-        stats.framesPerSecond, stats.kilobitsPerSecond, stats.encodedFrames, stats.droppedFrames
+        format: "[fakesender] %.1f fps, %.0f kbps, %d encoded, %d skipped, %d keyframes",
+        stats.framesPerSecond, stats.kilobitsPerSecond, stats.encodedFrames,
+        stats.skippedFrames, stats.keyframes
     ))
 }
 
-sender.connect()
+sender.start()
 
 let timerQueue = DispatchQueue(label: "spike.fakesender.frames")
 let timer = DispatchSource.makeTimerSource(queue: timerQueue)

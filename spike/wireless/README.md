@@ -7,8 +7,7 @@ own Xcode project, and must never be merged into the shipping app.
 
 ```text
 spike/wireless/
-  Spike/                    SwiftPM package (Mac side + shared code)
-    Sources/SpikeWire/      wire protocol, H.264 encode/decode, Bonjour link, clock sync
+  Spike/                    SwiftPM package (Mac side), built on Packages/SharePadWire
     Sources/SpikeReceiver/  Mac receiver: window, decode, latency HUD, CSV
     Sources/SpikeFakeSender/ stands in for the iPad so the path works with no hardware
   Sender/                   iPadOS app: ReplayKit capture + PencilKit canvas + ms counter
@@ -23,9 +22,9 @@ iPad `RPScreenRecorder.startCapture` → `VTCompressionSession` (H.264, hardware
 real-time, no frame reordering) → length-prefixed messages over one
 `NWConnection` (TCP, `noDelay`, `interactiveVideo`) → Mac
 `VTDecompressionSession` → `AVSampleBufferDisplayLayer` with
-`DisplayImmediately`. Discovery is Bonjour (`_sharepadspike._tcp`); first
-service wins, because pick-and-confirm pairing is product design the spec defers
-until a GO.
+`DisplayImmediately`. Discovery is Bonjour (`_sharepad._tcp`); the Mac used
+last wins, else the first found. Pairing and encryption arrive in W2
+(specs/wireless-product.md §6), so the spike link is still open on the network.
 
 ## Running it
 

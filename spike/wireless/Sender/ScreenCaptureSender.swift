@@ -1,7 +1,7 @@
 import CoreMedia
 import Foundation
 import ReplayKit
-import SpikeWire
+import SharePadWire
 import UIKit
 
 /// ReplayKit in-app capture (`RPScreenRecorder.startCapture`) feeding the shared
@@ -14,22 +14,25 @@ final class ScreenCaptureSender {
     var isCapturing = false
     var framesPerSecond: Double = 0
     var kilobitsPerSecond: Double = 0
-    var droppedFrames = 0
+    var skippedFrames = 0
     var encodedFrames = 0
     var errorText: String?
 
-    private let sender: SpikeStreamSender
+    private let sender: StreamSender
     private let recorder = RPScreenRecorder.shared()
 
-    init(bitrate: Int = 8_000_000, expectedFrameRate: Int = 15) {
-        sender = SpikeStreamSender(bitrate: bitrate, expectedFrameRate: expectedFrameRate)
-        sender.onState = { [weak self] state in
-            self?.statusText = state.label
+    init() {
+        sender = StreamSender(
+            deviceID: UIDevice.current.identifierForVendor ?? UUID(),
+            deviceName: UIDevice.current.name
+        )
+        sender.onPhase = { [weak self] phase in
+            self?.statusText = "\(phase)"
         }
         sender.onStats = { [weak self] stats in
             self?.framesPerSecond = stats.framesPerSecond
             self?.kilobitsPerSecond = stats.kilobitsPerSecond
-            self?.droppedFrames = stats.droppedFrames
+            self?.skippedFrames = stats.skippedFrames
             self?.encodedFrames = stats.encodedFrames
         }
     }
@@ -37,7 +40,7 @@ final class ScreenCaptureSender {
     func start() {
         guard !isCapturing else { return }
         errorText = nil
-        sender.connect()
+        sender.start()
 
         recorder.isMicrophoneEnabled = false
         recorder.isCameraEnabled = false

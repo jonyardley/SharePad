@@ -60,6 +60,9 @@ jobs:
       - name: Build & test
         run: just test
 
+      - name: Wire package tests
+        run: just wire-test
+
       - name: Coverage summary
         run: just coverage
 
