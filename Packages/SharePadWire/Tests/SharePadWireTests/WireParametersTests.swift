@@ -2,11 +2,11 @@ import SharePadWire
 import XCTest
 
 final class WireParametersTests: XCTestCase {
-    func testStreamExcludesPeerToPeer() {
-        XCTAssertFalse(WireParameters.stream().includePeerToPeer)
+    func testStreamKeepsPeerToPeerOn() {
+        XCTAssertTrue(WireParameters.stream().includePeerToPeer)
     }
 
-    func testBrowseExcludesPeerToPeer() {
-        XCTAssertFalse(WireParameters.browse().includePeerToPeer)
+    func testBrowseKeepsPeerToPeerOn() {
+        XCTAssertTrue(WireParameters.browse().includePeerToPeer)
     }
 }

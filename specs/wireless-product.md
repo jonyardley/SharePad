@@ -1,7 +1,8 @@
 # Wireless sharing (product spec)
 
-> Status: **draft, Tier 3. W0 code landed** (`Packages/SharePadWire`, spike
-> rebuilt on it); the W0 home Wi-Fi measurement is still to run. Follows the GO verdict in
+> Status: **draft, Tier 3. W0 done** (`Packages/SharePadWire`, spike rebuilt on
+> it; measured on home Wi-Fi 2026-10-02). The latency tail is accepted for v1 as a
+> known gap ([#160](https://github.com/jonyardley/SharePad/issues/160)). Follows the GO verdict in
 > [`specs/wireless.md`](wireless.md#spike-result) (2026-10-01). Touches the
 > capture pipeline, the state reducer, permissions and the share-window model, so
 > every phase below gets Plan mode before code. Reference code is the throwaway
@@ -314,7 +315,8 @@ with `expectedFrameRate` left at 15. Capture ran at 60 fps, so the 30-frame cap
 fired every **0.5 s**, before the 2 s duration cap ever applied. That matches the
 1251 keyframes in 626 s. Each keyframe is several times the size of a normal
 frame, sent in one burst over the radio, and the tail readings line up with that
-pattern.
+pattern. The W0 measurement found the iPad's Wi-Fi link stalls on the same 0.5 s
+period, so the keyframe fix alone does not remove the tail.
 
 ### Product settings
 
@@ -342,18 +344,38 @@ pattern.
 
 The spike's telemetry (capture-to-decoded timing, keyframe count) moves into the
 product behind a debug-build flag, so W0 can re-run the spike method against the
-new settings. Target on the same home network: **capture-to-decoded p95 under
-60 ms** and **no camera reading above 100 ms** across 15 readings.
+new settings. The original target was **capture-to-decoded p95 under 60 ms** and
+**no camera reading above 100 ms** across 15 readings. The W0 measurement showed a
+Wi-Fi stall the encoder cannot fix (below), so that bar moves from a W0 gate to a
+W5 check.
 
 #### W0 measurement (2026-10-02)
 
-iPad Mini to Mac over home Wi-Fi. Keyframes arrived every 10 s, as intended.
-Capture-to-decoded median was 24 ms but p95 was 149 ms, so the target is not yet
-met. The slow frames come in bursts every ~0.52 s: six or seven small frames
-(~2.5 KB) held for ~150 ms, then delivered together, unrelated to keyframes. The
-suspected cause is peer-to-peer Wi-Fi (AWDL) channel hopping, which may also
-explain the original spike's tail, since its 0.5 s keyframes had the same period.
-The `fix/wireless-no-p2p` branch turns peer-to-peer off to test that.
+iPad Mini to MacBook over home Wi-Fi, spike sender and receiver, four runs.
+
+Certain:
+
+- Keyframes arrive every 10 s, as intended (7 in 68.8 s).
+- Capture-to-decoded median is 18 to 24 ms. The original spike's ~45 ms was
+  glass to glass, so the two are not directly comparable.
+- p95 is 143 to 149 ms in every run, with 22 to 27% of frames over 60 ms.
+- The slow frames come in bursts every 0.52 s: 6 to 8 small frames (~2.5 KB) held
+  ~150 ms, then delivered together. Unrelated to keyframes or frame size.
+- Turning peer-to-peer off on the link made no difference, so it stays on.
+- Pinging the iPad from the Mac while streaming shows slow replies (41 to 152 ms)
+  every 0.45 to 0.5 s. The stall is in the Wi-Fi link to the iPad, not in the
+  encoder or the send queue.
+
+Likely (medium confidence): the iPad's AWDL (peer-to-peer Wi-Fi) channel hopping,
+which apps cannot switch off on iPadOS. Taking the Mac's own AWDL interface down
+steadied its ping to the router but left the stream bursts unchanged.
+
+#### Known gaps, accepted for v1
+
+- **The iPad's Wi-Fi link stalls ~150 ms every 0.5 s** on home Wi-Fi, so p95 sits
+  near 150 ms while the median is under 25 ms. Accepted for v1; follow-ups (a
+  5 GHz channel test, routing over AWDL deliberately) are tracked in
+  [#160](https://github.com/jonyardley/SharePad/issues/160).
 
 ## 9. Design
 
@@ -501,13 +523,13 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 
 | Phase | Deliverable | Verify by |
 |---|---|---|
-| **W0: Wire and tail** | `Packages/SharePadWire` (versioned handshake, config with canvas rectangle, `requestKeyframe`, `pause`, `resume`); keyframe and send-queue fixes (§8); spike sender and receiver rebuilt on it | Spike method re-run on home Wi-Fi: capture-to-decoded p95 under 60 ms, no camera reading over 100 ms in 15, about one keyframe per 10 s in the CSV |
+| **W0: Wire and tail** | `Packages/SharePadWire` (versioned handshake, config with canvas rectangle, `requestKeyframe`, `pause`, `resume`); keyframe and send-queue fixes (§8); spike sender and receiver rebuilt on it | Spike method re-run on home Wi-Fi: about one keyframe per 10 s in the CSV, capture-to-decoded median under 30 ms |
 | **W1: Mac wireless source** | `FeedSource` protocol; `WirelessReceiver`; reducer with source inputs and `localNetworkDenied`, with tests; share window hosts either layer; thumbnail from decoded frames. Unauthenticated, Debug builds only | Spike sender streams into the real share window; it picks cleanly in Zoom desktop and browser Meet; USB still works unchanged; denying local network on macOS 15 shows the popover fix |
 | **W2: Pairing and encryption** | Pairing window with QR and typed code; `PairingStore`; TLS-PSK link; Forget on both sides; listener only runs once paired | An unpaired iPad cannot connect; a capture of the traffic shows no readable stream; Forget on either side stops the next connection; the pairing window does not appear in a Zoom or Meet window share |
 | **W3: iPad app** | Canvas, tool picker, paper menu, connection pill, settings, canvas-rectangle crop, auto start and stop; TestFlight beta | On two iPad models: toolbar never appears on the Mac; open app streams within 3 s of the Mac being found; an hour on battery without a drop; backgrounding stops capture |
 | **W4: Lifecycle** | Cable-wins switching, 5 s reconnect hold, Wi-Fi lost-share banner, `pause` while the cable is active, trial meter keyed to the paired iPad | Plugging the cable in mid-share switches with no window flicker; Wi-Fi off for 3 s recovers in place; off for 10 s hides and shows the banner; trial pause covers a wireless feed |
-| **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app); `sharepad.co/pair` page and the universal-link association file; what's-new window with its tested show-once rule; signposting copy (§9); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; scanning the pairing QR with the Camera app on an iPad without the app reaches the App Store, and with it opens pairing; updating from 1.2 shows what's new once, a fresh install never shows it, and an update while sharing waits until the share ends; a busy office network passes the W0 measurement |
-| **W6: Whole screen** | Spike first: a Broadcast Upload Extension encoding inside the ~50 MB cap on the largest iPad Pro. On GO, add it as a second capture mode in the iPad app | Spike: steady frame rate, memory under the cap for 30 minutes, glass to glass within the W0 bar. Product: drawing in Notes or Procreate streams to the Mac |
+| **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app); `sharepad.co/pair` page and the universal-link association file; what's-new window with its tested show-once rule; signposting copy (§9); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; scanning the pairing QR with the Camera app on an iPad without the app reaches the App Store, and with it opens pairing; updating from 1.2 shows what's new once, a fresh install never shows it, and an update while sharing waits until the share ends; a busy office network passes the W0 measurement; capture-to-decoded p95 under 60 ms and no camera reading over 100 ms in 15 |
+| **W6: Whole screen** | Spike first: a Broadcast Upload Extension encoding inside the ~50 MB cap on the largest iPad Pro. On GO, add it as a second capture mode in the iPad app | Spike: steady frame rate, memory under the cap for 30 minutes, glass to glass within the latency bar (§8). Product: drawing in Notes or Procreate streams to the Mac |
 
 ## 11. Open questions
 

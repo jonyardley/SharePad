@@ -11,16 +11,14 @@ public enum WireParameters {
         options.keepaliveIdle = 2
 
         let parameters = NWParameters(tls: nil, tcp: options)
-        // AWDL channel hopping stalled frames 150 ms every 0.5 s in W0 (specs/wireless-product.md
-        // §8).
-        parameters.includePeerToPeer = false
+        parameters.includePeerToPeer = true
         parameters.serviceClass = .interactiveVideo
         return parameters
     }
 
     public static func browse() -> NWParameters {
         let parameters = NWParameters()
-        parameters.includePeerToPeer = false
+        parameters.includePeerToPeer = true
         return parameters
     }
 }
