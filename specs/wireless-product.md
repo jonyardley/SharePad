@@ -537,12 +537,17 @@ Rules:
   whether to show (`(lastSeen, current, featureReleases) → Bool`).
 - **Only for releases marked as features** in a small in-code list. Bug-fix
   releases never show it.
-- **Never on a fresh install.** No `lastSeenVersion` means a new user, who gets
-  the normal first run instead; the version is then recorded silently.
+- **Never on a fresh install.** A fresh install is one with no `firstLaunchDate`
+  (recorded since 1.1); it gets the normal first run and the version is recorded
+  silently. A missing `lastSeenVersion` alone does not mean a new user: every
+  install from before this window existed has none, and those are exactly the
+  people it is for, so they see it. (Built in W5a, 2026-10-02.)
 - **Never mid-call.** If the share window is up at launch (an update installed
   while plugged in), the window waits until the share window closes.
 - **Shown once.** Either button, Esc or the close button marks it seen. It is
-  excluded from screen sharing like every non-feed window.
+  excluded from screen sharing like every non-feed window. The record only moves
+  forward: a downgrade leaves the newer version in place, so going back up never
+  shows it twice.
 - **The QR here is a live pairing code** (§6), so scanning it gets the app and
   pairs in one go. It expires on the same 5-minute clock and is replaced with a
   **Show a new code** button after that. "Pair an iPad…" opens the normal

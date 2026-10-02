@@ -37,6 +37,8 @@ final class AppModel {
     /// Set by the composition root (App.swift) so the trial-pause overlay can open
     /// licence entry without the model layer reaching into the UI (LicenseWindow).
     var onEnterLicenseRequested: (() -> Void)?
+    var onWhatsNewRequested: (() -> Void)?
+    private(set) var isWhatsNewDue = false
     // When set, a post-trial session is counting down to the pause; the watermark
     // and popover render it live. Nil once paused, licensed, or not sharing.
     private(set) var sessionEndsAt: Date?
@@ -82,6 +84,9 @@ final class AppModel {
     private let validator: LicenseValidator
     private let now: () -> Date
     private let sessionLimit: TimeInterval
+    private let appVersion: String?
+    private let featureReleases: [String]
+    private let isFreshInstall: Bool
     private var sessionTimer: Task<Void, Never>?
     // The post-trial pause meters actual sharing per iPad: `sessionBudgets[deviceID]`
     // is the time left for that device. The same iPad resumes its remaining time on
@@ -122,7 +127,8 @@ final class AppModel {
             wireless: Self.debugWirelessSource(),
             window: window,
             reporter: DiagnosticsReporter.shared,
-            sessionLimit: Self.debugSessionLimitOverride ?? 5 * 60
+            sessionLimit: Self.debugSessionLimitOverride ?? 5 * 60,
+            featureReleases: WhatsNew.featureReleases + Self.debugFeatureReleases
         )
     }
 
@@ -147,7 +153,9 @@ final class AppModel {
         validator: LicenseValidator = .production,
         reporter: DiagnosticsReporting = .disabled,
         now: @escaping () -> Date = Date.init,
-        sessionLimit: TimeInterval = 5 * 60
+        sessionLimit: TimeInterval = 5 * 60,
+        appVersion: String? = AppModel.bundleVersion,
+        featureReleases: [String] = WhatsNew.featureReleases
     ) {
         self.preferences = preferences
         self.capture = capture
@@ -158,6 +166,9 @@ final class AppModel {
         self.reporter = reporter
         self.now = now
         self.sessionLimit = sessionLimit
+        self.appVersion = appVersion
+        self.featureReleases = featureReleases
+        isFreshInstall = preferences.firstLaunchDate == nil
         monitor = DeviceMonitor()
         autoShowOnConnect = preferences.autoShowOnConnect
         keepOnTop = preferences.keepOnTop
@@ -186,6 +197,7 @@ final class AppModel {
         Task { await observeVideoSize() }
         Task { await observeRestarts() }
         Task { await observeWake() }
+        Task { await checkWhatsNew() }
         if let wireless {
             wireless.start()
             Task { await observeWireless(wireless) }
@@ -210,33 +222,6 @@ final class AppModel {
         }
         guard id != currentDeviceID, devices.contains(where: { $0.id == id }) else { return }
         Task { await switchTo(deviceID: id) }
-    }
-
-    func setAutoShow(_ enabled: Bool) {
-        autoShowOnConnect = enabled
-        preferences.autoShowOnConnect = enabled
-    }
-
-    func setKeepOnTop(_ enabled: Bool) {
-        keepOnTop = enabled
-        preferences.keepOnTop = enabled
-        window.setKeepOnTop(enabled)
-    }
-
-    func setDiagnosticsEnabled(_ enabled: Bool) {
-        diagnosticsEnabled = enabled
-        preferences.diagnosticsEnabled = enabled
-        reporter.refreshSubscription()
-    }
-
-    func setLaunchAtLogin(_ enabled: Bool) {
-        do {
-            try LaunchAtLogin.setEnabled(enabled)
-            launchAtLoginFailed = false
-        } catch {
-            launchAtLoginFailed = true
-        }
-        launchAtLogin = LaunchAtLogin.isEnabled
     }
 
     func openCameraSettings() {
@@ -313,6 +298,24 @@ final class AppModel {
 
 /// ── Connection lifecycle: discovery → auto-connect → retry → restart ──
 extension AppModel {
+    // Long enough for an iPad plugged in across an update's relaunch to connect and
+    // auto-show, so what's new sees the share window and waits.
+    private static let whatsNewSettle: Duration = .seconds(10)
+
+    static var bundleVersion: String? {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
+    }
+
+    #if DEBUG
+        // `SHAREPAD_FEATURE_RELEASE=1.0.0` marks the Debug build's version as a feature
+        // release so the what's-new window can be checked by hand.
+        private static var debugFeatureReleases: [String] {
+            ProcessInfo.processInfo.environment["SHAREPAD_FEATURE_RELEASE"].map { [$0] } ?? []
+        }
+    #else
+        private static let debugFeatureReleases: [String] = []
+    #endif
+
     /// A full `start()` reporting `isRunning` isn't proof of frames — a present-but-
     /// stalled device runs with none (frozen preview). Confirm a frame before treating
     /// the device as live; a stall routes into `failed` + Retry, same as a start that
@@ -715,6 +718,7 @@ extension AppModel {
             """)
         #endif
         isWindowVisible = visible
+        if !visible { presentWhatsNewIfDue() }
     }
 
     // Once per link, level-triggered: the first frame can land before the wireless
@@ -756,5 +760,71 @@ extension AppModel {
             armOrResumeTrialSession()
         }
         autoShowWirelessIfDue()
+    }
+}
+
+// ── Settings ──
+
+extension AppModel {
+    func setAutoShow(_ enabled: Bool) {
+        autoShowOnConnect = enabled
+        preferences.autoShowOnConnect = enabled
+    }
+
+    func setKeepOnTop(_ enabled: Bool) {
+        keepOnTop = enabled
+        preferences.keepOnTop = enabled
+        window.setKeepOnTop(enabled)
+    }
+
+    func setDiagnosticsEnabled(_ enabled: Bool) {
+        diagnosticsEnabled = enabled
+        preferences.diagnosticsEnabled = enabled
+        reporter.refreshSubscription()
+    }
+
+    func setLaunchAtLogin(_ enabled: Bool) {
+        do {
+            try LaunchAtLogin.setEnabled(enabled)
+            launchAtLoginFailed = false
+        } catch {
+            launchAtLoginFailed = true
+        }
+        launchAtLogin = LaunchAtLogin.isEnabled
+    }
+}
+
+// ── What's new ──
+
+extension AppModel {
+    func checkWhatsNew() async {
+        guard let appVersion else { return }
+        let decision = WhatsNew.decide(
+            lastSeen: preferences.lastSeenVersion,
+            isFreshInstall: isFreshInstall,
+            current: appVersion,
+            featureReleases: featureReleases
+        )
+        switch decision {
+        case .show:
+            await sleep(Self.whatsNewSettle)
+            isWhatsNewDue = true
+            presentWhatsNewIfDue()
+        case .recordSilently:
+            preferences.lastSeenVersion = appVersion
+        case .leave:
+            break
+        }
+    }
+
+    func markWhatsNewSeen() {
+        guard let appVersion else { return }
+        preferences.lastSeenVersion = appVersion
+    }
+
+    private func presentWhatsNewIfDue() {
+        guard isWhatsNewDue, !isWindowVisible, !window.isShowing else { return }
+        isWhatsNewDue = false
+        onWhatsNewRequested?()
     }
 }

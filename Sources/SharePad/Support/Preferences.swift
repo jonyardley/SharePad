@@ -78,6 +78,11 @@ struct Preferences {
         nonmutating set { defaults.set(newValue, forKey: Key.licenseKey) }
     }
 
+    var lastSeenVersion: String? {
+        get { defaults.string(forKey: Key.lastSeenVersion) }
+        nonmutating set { defaults.set(newValue, forKey: Key.lastSeenVersion) }
+    }
+
     private enum Key {
         static let autoShowOnConnect = "autoShowOnConnect"
         static let keepOnTop = "keepOnTop"
@@ -89,5 +94,6 @@ struct Preferences {
         static let firstLaunchDate = "firstLaunchDate"
         static let licenseEmail = "licenseEmail"
         static let licenseKey = "licenseKey"
+        static let lastSeenVersion = "lastSeenVersion"
     }
 }

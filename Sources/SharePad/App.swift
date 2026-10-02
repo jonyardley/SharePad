@@ -42,6 +42,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             guard let model else { return }
             LicenseWindow.present(model: model)
         }
+        model.onWhatsNewRequested = { [weak model] in
+            guard let model else { return }
+            WhatsNewWindow.present(model: model, pairing: nil)
+        }
         model.start()
         updater.start()
         // Subscribe to MetricKit only if the user has opted in (specs/telemetry.md);
