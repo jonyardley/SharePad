@@ -127,6 +127,13 @@ targets:
         SUPPORTS_MACCATALYST: "NO"
         SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "NO"
         SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: "NO"
+    # The pairing QR is a universal link (specs/wireless-product.md §6); the site's
+    # apple-app-site-association file ships separately.
+    entitlements:
+      path: Sources/SharePadPad/SharePadPad.entitlements
+      properties:
+        com.apple.developer.associated-domains:
+          - applinks:sharepad.co
     info:
       path: Sources/SharePadPad/Info.plist
       properties:
@@ -136,6 +143,7 @@ targets:
         LSRequiresIPhoneOS: true
         ITSAppUsesNonExemptEncryption: false
         NSLocalNetworkUsageDescription: SharePad finds your Mac on this Wi-Fi so your drawing can appear on it.
+        NSCameraUsageDescription: SharePad uses the camera only to scan the pairing code your Mac shows.
         NSBonjourServices:
           - _sharepad._tcp
         UILaunchScreen: {}

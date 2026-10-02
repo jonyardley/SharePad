@@ -6,7 +6,6 @@ enum LinkStatus: Equatable, Sendable {
     case live(String)
     case paused(String)
     case incompatible(String)
-    case notPaired
 
     init(_ phase: SenderLink.Phase, lastMac: String?) {
         switch phase {
@@ -48,6 +47,8 @@ struct ConnectionPill: Equatable {
     enum Action: Equatable {
         case openSettings
         case retryCapture
+        case pair
+        case pairAgain
     }
 
     let text: String
@@ -62,12 +63,13 @@ struct ConnectionPill: Equatable {
 
     init(
         link: LinkStatus,
+        pairing: PairingState = .paired,
         localNetworkDenied: Bool,
         captureDeclined: Bool,
         toolsUnlocated: Bool = false
     ) {
-        if link == .notPaired {
-            self.init(text: "Not paired", tone: .attention)
+        if pairing == .unpaired {
+            self.init(text: "Not paired", tone: .attention, action: .pair)
         } else if localNetworkDenied {
             self.init(text: "Local network is off", tone: .attention, action: .openSettings)
         } else if captureDeclined, link.isUp {
@@ -78,6 +80,8 @@ struct ConnectionPill: Equatable {
             )
         } else if toolsUnlocated, link.isUp {
             self.init(text: "Sharing paused while the tools are shown", tone: .attention)
+        } else if case let .broken(mac) = pairing, !link.isUp {
+            self.init(text: "Not paired with \(mac)", tone: .attention, action: .pairAgain)
         } else {
             self.init(link: link)
         }
@@ -93,7 +97,7 @@ struct ConnectionPill: Equatable {
             self.init(text: "Update SharePad here and on \(mac)", tone: .attention)
         case let .looking(mac?):
             self.init(text: "Looking for \(mac)…", tone: .waiting)
-        case .looking(nil), .idle, .notPaired:
+        case .looking(nil), .idle:
             self.init(text: "Looking for your Mac…", tone: .waiting)
         }
     }

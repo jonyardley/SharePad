@@ -16,6 +16,9 @@ struct CanvasScreen: View {
         .sheet(isPresented: $model.isSettingsShown) {
             SettingsSheet(model: model)
         }
+        .sheet(isPresented: $model.isPairingShown) {
+            PairingSheet(model: model)
+        }
     }
 }
 

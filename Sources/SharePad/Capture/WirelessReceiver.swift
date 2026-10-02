@@ -176,14 +176,6 @@
             }
         }
 
-        static var uptime: TimeInterval {
-            ProcessInfo.processInfo.systemUptime
-        }
-
-        static var wallClock: TimeInterval {
-            Date().timeIntervalSince1970
-        }
-
         // ── Pairings and the listener ──
 
         private func loadPairings() {
@@ -292,6 +284,14 @@
     // ── Connections: the gate, pairing and the link rules ──
 
     extension WirelessReceiver {
+        static var uptime: TimeInterval {
+            ProcessInfo.processInfo.systemUptime
+        }
+
+        static var wallClock: TimeInterval {
+            Date().timeIntervalSince1970
+        }
+
         private func handle(_ event: WireConnection.Event, from id: ConnectionID) {
             switch event {
             case .ready:

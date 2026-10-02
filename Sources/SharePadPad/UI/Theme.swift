@@ -21,6 +21,10 @@ enum Theme {
         }
     }
 
+    enum Pairing {
+        static let scannerHeight: CGFloat = 320
+    }
+
     enum Status {
         static func colour(_ tone: ConnectionPill.Tone) -> Color {
             switch tone {

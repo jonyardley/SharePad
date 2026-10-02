@@ -326,7 +326,8 @@ then fails, and both sides say so instead of failing silently
   rule cannot attribute failures to a paired iPad. The iPad side can (it knows
   which Mac it dialled). On the Mac, **Needs pairing again** shows only when the
   iPad tells it (W2b: a best-effort note on Forget while connected) or the user
-  re-pairs, which replaces the row.
+  re-pairs, which replaces the row. W2b also counts a failed `authenticate` proof
+  for a known pairing (`specs/wireless-pairing-ui.md`, decision 2).
 - **An attacker on the network during the 5 minutes** could pose as the Mac to the
   iPad and test guesses at the code offline. With 120 bits that is out of reach;
   with a short code it would not be (open question 9). Network.framework has no
@@ -341,7 +342,8 @@ then fails, and both sides say so instead of failing silently
   store uses the file-based keychain, which ignores the accessibility class and
   ties access to the app's code signature (ad-hoc Debug builds will prompt).
   Moving to the data-protection keychain needs a keychain-access-groups
-  entitlement; W2b decides.
+  entitlement. **W2b kept the file-based keychain** for v1
+  (`specs/wireless-pairing-ui.md`, decision 3).
 - **The session proof relies on TLS 1.2 exporters**, which are strongest with the
   Extended Master Secret extension (RFC 7627). Both ends need the same PSK anyway,
   so the exposure is negligible.
@@ -585,12 +587,19 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 | **W0: Wire and tail** | `Packages/SharePadWire` (versioned handshake, config with canvas rectangle, `requestKeyframe`, `pause`, `resume`); keyframe and send-queue fixes (§8); spike sender and receiver rebuilt on it | Spike method re-run on home Wi-Fi: about one keyframe per 10 s in the CSV, capture-to-decoded median under 30 ms |
 | **W1: Mac wireless source** | `FeedSource` protocol; `WirelessReceiver`; reducer with source inputs and `localNetworkDenied`, with tests; share window hosts either layer; thumbnail from decoded frames. Unauthenticated, Debug builds only | Spike sender streams into the real share window; it picks cleanly in Zoom desktop and browser Meet; USB still works unchanged; denying local network on macOS 15 shows the popover fix |
 | **W2a: Pairing core** (done) | In `SharePadWire`, no UI: pairing code and QR link; `PairingStore` (Keychain, with an in-memory fake); TLS-PSK link as an option beside the unauthenticated one; `authenticate` proof and `LinkGate`; pure reducers for the Mac pairing window, iPad pairing, the paired list (replace and Forget) and pairing health | Package tests: loopback TLS negotiates ECDHE-PSK; wrong, forgotten and unauthenticated peers fail; an end-to-end loopback pair then reconnect on the new secret; a spent code is refused |
-| **W2b: Pairing UI and switch-over** | Pairing window with QR and typed code; iPad pairing screen; Forget on both sides; listener only runs once paired; the W1 receiver switched to the TLS link | An unpaired iPad cannot connect; a capture of the traffic shows no readable stream; Forget on either side stops the next connection; the pairing window does not appear in a Zoom or Meet window share |
+| **W2b: Pairing UI and switch-over** (built, hardware check pending) | Pairing window with QR and typed code; iPad pairing screen (scan and typed code, universal link) and the "Not paired" pill; Forget on both sides; listener only runs once paired; both apps switched to the TLS link (`specs/wireless-pairing-ui.md`) | An unpaired iPad cannot connect; a capture of the traffic shows no readable stream; Forget on either side stops the next connection; the pairing window does not appear in a Zoom or Meet window share |
 | **W3a: iPad app shell** | `Sources/SharePadPad` target: canvas, tool picker, paper menu, connection pill, settings, canvas-rectangle crop, auto start and stop, frames held while a sheet or popover covers the canvas. Streams over the unauthenticated W0 link, Debug builds only; `StreamLink` is the seam W3b fills. GPLv3 with the App Store permission (§11, item 1) | On an iPad, against the spike receiver: toolbar never appears on the Mac; open app streams within 3 s of the Mac being found; backgrounding stops capture |
-| **W3b: iPad pairing and beta** | Pairing screen (scan and typed code) on the W2b link, Forget in settings, the "Not paired" pill driven by the pairing store; TestFlight beta | On two iPad models: everything in W3a over the paired link; an hour on battery without a drop |
+| **W3b: iPad beta** | TestFlight beta of the paired iPad app (pairing, Forget and the "Not paired" pill moved to W2b) | On two iPad models: everything in W3a over the paired link; an hour on battery without a drop |
 | **W4: Lifecycle** | Cable-wins switching, 5 s reconnect hold, Wi-Fi lost-share banner, `pause` while the cable is active, trial meter keyed to the paired iPad | Plugging the cable in mid-share switches with no window flicker; Wi-Fi off for 3 s recovers in place; off for 10 s hides and shows the banner; trial pause covers a wireless feed |
 | **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app); `sharepad.co/pair` page and the universal-link association file; what's-new window with its tested show-once rule; signposting copy (§9); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; scanning the pairing QR with the Camera app on an iPad without the app reaches the App Store, and with it opens pairing; updating from 1.2 shows what's new once, a fresh install never shows it, and an update while sharing waits until the share ends; on a busy office network: about one keyframe per 10 s, capture-to-decoded median under 30 ms, p95 under 60 ms and no camera reading over 100 ms in 15 |
 | **W6: Whole screen** | Spike first: a Broadcast Upload Extension encoding inside the ~50 MB cap on the largest iPad Pro. On GO, add it as a second capture mode in the iPad app | Spike: steady frame rate, memory under the cap for 30 minutes, glass to glass within the latency bar (§8). Product: drawing in Notes or Procreate streams to the Mac |
+
+**W2b status (2026-10-02):** built; package, Mac and iPad unit tests cover the
+listener plan, paired-service ranking, the forget notice, the pairing panel and
+paired-list presenters and the iPad pairing state. Both apps now speak only the
+TLS-PSK link; the unauthenticated link survives only in `spike/wireless`. Wireless
+stays Debug-only on the Mac until W5 (`specs/wireless-pairing-ui.md`, decision 1).
+The verify-by line still needs Jon with the iPad, in Zoom and Meet.
 
 **W1 status (2026-10-02):** built, Debug builds only; unit tests cover the reducer,
 the local network probe and the wireless paths through `AppModel`. The verify-by

@@ -37,13 +37,42 @@ final class ConnectionPillTests: XCTestCase {
         XCTAssertNil(pill(.looking(nil), declined: true).action)
     }
 
-    func testNotPairedWins() {
-        XCTAssertEqual(pill(.notPaired, denied: true).text, "Not paired")
+    func testNotPairedWinsAndOffersPairing() {
+        let unpaired = ConnectionPill(
+            link: .looking(nil),
+            pairing: .unpaired,
+            localNetworkDenied: true,
+            captureDeclined: false
+        )
+        XCTAssertEqual(
+            unpaired,
+            ConnectionPill(text: "Not paired", tone: .attention, action: .pair)
+        )
+    }
+
+    func testABrokenPairingNamesTheMacUntilALinkIsUp() {
+        let broken = ConnectionPill(
+            link: .looking("Studio"),
+            pairing: .broken("Studio"),
+            localNetworkDenied: false,
+            captureDeclined: false
+        )
+        XCTAssertEqual(
+            broken,
+            ConnectionPill(text: "Not paired with Studio", tone: .attention, action: .pairAgain)
+        )
+        let liveElsewhere = ConnectionPill(
+            link: .live("Office"),
+            pairing: .broken("Studio"),
+            localNetworkDenied: false,
+            captureDeclined: false
+        )
+        XCTAssertEqual(liveElsewhere.text, "Live on Office")
     }
 
     func testCopyAvoidsTransportJargon() {
         let all: [LinkStatus] = [
-            .idle, .looking(nil), .live("Mac"), .paused("Mac"), .incompatible("Mac"), .notPaired,
+            .idle, .looking(nil), .live("Mac"), .paused("Mac"), .incompatible("Mac"),
         ]
         for status in all {
             for text in [pill(status).text, pill(status, denied: true).text] {

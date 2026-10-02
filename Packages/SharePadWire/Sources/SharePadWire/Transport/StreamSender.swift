@@ -8,16 +8,6 @@ import os
 // on it, so Network.framework's callbacks (send completions included) land there
 // too; only the encoder's output hops in explicitly.
 public final class StreamSender: @unchecked Sendable {
-    public enum Security: Sendable {
-        case unauthenticated
-        case paired([PairingRecord])
-    }
-
-    public enum PairedEvent: Equatable, Sendable {
-        case connected(macID: UUID)
-        case handshakeFailed(macID: UUID)
-    }
-
     public struct Stats: Sendable {
         public var framesPerSecond: Double = 0
         public var kilobitsPerSecond: Double = 0
@@ -86,10 +76,6 @@ public final class StreamSender: @unchecked Sendable {
 
     public func stop() {
         queue.async { [weak self] in self?.send(.stop) }
-    }
-
-    public func setPairings(_ records: [PairingRecord]) {
-        queue.async { [weak self] in self?.pairingsChanged(records) }
     }
 
     public func setCanvas(_ rect: CanvasRect?) {
@@ -172,29 +158,6 @@ public final class StreamSender: @unchecked Sendable {
         }
     }
 
-    private func found(_ results: [NWBrowser.Result]) {
-        lastResults = results
-        let all = Dictionary(
-            results.map { ($0.serviceName, $0.endpoint) },
-            uniquingKeysWith: { first, _ in first }
-        )
-        guard case let .paired(records) = security else {
-            endpoints = all
-            send(.found(results.map(\.serviceName)))
-            return
-        }
-        let ranked = PairedServices.rank(
-            results.map { AdvertisedService(name: $0.serviceName, deviceID: $0.deviceID) },
-            pairings: records
-        )
-        pairedServices = Dictionary(
-            ranked.map { ($0.name, $0.record) },
-            uniquingKeysWith: { first, _ in first }
-        )
-        endpoints = all.filter { pairedServices[$0.key] != nil }
-        send(.found(ranked.map(\.name)))
-    }
-
     private func open(_ connection: WireConnection) {
         self.connection = connection
         connection.onEvent = { [weak self, weak connection] event in
@@ -214,15 +177,9 @@ public final class StreamSender: @unchecked Sendable {
             handshakeFailed()
         case let .waiting(error):
             log.info("waiting: \(String(describing: error))")
-        case let .failed(error):
-            if error?.isLinkAuthenticationFailure == true {
-                handshakeFailed()
-            } else {
-                connection = nil
-                dialled = nil
-                send(.connectionLost)
-            }
-        case .cancelled:
+        case let .failed(error) where error?.isLinkAuthenticationFailure == true:
+            handshakeFailed()
+        case .failed, .cancelled:
             connection = nil
             dialled = nil
             send(.connectionLost)
@@ -322,7 +279,36 @@ public final class StreamSender: @unchecked Sendable {
     }
 }
 
+public extension StreamSender {
+    func setPairings(_ records: [PairingRecord]) {
+        queue.async { [weak self] in self?.pairingsChanged(records) }
+    }
+}
+
 private extension StreamSender {
+    func found(_ results: [NWBrowser.Result]) {
+        lastResults = results
+        let all = Dictionary(
+            results.map { ($0.serviceName, $0.endpoint) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        guard case let .paired(records) = security else {
+            endpoints = all
+            send(.found(results.map(\.serviceName)))
+            return
+        }
+        let ranked = PairedServices.rank(
+            results.map { AdvertisedService(name: $0.serviceName, deviceID: $0.deviceID) },
+            pairings: records
+        )
+        pairedServices = Dictionary(
+            ranked.map { ($0.name, $0.record) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        endpoints = all.filter { pairedServices[$0.key] != nil }
+        send(.found(ranked.map(\.name)))
+    }
+
     func connect(to name: String) {
         guard let endpoint = endpoints[name] else {
             send(.connectionLost)

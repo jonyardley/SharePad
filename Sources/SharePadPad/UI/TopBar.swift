@@ -66,6 +66,8 @@ struct ConnectionPillView: View {
         switch action {
         case .openSettings: "Settings"
         case .retryCapture: "Try again"
+        case .pair: "Pair…"
+        case .pairAgain: "Pair again…"
         }
     }
 }

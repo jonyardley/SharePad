@@ -1,6 +1,7 @@
 import Foundation
 import os
 import PencilKit
+import SharePadWire
 import SwiftUI
 import UIKit
 
@@ -25,12 +26,17 @@ final class PadModel {
         didSet { overlayChanged(.settings, shown: isSettingsShown, was: oldValue) }
     }
 
+    var isPairingShown = false {
+        didSet { pairingShownChanged(was: oldValue) }
+    }
+
     let canvas: CanvasController
-    let isDevelopmentBuild: Bool
+    let pairings: MacPairings
 
     var pill: ConnectionPill {
         ConnectionPill(
             link: linkStatus,
+            pairing: pairings.state,
             localNetworkDenied: localNetworkDenied,
             captureDeclined: rules.captureDeclined,
             toolsUnlocated: toolsUnlocated
@@ -45,33 +51,34 @@ final class PadModel {
     }
 
     @ObservationIgnored private let preferences: PadPreferences
+    @ObservationIgnored private var pairAfterSettings = false
     @ObservationIgnored private let drawingStore: DrawingStore
     @ObservationIgnored private let recorder: ScreenRecording
     @ObservationIgnored private let captureContext = CaptureContext()
     @ObservationIgnored private var pendingSave: Task<Void, Never>?
     @ObservationIgnored private let log = Logger(subsystem: "co.sharepad.ipad", category: "model")
-    @ObservationIgnored private lazy var link: StreamLink = StreamLinks.make(
+    @ObservationIgnored private lazy var link: StreamLink = PairedLink(
+        identity: pairings.identity,
         lastMac: preferences.lastMac,
+        pairings: pairings.macs,
         callbacks: LinkCallbacks(
             onStatus: { [weak self] status in self?.linkChanged(status) },
-            onLocalNetworkDenied: { [weak self] denied in self?.localNetworkDenied = denied }
+            onLocalNetworkDenied: { [weak self] denied in self?.localNetworkDenied = denied },
+            onPairedEvent: { [weak self] event in self?.pairings.linkEvent(event) }
         )
     )
 
     init(
         preferences: PadPreferences = PadPreferences(),
         drawingStore: DrawingStore = .applicationSupport(),
-        recorder: ScreenRecording = ScreenRecorder()
+        recorder: ScreenRecording = ScreenRecorder(),
+        store: PairingStore = KeychainPairingStore()
     ) {
         self.preferences = preferences
         self.drawingStore = drawingStore
         self.recorder = recorder
+        pairings = MacPairings(store: store, deviceName: UIDevice.current.name)
         paper = preferences.paper
-        #if DEBUG
-            isDevelopmentBuild = true
-        #else
-            isDevelopmentBuild = false
-        #endif
         canvas = CanvasController(drawing: drawingStore.load())
         canvas.apply(tone: paper.tone)
         canvas.onDrawingChange = { [weak self] _ in self?.scheduleSave() }
@@ -86,6 +93,13 @@ final class PadModel {
         canvas
             .onToolsUnlocated = { [weak self] unlocated in self?.toolsUnlocatedChanged(unlocated) }
         UIApplication.shared.applicationSupportsShakeToEdit = false
+        pairings.onChange = { [weak self] records in self?.link.setPairings(records) }
+        isPairingShown = pairings.macs.isEmpty
+        captureContext.overlay(
+            .pairing,
+            shown: isPairingShown,
+            at: ProcessInfo.processInfo.systemUptime
+        )
     }
 
     // ── Intents ──
@@ -127,7 +141,34 @@ final class PadModel {
             UIApplication.shared.open(url)
         case .retryCapture:
             apply(.retryCapture)
+        case .pair, .pairAgain:
+            showPairing()
         }
+    }
+
+    // ── Pairing ──
+
+    func showPairing() {
+        if isSettingsShown {
+            pairAfterSettings = true
+            isSettingsShown = false
+            return
+        }
+        pairings.reset()
+        isPairingShown = true
+    }
+
+    func open(_ url: URL) {
+        guard let code = PairingCode(invitation: url) else { return }
+        isSettingsShown = false
+        pairings.reset()
+        isPairingShown = true
+        pairings.start(code)
+    }
+
+    private func pairingShownChanged(was: Bool) {
+        if !isPairingShown { pairings.cancel() }
+        overlayChanged(.pairing, shown: isPairingShown, was: was)
     }
 
     // ── Streaming ──
@@ -197,7 +238,13 @@ final class PadModel {
         guard !shown else { return }
         Task { [weak self] in
             try? await Task.sleep(for: .seconds(FrameGate.settle))
-            self?.canvas.showToolPicker()
+            guard let self else { return }
+            if overlay == .settings, pairAfterSettings {
+                pairAfterSettings = false
+                showPairing()
+            } else {
+                canvas.showToolPicker()
+            }
         }
     }
 

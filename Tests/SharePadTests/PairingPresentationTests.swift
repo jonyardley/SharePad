@@ -228,8 +228,9 @@ final class AppModelPairingTests: AppModelTestCase {
         )
         var status = WirelessStatus()
         status.pairing = .paired(iPad: "Jon’s iPad")
-        status.paired = [PairedIPad(id: UUID(), name: "Jon’s iPad", lastConnectedAt: nil,
-                                    needsPairing: false)]
+        let iPad = PairedIPad(id: UUID(), name: "Jon’s iPad", lastConnectedAt: nil,
+                              needsPairing: false)
+        status.paired = [iPad]
         model.applyWireless(status)
 
         XCTAssertEqual(model.pairingPanel(now: Date()).status, "Paired with Jon’s iPad")

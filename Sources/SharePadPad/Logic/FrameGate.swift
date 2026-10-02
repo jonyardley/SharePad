@@ -3,6 +3,7 @@ import Foundation
 enum Overlay: Hashable, Sendable {
     case paperMenu
     case settings
+    case pairing
     case unlocatedTools
 }
 

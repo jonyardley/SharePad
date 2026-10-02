@@ -29,8 +29,9 @@ displayed as full shared content (not a webcam tile).
 - **Not** a virtual camera (see [§2](#2-approach--rejected-alternatives)).
 - **No** iPad audio routing into the call.
 - **USB only in Release.** Wireless sharing through an iPad companion app is
-  specced in `specs/wireless-product.md` (2026-10-01). The Mac side of W1
-  (unauthenticated receiver) exists in **Debug builds only** (2026-10-02).
+  specced in `specs/wireless-product.md` (2026-10-01). The Mac receiver, with
+  pairing and the TLS-PSK link (W2b, `specs/wireless-pairing-ui.md`), exists in
+  **Debug builds only** until the iPad app ships (2026-10-02).
 - **No** annotation, recording, cropping, or multi-device mosaic.
 - ~~**No** distribution / App Store / notarization — personal local build.~~
   **Superseded (2026-06-05):** 1.0 ships as a notarized **direct download**
@@ -321,10 +322,12 @@ ipad-share/
     State/
       AppState.swift          # enum + pure reducer (unit-tested)
       WirelessStatus.swift    # what the wireless source reports to AppModel
+      PairingProgress.swift   # pairing window and paired-list state, no secrets
+      PairingPresentation.swift # pure presenters for the panel and popover rows
     Capture/
       FeedSource.swift         # protocol both sources sit behind
       CaptureController.swift  # owns AVCaptureSession (protocol-fronted)
-      WirelessReceiver.swift   # Debug only: listener, link, decoder (W1)
+      WirelessReceiver.swift   # Debug only: listener, gate, pairing, link, decoder
       DeviceMonitor.swift      # CMIO opt-in + DiscoverySession KVO
       CMIO.swift               # the opt-in helper (§6.1)
     Windows/
@@ -333,6 +336,8 @@ ipad-share/
       PreviewView.swift        # NSViewRepresentable over preview layer
     UI/
       PopoverView.swift
+      WirelessSectionView.swift # popover Wireless section (paired list, Allow)
+      PairingPanel.swift       # pairing window with QR, unshareable
       StatusItem.swift
     Licensing/
       License.swift            # embedded Ed25519 public key + checkout URLs

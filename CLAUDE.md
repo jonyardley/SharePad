@@ -273,20 +273,30 @@ before touching capture.
   subview added on top of the hosting view: that does **not** reliably composite
   above the layer-backed preview (the overlay silently never renders). Keep new
   share-window chrome inside this root, not as added subviews.
-- **The iPad app streams only in Debug builds until W2b.** `StreamLinks.make` picks
-  the unauthenticated `DevelopmentLink` under `#if DEBUG` and `UnpairedLink` (pill:
-  "Not paired") otherwise, so a Release or TestFlight build never sends an
-  unencrypted stream. Pairing replaces `UnpairedLink`, not the model.
+- **The iPad app streams only to paired Macs** (`specs/wireless-pairing-ui.md`).
+  `PairedLink` runs `StreamSender` in paired mode: it dials only Bonjour services
+  whose TXT `id` matches a pairing, with that pairing's key, and authenticates
+  before its hello. Install ids on both ends come from `localDeviceID()` in the
+  Keychain, never `identifierForVendor` or a per-launch UUID; `LinkGate` closes a
+  link whose hello id differs from the paired one.
 - **iPad frames leave only with a known canvas rectangle.** `CaptureContext` drops
   any frame without a layout or while a sheet or popover covers the canvas. New
   chrome that draws over the canvas must register an `Overlay` with the model.
-- **Wireless is Debug only until pairing ships** (`specs/wireless-product.md` §10,
-  W1). `WirelessReceiver` is wrapped in `#if DEBUG`, and its Info.plist keys
-  (`NSLocalNetworkUsageDescription`, `NSBonjourServices`) are added by a
-  Debug-only post-build script in `project.yml`, because `info:` applies to every
-  configuration. `just verify-app` on a Release product fails if either key
-  appears. The `SharePadWire` package is still linked into Release (xcodegen has
-  no per-configuration package link) but nothing there calls it.
+- **Wireless is Debug only on the Mac until the iPad app ships in W5**
+  (`specs/wireless-pairing-ui.md`, decision 1). `WirelessReceiver` is wrapped in
+  `#if DEBUG`, and its Info.plist keys (`NSLocalNetworkUsageDescription`,
+  `NSBonjourServices`) are added by a Debug-only post-build script in
+  `project.yml`, because `info:` applies to every configuration. `just verify-app`
+  on a Release product fails if either key appears. The `SharePadWire` package is
+  still linked into Release (xcodegen has no per-configuration package link).
+- **The Mac listener's keys are fixed when it is made.** `ListenerPlan` decides
+  whether to listen (a code on offer, or something paired with **Allow wireless
+  iPads** on) and with which keys; any change replaces the `NWListener`.
+  Connections it already accepted carry on, so Forget must close them explicitly
+  (`PairingBook`'s `dropConnections`).
+- **The pairing window must never be shareable.** `PairingPanel` sets
+  `sharingType = .none` before the window is first ordered on screen, then sweeps
+  `WindowSharing`; its QR is a live pairing code.
 - **Local network denial has no API on macOS** (TN3179). The only signal is the
   listener's Bonjour registration waiting with `kDNSServiceErr_PolicyDenied`
   (`LocalNetworkProbe`); the receiver takes the latest listener state as the

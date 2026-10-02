@@ -46,10 +46,6 @@ final class AppModel {
         currentDeviceName != nil || wirelessStatus.peer != nil
     }
 
-    var sessionLimitMinutes: Int {
-        Int(sessionLimit / 60)
-    }
-
     var isWindowHotkeyActive: Bool {
         windowHotkey != nil
     }
@@ -486,6 +482,10 @@ extension AppModel {
 
 /// ── Licensing: trial entitlement, licence entry, expired-session gate ──
 extension AppModel {
+    var sessionLimitMinutes: Int {
+        Int(sessionLimit / 60)
+    }
+
     @discardableResult
     func enterLicense(email: String, key: String) -> LicenseCheck {
         let result = validator.check(key: key, email: email)

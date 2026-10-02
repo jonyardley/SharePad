@@ -8,10 +8,27 @@ struct SettingsSheet: View {
         NavigationStack {
             Form {
                 Section("Paired Macs") {
-                    if model.isDevelopmentBuild {
-                        Text("Development build: streams to any SharePad Mac on this Wi-Fi.")
-                    } else {
+                    if model.pairings.macs.isEmpty {
                         Text("No Mac paired yet.")
+                    }
+                    ForEach(model.pairings.macs, id: \.peerID) { mac in
+                        HStack {
+                            Text(mac.peerName)
+                            Spacer()
+                            Button("Forget this Mac", role: .destructive) {
+                                model.pairings.forget(id: mac.peerID)
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                    Button(model.pairings.pairButtonTitle) {
+                        model.showPairing()
+                    }
+                }
+                if model.pairings.storeFailed {
+                    Section {
+                        Text("This iPad couldn’t read or save its paired Macs.")
+                            .foregroundStyle(.secondary)
                     }
                 }
                 Section {

@@ -8,6 +8,7 @@ struct PadApp: App {
     var body: some Scene {
         WindowGroup {
             CanvasScreen(model: model)
+                .onOpenURL { model.open($0) }
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             model.sceneChanged(phase)
