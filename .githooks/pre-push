@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Scans every commit about to be pushed, so a leak committed with --no-verify, or
+# before the rules caught it, still stops here. Enable with `just install-hooks`.
+set -euo pipefail
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+    echo "error: gitleaks not installed. Run 'brew install gitleaks' (see CLAUDE.md setup)." >&2
+    exit 1
+fi
+
+remote="$1"
+zero=0000000000000000000000000000000000000000
+
+while read -r _local_ref local_sha _remote_ref remote_sha; do
+    [ "$local_sha" = "$zero" ] && continue
+    if [ "$remote_sha" = "$zero" ]; then
+        range="$local_sha --not --remotes=$remote"
+    else
+        range="$remote_sha..$local_sha"
+    fi
+    gitleaks git --config .gitleaks.toml --redact --no-banner --verbose --log-opts="$range" .
+done

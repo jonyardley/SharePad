@@ -5,6 +5,7 @@ enum Theme {
         static let row: CGFloat = 8
         static let section: CGFloat = 16
         static let overlayInset: CGFloat = 32
+        static let window: CGFloat = 24
     }
 
     enum Radius {

@@ -39,6 +39,13 @@ final class PreferencesTests: XCTestCase {
         XCTAssertEqual(Preferences(defaults: defaults).lastDeviceID, "abc-123")
     }
 
+    func testLastSeenVersionRoundTrips() throws {
+        let defaults = try makeEphemeralDefaults()
+        XCTAssertNil(Preferences(defaults: defaults).lastSeenVersion)
+        Preferences(defaults: defaults).lastSeenVersion = "1.3.0"
+        XCTAssertEqual(Preferences(defaults: defaults).lastSeenVersion, "1.3.0")
+    }
+
     func testWindowFrameDefaultsAreNil() throws {
         let prefs = try Preferences(defaults: makeEphemeralDefaults())
         XCTAssertNil(prefs.windowOrigin)

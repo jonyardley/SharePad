@@ -1,6 +1,6 @@
-# Secret-scanning rules for SharePad — run in CI (full history) and the
-# pre-commit hook (staged changes). The Sparkle EdDSA *private* key leaked in
-# #40 was a bare 44-char base64 string with no provider signature, so GitHub's
+# Secret-scanning rules for SharePad — run in CI (full history), the pre-commit
+# hook (staged changes) and the pre-push hook (outgoing commits). The Sparkle
+# EdDSA *private* key leaked in #40 was a bare 44-char base64 string with no provider signature, so GitHub's
 # native scanner missed it. The explicit rules below close that gap.
 
 title = "SharePad secret scan"
@@ -22,6 +22,32 @@ description = "Signing material / private key committed by filename"
 regex = '''(?s).'''
 path = '''(?i)(^|/)([^/]*\.(p12|p8|pem|key|keystore|jks|mobileprovision)|id_(rsa|dsa|ecdsa|ed25519))$'''
 
+
+[[rules]]
+id = "personal-email"
+description = "Personal mailbox address (Gmail, iCloud, Outlook and similar)"
+# Keeps the maintainer's and buyers' own addresses (Stripe and Resend test data,
+# pasted logs) out of a public repo. Product addresses on sharepad.co are fine.
+regex = '''(?i)\b[a-z0-9._%+-]+@(gmail|googlemail|icloud|me|mac|hotmail|outlook|live|yahoo|proton|protonmail)\.(com|me|co\.uk)\b'''
+keywords = ["gmail", "googlemail", "icloud", "@me.", "@mac.", "hotmail", "outlook", "live.", "yahoo", "proton"]
+
+[[rules]]
+id = "local-home-path"
+description = "Absolute path into a home directory"
+# Leaks the machine user name and directory layout; scripts and docs should use
+# repo-relative paths or $HOME.
+regex = '''(/Users/|/home/)[A-Za-z0-9._-]+/'''
+keywords = ["/users/", "/home/"]
+
+[[rules]]
+id = "apple-team-id"
+description = "Apple Developer team id hard-coded for signing"
+# Signing identity stays in the environment (SHAREPAD_TEAM_ID, SIGN_IDENTITY).
+# The future apple-app-site-association file needs the team id by design;
+# allowlist that path when it lands.
+regex = '''(DEVELOPMENT_TEAM\s*[:=]\s*["']?[A-Z0-9]{10}\b|Developer ID Application: [^()\n]+\([A-Z0-9]{10}\))'''
+keywords = ["development_team", "developer id application"]
+
 [allowlist]
 description = "Commit-safe public values"
 # SUPublicEDKey is the public half of the signing keypair — it is meant to live
@@ -34,11 +60,15 @@ description = "Commit-safe public values"
 # (LicenseValidatorTests) — an Ed25519 *signature* of an email, public by
 # construction (the app verifies it with the embedded public key). The variable
 # names are pinned by name, not value, so a real secret pasted on the same line is
-# still caught. Match the line, not the captured value.
+# still caught. Match the line, not the captured value. The last two are a
+# made-up team id in the release runbook and a made-up buyer address in a Worker
+# test.
 regexTarget = "line"
 regexes = [
   '''SUPublicEDKey''',
   '''data-cf-beacon''',
   '''ACCESS_AUD''',
   '''YahgYgZ6fYgl4MsWJpRwtJWdcL6fmEzbk9yFoCmxJpe2DFae''',
+  '''\(AB12CD34EF\)''',
+  '''u\.ser\+tag@''',
 ]

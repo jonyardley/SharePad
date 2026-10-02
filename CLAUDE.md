@@ -80,7 +80,7 @@ just scan          # gitleaks secret scan over full history (same check CI runs)
 just downloads     # GitHub Release download counts (DMG installs + appcast update-checks)
 just appcast-stats # active installs + version adoption from the appcast Worker (Analytics Engine)
 just telemetry-stats # crash/hang/error counts from the telemetry Worker (opt-in; Analytics Engine)
-just install-hooks # enable the pre-commit secret scan (run once per clone/worktree)
+just install-hooks # enable the pre-commit and pre-push secret scans (run once per clone/worktree)
 just release-build # Release build, Hardened Runtime, ad-hoc (for local on-iPad checks)
 just release       # full pipeline: build → Developer ID sign → notarize → DMG (needs creds)
 ```
@@ -91,7 +91,7 @@ First-time setup:
 
 ```bash
 brew install xcodegen just swiftformat swiftlint gitleaks
-just install-hooks   # enable the pre-commit secret scan
+just install-hooks   # enable the pre-commit and pre-push secret scans
 just gen && just run
 ```
 
@@ -309,6 +309,12 @@ before touching capture.
   only when the user turns it on. It is first-party MetricKit (crashes/hangs) plus
   five named non-fatals, never any content, licence, or device id. Never flip the
   default to on without a privacy-page change and a deliberate decision.
+- **What's new shows only for versions in `WhatsNew.featureReleases`**
+  (`specs/wireless-product.md` §9). A fresh install is `firstLaunchDate == nil`,
+  not a missing `lastSeenVersion` (no install before W5a has one). It waits while
+  the share window is up, then shows on a hide or once a lost-share notice clears.
+  To see it in a Debug build: `open --env SHAREPAD_FEATURE_RELEASE=1.0.0` plus an
+  older `lastSeenVersion` in the defaults.
 - **Wireless TLS-PSK is TLS 1.2 only, and the suite must be pinned**
   (`specs/wireless-product.md` §6, open question 3). Network.framework's default
   PSK suite has no forward secrecy, so `LinkSecurity` pins ECDHE-PSK and a loopback

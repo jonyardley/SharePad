@@ -150,7 +150,7 @@ scan:
 check-pairing:
     ED25519_PRIVATE_KEY="$(cat ~/.sharepad-ed25519-private-key.txt)" node scripts/check-key-pairing.mjs
 
-# install the repo git hooks (pre-commit secret scan). Run once per clone/worktree.
+# install the repo git hooks (pre-commit and pre-push secret scans). Run once per clone/worktree.
 install-hooks:
     git config core.hooksPath .githooks
     @echo "git hooks installed (core.hooksPath -> .githooks). Needs: brew install gitleaks"

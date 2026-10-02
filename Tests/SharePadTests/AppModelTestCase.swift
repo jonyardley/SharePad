@@ -21,7 +21,9 @@ class AppModelTestCase: XCTestCase {
         window: FakeShareWindow,
         preferences: Preferences,
         reporter: DiagnosticsReporting = .disabled,
-        wireless: WirelessFeeding? = nil
+        wireless: WirelessFeeding? = nil,
+        appVersion: String? = nil,
+        featureReleases: [String] = []
     ) -> AppModel {
         AppModel(
             preferences: preferences,
@@ -29,7 +31,9 @@ class AppModelTestCase: XCTestCase {
             wireless: wireless,
             window: window,
             sleep: { _ in }, // retries run without real delay
-            reporter: reporter
+            reporter: reporter,
+            appVersion: appVersion,
+            featureReleases: featureReleases
         )
     }
 }
