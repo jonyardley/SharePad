@@ -1,6 +1,7 @@
 import AppKit
 import AVFoundation
 import Observation
+import os
 
 @MainActor
 @Observable
@@ -18,6 +19,7 @@ final class AppModel {
     // becomes the active one, so a feed that goes away leaves its last frame up.
     private(set) var hostedFeed: FeedKind = .usb
     private var wirelessVideoSize: CGSize?
+    private var autoShownPeerID: UUID?
 
     /// A one-shot, self-expiring event (not a steady AppState case): the iPad vanished
     /// while its share window was up, so the user — possibly mid-call — lost their share.
@@ -579,6 +581,10 @@ extension AppModel {
 /// ── Wireless feed: status, hosted layer, lost share ──
 extension AppModel {
     static let wirelessSourceID = "wireless"
+    private static let wirelessLog = Logger(
+        subsystem: "com.jonyardley.sharepad",
+        category: "wireless"
+    )
 
     // Wireless W1 is unauthenticated, so it never ships: Debug builds only until
     // pairing lands (specs/wireless-product.md §10, W2).
@@ -672,20 +678,41 @@ extension AppModel {
 
     func applyWireless(_ status: WirelessStatus) {
         let lostPeer = wirelessStatus.peer != nil && status.peer == nil
-        let startedReceiving = !wirelessStatus.isReceiving && status.isReceiving
         wirelessStatus = status
-        if status.peer == nil { wirelessVideoSize = nil }
+        if status.peer == nil {
+            wirelessVideoSize = nil
+            autoShownPeerID = nil
+        }
         syncHostedFeed()
+        let hosted = String(describing: hostedFeed)
+        let visible = isWindowVisible
+        let autoShow = autoShowOnConnect
+        Self.wirelessLog.notice("""
+        status peer=\(status.peer != nil) receiving=\(status.isReceiving) \
+        reconnecting=\(status.isReconnecting) hosted=\(hosted, privacy: .public) \
+        visible=\(visible) autoShow=\(autoShow)
+        """)
         guard hostedFeed == .wireless else { return }
         if lostPeer, isWindowVisible {
             window.hide()
             isWindowVisible = false
             suspendTrialSession()
             raiseShareLost()
-        } else if startedReceiving {
-            dismissShareLost()
-            if autoShowOnConnect, !isWindowVisible { presentWindow() }
+        } else {
+            autoShowWirelessIfDue()
         }
+    }
+
+    // Once per link, level-triggered: the first frame can land before the wireless
+    // feed is the hosted one, and a user who hides the window keeps it hidden.
+    private func autoShowWirelessIfDue() {
+        guard hostedFeed == .wireless, wirelessStatus.isReceiving,
+              let peer = wirelessStatus.peer, autoShownPeerID != peer.id else { return }
+        autoShownPeerID = peer.id
+        dismissShareLost()
+        guard autoShowOnConnect, !isWindowVisible else { return }
+        Self.wirelessLog.notice("auto-showing the share window for a wireless feed")
+        presentWindow()
     }
 
     // A cable that fails or goes while another feed can take over hands the window
@@ -709,9 +736,11 @@ extension AppModel {
         ), feed != hostedFeed else { return }
         hostedFeed = feed
         window.setFeedLayer(source(for: feed).hostedLayer)
-        guard isWindowVisible else { return }
-        if let size = hostedVideoSize { window.updateSize(size) }
-        suspendTrialSession()
-        armOrResumeTrialSession()
+        if isWindowVisible {
+            if let size = hostedVideoSize { window.updateSize(size) }
+            suspendTrialSession()
+            armOrResumeTrialSession()
+        }
+        autoShowWirelessIfDue()
     }
 }

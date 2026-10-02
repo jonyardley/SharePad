@@ -1,28 +1,9 @@
 #if DEBUG
     import AVFoundation
-    import dnssd
     import Network
     import os
     import SharePadWire
     import SystemConfiguration
-
-    enum LocalNetworkProbe {
-        // No API reports the Local Network privilege (TN3179). Bonjour registration
-        // is gated, so a denied listener waits with kDNSServiceErr_PolicyDenied.
-        static func access(for state: NWListener.State) -> LocalNetworkAccess? {
-            switch state {
-            case let .waiting(error), let .failed(error):
-                isPolicyDenied(error) ? .denied : nil
-            default:
-                nil
-            }
-        }
-
-        static func isPolicyDenied(_ error: NWError) -> Bool {
-            guard case let .dns(code) = error else { return false }
-            return code == DNSServiceErrorType(kDNSServiceErr_PolicyDenied)
-        }
-    }
 
     // @unchecked Sendable: every mutable property is touched only on `queue`; the
     // layers are created on main and fed off-main only through their renderers.
@@ -60,6 +41,7 @@
         private var frameWaiter: (@Sendable (Bool) -> Void)?
         private var frameWaiterID = 0
         private var isStopped = false
+        private var framesShown = 0
 
         @MainActor
         init(deviceName: String = SCDynamicStoreCopyComputerName(nil, nil) as String? ?? "Mac") {
@@ -88,6 +70,7 @@
             queue.async { [self] in
                 isStopped = false
                 openListener()
+                logDisplayHealth()
             }
         }
 
@@ -213,6 +196,7 @@
 
         private func apply(_ effects: [ReceiverLink.Effect]) {
             for effect in effects {
+                log.notice("link: \(String(describing: effect), privacy: .public)")
                 switch effect {
                 case let .sendHello(id):
                     connections[id]?.send(.hello(identity))
@@ -311,6 +295,7 @@
                 requestKeyframe(after: .layerFlushed(at: Self.uptime))
             }
             renderer.enqueue(sample)
+            framesShown += 1
             renderThumbnail(sample)
             if let frameWaiter {
                 self.frameWaiter = nil
@@ -336,7 +321,33 @@
         }
 
         private func publish(_ status: WirelessStatus) {
+            log.notice("""
+            status peer=\(status.peer != nil) receiving=\(status.isReceiving) \
+            reconnecting=\(status.isReconnecting) \
+            localNetwork=\(String(describing: status.localNetwork), privacy: .public)
+            """)
             statusContinuation.yield(status)
+        }
+
+        // Every 5 s while a peer is live: whether frames reach the share window's
+        // renderer and whether it is taking them (W1 hardware check).
+        private func logDisplayHealth() {
+            queue.asyncAfter(deadline: .now() + 5) { [weak self] in
+                guard let self, !isStopped else { return }
+                if status.peer != nil {
+                    let renderer = displayRenderer
+                    let shown = framesShown
+                    let state = renderer.status.rawValue
+                    let ready = renderer.isReadyForMoreMediaData
+                    let error = String(describing: renderer.error)
+                    log.notice("""
+                    display: frames=\(shown) status=\(state) ready=\(ready) \
+                    error=\(error, privacy: .public)
+                    """)
+                    framesShown = 0
+                }
+                logDisplayHealth()
+            }
         }
 
         // Decoded frames carry no timeline, so they are marked for immediate display;
@@ -382,17 +393,4 @@
         }
     }
 
-    // @unchecked Sendable: created and resolved only on the receiver's queue.
-    private final class ResolveOnce: @unchecked Sendable {
-        private var continuation: CheckedContinuation<Bool, Never>?
-
-        init(_ continuation: CheckedContinuation<Bool, Never>) {
-            self.continuation = continuation
-        }
-
-        func resolve(_ value: Bool) {
-            continuation?.resume(returning: value)
-            continuation = nil
-        }
-    }
 #endif

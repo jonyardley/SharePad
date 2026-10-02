@@ -31,6 +31,44 @@ final class AppModelWirelessTests: AppModelTestCase {
         XCTAssertTrue(model.thumbnailLayer === wireless.thumbnailLayer)
     }
 
+    func testReceiverSequenceAutoShowsOnTheFirstFrame() throws {
+        let window = FakeShareWindow()
+        let model = try makeWirelessModel(window: window)
+
+        model.applyWireless(WirelessStatus(localNetwork: .granted))
+        model.applyWireless(WirelessStatus(peer: peer, localNetwork: .granted))
+        XCTAssertFalse(model.isWindowVisible)
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true, localNetwork: .granted))
+
+        XCTAssertTrue(model.isWindowVisible)
+        XCTAssertEqual(window.shownSizes.count, 1)
+    }
+
+    func testAWindowTheUserHidStaysHiddenForTheRestOfTheLink() throws {
+        let model = try makeWirelessModel()
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+        model.toggleWindow()
+        XCTAssertFalse(model.isWindowVisible)
+
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true, isReconnecting: true))
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+
+        XCTAssertFalse(model.isWindowVisible)
+    }
+
+    func testANewLinkAfterALostOneAutoShowsAgain() throws {
+        let window = FakeShareWindow()
+        let model = try makeWirelessModel(window: window)
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+        model.applyWireless(WirelessStatus())
+
+        model.applyWireless(WirelessStatus(peer: peer))
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+
+        XCTAssertTrue(model.isWindowVisible)
+        XCTAssertEqual(window.shownSizes.count, 2)
+    }
+
     func testConnectedPeerWithoutFramesWaitsWithTheWindowHidden() throws {
         let model = try makeWirelessModel()
 

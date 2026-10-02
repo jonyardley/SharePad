@@ -1,5 +1,6 @@
 import AppKit
 import AVFoundation
+import os
 import SwiftUI
 
 @MainActor
@@ -42,7 +43,37 @@ final class ShareWindowController: ShareWindowControlling {
         appliedFrame = window.frame
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
+        #if DEBUG
+            logPresentation(of: window)
+        #endif
     }
+
+    #if DEBUG
+        // Wireless W1 hardware check: records whether a shown window is really on
+        // screen and hosting the feed layer, since a call shares only what composites.
+        private func logPresentation(of window: NSWindow) {
+            let log = Logger(subsystem: "com.jonyardley.sharepad", category: "window")
+            let describe = { [overlayModel] (moment: String) in
+                let layer = overlayModel.feedLayer
+                let frame = String(describing: window.frame)
+                let kind = String(describing: type(of: layer))
+                let bounds = String(describing: layer.bounds)
+                log.notice("""
+                \(moment, privacy: .public): visible=\(window.isVisible) \
+                occludedVisible=\(window.occlusionState.contains(.visible)) \
+                activeSpace=\(window.isOnActiveSpace) appActive=\(NSApp.isActive) \
+                level=\(window.level.rawValue) frame=\(frame, privacy: .public) \
+                layer=\(kind, privacy: .public) attached=\(layer.superlayer != nil) \
+                bounds=\(bounds, privacy: .public)
+                """)
+            }
+            describe("shown")
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(1))
+                describe("one second after show")
+            }
+        }
+    #endif
 
     /// Driven by iPad rotation, not the user — so adapt the live window (keeping its
     /// centre) but don't persist. Overwriting the saved origin here would discard the
