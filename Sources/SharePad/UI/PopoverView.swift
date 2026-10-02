@@ -228,6 +228,8 @@ struct PopoverView: View {
     // briefly on a healthy connect). The app can't tell "locked" from "still trusting".
     private var statusHint: String? {
         switch model.state {
+        case .noDevice where model.wirelessStatus.listenerFailed:
+            "Wi-Fi sharing couldn't start; SharePad keeps retrying. The cable still works."
         case .noDevice: "Plug your iPad in with its cable to begin."
         case .starting(.usb): "Unlock your iPad and tap Trust if it asks."
         case .failed(.usb): "Check your iPad is unlocked and connected, then Retry."

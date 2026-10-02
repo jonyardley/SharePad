@@ -14,10 +14,14 @@ struct PreviewView: NSViewRepresentable {
 
     func updateNSView(_ view: PreviewNSView, context _: Context) {
         guard view.hostedLayer !== layer else { return }
+        // The window is in a call: an implicit fade on the swap would go out to it.
+        CATransaction.begin()
+        CATransaction.setDisableActions(true)
         view.hostedLayer?.removeFromSuperlayer()
         view.hostedLayer = layer
         layer.frame = view.bounds
         view.layer?.addSublayer(layer)
+        CATransaction.commit()
     }
 }
 

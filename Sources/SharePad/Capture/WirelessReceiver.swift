@@ -4,6 +4,7 @@
     import Network
     import os
     import SharePadWire
+    import SystemConfiguration
 
     enum LocalNetworkProbe {
         // No API reports the Local Network privilege (TN3179). Bonjour registration
@@ -57,10 +58,11 @@
         private var thumbnailActive = false
         private var lastThumbnailAt: Double?
         private var frameWaiter: (@Sendable (Bool) -> Void)?
+        private var frameWaiterID = 0
         private var isStopped = false
 
         @MainActor
-        init(deviceName: String = Host.current().localizedName ?? "Mac") {
+        init(deviceName: String = SCDynamicStoreCopyComputerName(nil, nil) as String? ?? "Mac") {
             identity = Hello(deviceID: UUID(), deviceName: deviceName)
             displayLayer = AVSampleBufferDisplayLayer()
             displayLayer.videoGravity = .resizeAspect
@@ -118,9 +120,11 @@
             await withCheckedContinuation { continuation in
                 queue.async { [self] in
                     let once = ResolveOnce(continuation)
+                    frameWaiterID += 1
+                    let id = frameWaiterID
                     frameWaiter = { once.resolve($0) }
                     queue.asyncAfter(deadline: .now() + timeout) { [self] in
-                        frameWaiter = nil
+                        if frameWaiterID == id { frameWaiter = nil }
                         once.resolve(false)
                     }
                 }
@@ -146,6 +150,8 @@
                 self.listener = listener
             } catch {
                 log.error("listener not created: \(String(describing: error))")
+                status.listenerFailed = true
+                publish(status)
                 retryListener()
             }
         }
@@ -156,10 +162,13 @@
                 publish(status)
             } else if case .ready = state {
                 status.localNetwork = .granted
+                status.listenerFailed = false
                 publish(status)
             }
             if case let .failed(error) = state {
                 log.error("listener failed: \(String(describing: error))")
+                status.listenerFailed = true
+                publish(status)
                 listener?.cancel()
                 listener = nil
                 retryListener()

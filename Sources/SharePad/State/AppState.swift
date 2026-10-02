@@ -82,8 +82,8 @@ extension AppState {
         }
     }
 
-    // Cable wins unless the user picked wireless; a cable without camera access
-    // can't run, so it never counts as available.
+    // A cable without camera access can't run, and a failed one shouldn't take the
+    // window from a working Wi-Fi feed (specs/wireless-product.md §3, decision 6).
     static func activeFeed(
         camera: CameraAccess,
         usb: SourceInput,
@@ -92,7 +92,8 @@ extension AppState {
     ) -> FeedKind? {
         let usbUsable = camera == .granted && usb.available
         if preferred == .wireless, wireless.available { return .wireless }
-        if usbUsable { return .usb }
-        return wireless.available ? .wireless : nil
+        if usbUsable, !usb.failed { return .usb }
+        if wireless.available { return .wireless }
+        return usbUsable ? .usb : nil
     }
 }

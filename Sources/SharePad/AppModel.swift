@@ -370,9 +370,7 @@ extension AppModel {
             suspendTrialSession()
             armOrResumeTrialSession()
         } else {
-            window.hide()
-            isWindowVisible = false
-            suspendTrialSession()
+            hideIfShowingUSB()
         }
         isReconfiguring = false
     }
@@ -394,11 +392,9 @@ extension AppModel {
             isLive = false
             failed = false
             videoSize = nil
-            window.hide()
-            isWindowVisible = false
-            suspendTrialSession()
+            let usbWasShown = hideIfShowingUSB()
             await capture.stop()
-            if wasSharing { raiseShareLost() }
+            if wasSharing, usbWasShown { raiseShareLost() }
         case let .keep(device):
             currentDeviceName = device.name
         case let .switchTo(device):
@@ -420,7 +416,7 @@ extension AppModel {
         // Suspend the prior device's countdown/overlay before connecting. The new
         // device's budget is decided in armOrResumeTrialSession: a different iPad
         // starts fresh, the same one resumes — so this must not reset it here.
-        suspendTrialSession()
+        if hostedFeed == .usb { suspendTrialSession() }
         currentDeviceID = device.id
         currentDeviceName = device.name
         isLive = false
@@ -452,9 +448,7 @@ extension AppModel {
         guard generation == connectGeneration, !isLive else { return }
         failed = true
         reporter.report(.retryExhausted)
-        window.hide()
-        isWindowVisible = false
-        suspendTrialSession()
+        hideIfShowingUSB()
     }
 
     private func connectOnce(deviceID: String, generation: Int) async -> ConnectOutcome {
@@ -692,6 +686,18 @@ extension AppModel {
             dismissShareLost()
             if autoShowOnConnect, !isWindowVisible { presentWindow() }
         }
+    }
+
+    // A cable that fails or goes while another feed can take over hands the window
+    // to that feed instead of ending the share.
+    @discardableResult
+    private func hideIfShowingUSB() -> Bool {
+        syncHostedFeed()
+        guard hostedFeed == .usb else { return false }
+        window.hide()
+        isWindowVisible = false
+        suspendTrialSession()
+        return true
     }
 
     func syncHostedFeed() {

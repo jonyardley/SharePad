@@ -46,9 +46,11 @@ targets:
         ENABLE_HARDENED_RUNTIME: "YES"
         CODE_SIGN_ENTITLEMENTS: Sources/SharePad/SharePad.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      configs:
         # The wireless Info.plist script below edits the built product's plist,
         # which the user-script sandbox would block.
-        ENABLE_USER_SCRIPT_SANDBOXING: "NO"
+        Debug:
+          ENABLE_USER_SCRIPT_SANDBOXING: "NO"
     # Wireless is Debug only until pairing ships (specs/wireless-product.md §10,
     # W1), so its Info.plist keys are added to Debug products only. `info:` below
     # applies to every configuration and can't express that.

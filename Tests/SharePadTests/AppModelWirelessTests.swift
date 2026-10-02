@@ -90,6 +90,34 @@ final class AppModelWirelessTests: AppModelTestCase {
         )
     }
 
+    func testUnpluggingACableDoesNotEndAWirelessShare() async throws {
+        let model = try makeWirelessModel()
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+        await model.reconcile(devices: [device("a")])
+
+        await model.reconcile(devices: [])
+
+        XCTAssertTrue(model.isWindowVisible)
+        XCTAssertFalse(model.shareLostSignal)
+        XCTAssertEqual(model.hostedFeed, .wireless)
+    }
+
+    func testExpiredTrialMetersAWirelessShare() throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * 86400)
+        let model = makeModel(
+            capture: FakeCaptureController(),
+            window: FakeShareWindow(),
+            preferences: prefs,
+            wireless: FakeWirelessFeed()
+        )
+
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+
+        XCTAssertEqual(model.entitlement, .trialExpired)
+        XCTAssertNotNil(model.sessionEndsAt)
+    }
+
     func testUSBOnlyNeverSwapsTheWindowLayer() async throws {
         let window = FakeShareWindow()
         let model = try makeModel(

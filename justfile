@@ -82,6 +82,12 @@ verify-app app=".build/Build/Products/Debug/SharePad.app":
                 note "$key present in a Release build: wireless must stay Debug only"
             fi
         done ;;
+    *Debug*)
+        for key in NSLocalNetworkUsageDescription NSBonjourServices; do
+            plutil -extract "$key" raw "$PLIST" >/dev/null 2>&1 \
+                || plutil -extract "$key" json -o - "$PLIST" >/dev/null 2>&1 \
+                || note "$key missing from a Debug build: the wireless listener can't ask for local network access"
+        done ;;
     esac
     if [ "$fail" -eq 0 ]; then echo "verify-app OK: $APP"; else echo "verify-app FAILED" >&2; exit 1; fi
 

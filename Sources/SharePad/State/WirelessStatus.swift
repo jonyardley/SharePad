@@ -10,6 +10,7 @@ struct WirelessStatus: Equatable, Sendable {
     var isReceiving = false
     var isReconnecting = false
     var localNetwork: LocalNetworkAccess = .notRequested
+    var listenerFailed = false
 
     var input: SourceInput {
         SourceInput(available: peer != nil, running: isReceiving, failed: false)
