@@ -87,8 +87,6 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.jonyardley.SharePadTests
 
   # ── iPad companion app (specs/wireless-product.md §4) ──
-  # Self-contained block: nothing above depends on it, so the Mac targets are untouched.
-  # Device builds need DEVELOPMENT_TEAM (see `just pad-run`); simulator builds need none.
   SharePadPad:
     type: application
     platform: iOS

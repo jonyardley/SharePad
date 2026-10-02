@@ -30,35 +30,34 @@ final class ScreenRecorder: ScreenRecording {
     ) {
         recorder.isMicrophoneEnabled = false
         recorder.isCameraEnabled = false
-        let log = log
         recorder.startCapture(
             handler: Self.frameHandler(onFrame),
-            completionHandler: { error in
-                if let error {
-                    log.error("capture refused: \(error.localizedDescription)")
-                }
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated { completion(error == nil) }
-                }
-            }
+            completionHandler: Self.completion(log: log, completion)
         )
     }
 
     @MainActor
     func stop(completion: @escaping @MainActor @Sendable () -> Void) {
-        let log = log
-        recorder.stopCapture { error in
+        recorder.stopCapture(handler: Self.completion(log: log) { _ in completion() })
+    }
+
+    // These handlers are built outside any actor: ReplayKit calls them on its own
+    // queue, and a closure formed in a @MainActor method would trap there under Swift 6.
+    private nonisolated static func completion(
+        log: Logger,
+        _ onMain: @escaping @MainActor @Sendable (_ succeeded: Bool) -> Void
+    ) -> @Sendable (Error?) -> Void {
+        { error in
             if let error {
-                log.info("stop capture: \(error.localizedDescription)")
+                log.info("capture call ended with: \(error.localizedDescription)")
             }
+            let succeeded = error == nil
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { completion() }
+                MainActor.assumeIsolated { onMain(succeeded) }
             }
         }
     }
 
-    // Built outside any actor: ReplayKit calls it on its own queue, and a closure
-    // formed in a @MainActor method would trap on that queue under Swift 6.
     private nonisolated static func frameHandler(
         _ onFrame: @escaping @Sendable (CapturedFrame) -> Void
     ) -> @Sendable (CMSampleBuffer, RPSampleBufferType, Error?) -> Void {

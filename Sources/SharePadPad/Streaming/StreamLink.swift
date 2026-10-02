@@ -8,8 +8,6 @@ struct LinkCallbacks: Sendable {
     var onLocalNetworkDenied: @MainActor @Sendable (Bool) -> Void
 }
 
-// The seam W2b fills: a paired, TLS-PSK link conforms here and replaces
-// `DevelopmentLink` without the model changing.
 protocol StreamLink: AnyObject, Sendable {
     func start()
     func stop()

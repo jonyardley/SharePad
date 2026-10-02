@@ -67,13 +67,25 @@ enum CanvasCrop {
             bufferWidth: CGFloat(bufferWidth),
             bufferHeight: CGFloat(bufferHeight)
         )
-        return canvasRect(
-            stored.integral.intersection(CGRect(
-                x: 0,
-                y: 0,
-                width: bufferWidth,
-                height: bufferHeight
-            ))
+        let bounded = stored.intersection(CGRect(
+            x: 0,
+            y: 0,
+            width: bufferWidth,
+            height: bufferHeight
+        ))
+        guard !bounded.isNull else { return nil }
+        return canvasRect(inward(bounded))
+    }
+
+    // Rounding outward would let a pixel row of the bar or tool picker into the share.
+    private static func inward(_ rect: CGRect) -> CGRect {
+        let minX = rect.minX.rounded(.up)
+        let minY = rect.minY.rounded(.up)
+        return CGRect(
+            x: minX,
+            y: minY,
+            width: rect.maxX.rounded(.down) - minX,
+            height: rect.maxY.rounded(.down) - minY
         )
     }
 

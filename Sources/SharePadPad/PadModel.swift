@@ -14,14 +14,15 @@ final class PadModel {
     private(set) var localNetworkDenied = false
     private(set) var canUndo = false
     private(set) var canRedo = false
+    private(set) var toolsFloating = false
     private(set) var rules = StreamingRules()
 
     var isPaperMenuShown = false {
-        didSet { overlayChanged(.paperMenu, shown: isPaperMenuShown) }
+        didSet { overlayChanged(.paperMenu, shown: isPaperMenuShown, was: oldValue) }
     }
 
     var isSettingsShown = false {
-        didSet { overlayChanged(.settings, shown: isSettingsShown) }
+        didSet { overlayChanged(.settings, shown: isSettingsShown, was: oldValue) }
     }
 
     let canvas: CanvasController
@@ -31,7 +32,8 @@ final class PadModel {
         ConnectionPill(
             link: linkStatus,
             localNetworkDenied: localNetworkDenied,
-            captureDeclined: rules.captureDeclined
+            captureDeclined: rules.captureDeclined,
+            toolsFloating: toolsFloating
         )
     }
 
@@ -78,7 +80,11 @@ final class PadModel {
             self?.canRedo = canRedo
         }
         let context = captureContext
-        canvas.onLayoutChange = { layout in context.setLayout(layout) }
+        canvas.onLayoutChange = { layout in
+            context.setLayout(layout, at: ProcessInfo.processInfo.systemUptime)
+        }
+        canvas.onToolsFloating = { [weak self] floating in self?.toolsFloatingChanged(floating) }
+        UIApplication.shared.applicationSupportsShakeToEdit = false
     }
 
     // ── Intents ──
@@ -164,8 +170,8 @@ final class PadModel {
         let link = link
         return { frame in
             let decision = context.decide(for: frame, at: ProcessInfo.processInfo.systemUptime)
+            if let crop = decision.crop { link.setCanvas(crop) }
             guard decision.allowed else { return }
-            link.setCanvas(decision.crop)
             link.submit(
                 pixelBuffer: frame.pixelBuffer,
                 presentationTime: frame.presentationTime,
@@ -174,7 +180,18 @@ final class PadModel {
         }
     }
 
-    private func overlayChanged(_ overlay: Overlay, shown: Bool) {
+    private func toolsFloatingChanged(_ floating: Bool) {
+        guard floating != toolsFloating else { return }
+        toolsFloating = floating
+        captureContext.overlay(
+            .floatingTools,
+            shown: floating,
+            at: ProcessInfo.processInfo.systemUptime
+        )
+    }
+
+    private func overlayChanged(_ overlay: Overlay, shown: Bool, was: Bool) {
+        guard shown != was else { return }
         captureContext.overlay(overlay, shown: shown, at: ProcessInfo.processInfo.systemUptime)
         guard !shown else { return }
         Task { [weak self] in

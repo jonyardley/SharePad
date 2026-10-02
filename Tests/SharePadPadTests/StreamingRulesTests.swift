@@ -109,4 +109,22 @@ final class StreamingRulesTests: XCTestCase {
         var rules = liveAndCapturing()
         XCTAssertEqual(rules.reduce(.captureStopped), [.startCapture])
     }
+
+    func testStartLandingAfterTheStopCompletedStopsAgain() {
+        var rules = StreamingRules()
+        _ = rules.reduce(.scene(.active))
+        _ = rules.reduce(.linkUp(true))
+        _ = rules.reduce(.scene(.background))
+        XCTAssertEqual(rules.reduce(.captureStopped), [])
+        XCTAssertEqual(rules.reduce(.captureStarted), [.stopCapture])
+        XCTAssertEqual(rules.capture, .stopping)
+    }
+
+    func testStaleStopWhileStartingIsIgnored() {
+        var rules = StreamingRules()
+        _ = rules.reduce(.scene(.active))
+        _ = rules.reduce(.linkUp(true))
+        XCTAssertEqual(rules.reduce(.captureStopped), [])
+        XCTAssertEqual(rules.capture, .starting)
+    }
 }

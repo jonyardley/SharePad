@@ -23,6 +23,7 @@ final class CanvasController: NSObject {
     var onDrawingChange: ((PKDrawing) -> Void)?
     var onUndoChange: ((_ canUndo: Bool, _ canRedo: Bool) -> Void)?
     var onLayoutChange: ((CanvasLayout) -> Void)?
+    var onToolsFloating: ((Bool) -> Void)?
 
     private let canvasView = PKCanvasView()
     private let toolPicker = PKToolPicker()
@@ -95,9 +96,11 @@ final class CanvasController: NSObject {
     private func reportLayout() {
         guard let window = hostView.window else { return }
         let obscured = toolPicker.frameObscured(in: hostView)
-        let obstructions = obscured.isNull || obscured.isEmpty
-            ? []
-            : [hostView.convert(obscured, to: window)]
+        let unknown = obscured.isNull || obscured.isEmpty
+        let obstructions = unknown ? [] : [hostView.convert(obscured, to: window)]
+        // frameObscured(in:) is null for a floating picker (PKToolPicker docs), so its
+        // position over the canvas cannot be cropped out.
+        onToolsFloating?(unknown && toolPicker.isVisible)
         onLayoutChange?(CanvasLayout(
             canvas: hostView.convert(hostView.bounds, to: window),
             window: window.bounds.size,

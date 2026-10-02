@@ -109,6 +109,9 @@ struct StreamingRules: Equatable {
             return []
         case .stopping:
             return [.stopCapture]
+        case .idle where !isForeground || !isLinkUp:
+            capture = .stopping
+            return [.stopCapture]
         case .idle, .running:
             return []
         }

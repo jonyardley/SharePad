@@ -66,4 +66,21 @@ final class ConnectionPillTests: XCTestCase {
         XCTAssertTrue(LinkStatus.paused("Office").isUp)
         XCTAssertFalse(LinkStatus.looking("Office").isUp)
     }
+
+    func testFloatingToolsAskToDockWhileConnected() {
+        let live = ConnectionPill(
+            link: .live("Studio"),
+            localNetworkDenied: false,
+            captureDeclined: false,
+            toolsFloating: true
+        )
+        XCTAssertEqual(live.text, "Dock the tools to keep sharing")
+        let looking = ConnectionPill(
+            link: .looking(nil),
+            localNetworkDenied: false,
+            captureDeclined: false,
+            toolsFloating: true
+        )
+        XCTAssertEqual(looking.text, "Looking for your Mac…")
+    }
 }

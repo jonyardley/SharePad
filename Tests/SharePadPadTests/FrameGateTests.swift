@@ -28,4 +28,19 @@ final class FrameGateTests: XCTestCase {
         gate.overlay(.paperMenu, shown: false, at: 1)
         XCTAssertTrue(gate.allowsFrame(at: 1))
     }
+
+    func testATimedHoldBlocksUntilItEnds() {
+        var gate = FrameGate()
+        gate.hold(for: FrameGate.recrop, at: 10)
+        XCTAssertFalse(gate.allowsFrame(at: 10.5))
+        XCTAssertTrue(gate.allowsFrame(at: 10 + FrameGate.recrop))
+    }
+
+    func testFloatingToolsHoldFramesUntilDocked() {
+        var gate = FrameGate()
+        gate.overlay(.floatingTools, shown: true, at: 0)
+        XCTAssertFalse(gate.allowsFrame(at: 60))
+        gate.overlay(.floatingTools, shown: false, at: 60)
+        XCTAssertTrue(gate.allowsFrame(at: 60 + FrameGate.settle))
+    }
 }

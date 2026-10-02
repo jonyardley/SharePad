@@ -20,21 +20,26 @@ final class CaptureContext: Sendable {
         state.withLock { $0.gate.overlay(overlay, shown: shown, at: now) }
     }
 
-    func setLayout(_ layout: CanvasLayout) {
-        state.withLock { $0.layout = layout }
+    func setLayout(_ layout: CanvasLayout, at now: TimeInterval) {
+        state.withLock { state in
+            let changed = state.layout.map(CanvasCrop.shareableRect) != CanvasCrop
+                .shareableRect(of: layout)
+            if changed, state.layout != nil {
+                state.gate.hold(for: FrameGate.recrop, at: now)
+            }
+            state.layout = layout
+        }
     }
 
     func decide(for frame: CapturedFrame, at now: TimeInterval) -> Decision {
         let (gate, layout) = state.withLock { ($0.gate, $0.layout) }
-        guard gate.allowsFrame(at: now), let layout else {
-            return Decision(allowed: false, crop: nil)
-        }
+        guard let layout else { return Decision(allowed: false, crop: nil) }
         let crop = CanvasCrop.pixelRect(
             for: layout,
             bufferWidth: CVPixelBufferGetWidth(frame.pixelBuffer),
             bufferHeight: CVPixelBufferGetHeight(frame.pixelBuffer),
             orientation: frame.orientation
         )
-        return Decision(allowed: crop != nil, crop: crop)
+        return Decision(allowed: crop != nil && gate.allowsFrame(at: now), crop: crop)
     }
 }

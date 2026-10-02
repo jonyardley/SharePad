@@ -60,7 +60,12 @@ struct ConnectionPill: Equatable {
         self.action = action
     }
 
-    init(link: LinkStatus, localNetworkDenied: Bool, captureDeclined: Bool) {
+    init(
+        link: LinkStatus,
+        localNetworkDenied: Bool,
+        captureDeclined: Bool,
+        toolsFloating: Bool = false
+    ) {
         if link == .notPaired {
             self.init(text: "Not paired", tone: .attention)
         } else if localNetworkDenied {
@@ -71,6 +76,8 @@ struct ConnectionPill: Equatable {
                 tone: .attention,
                 action: .retryCapture
             )
+        } else if toolsFloating, link.isUp {
+            self.init(text: "Dock the tools to keep sharing", tone: .attention)
         } else {
             self.init(link: link)
         }

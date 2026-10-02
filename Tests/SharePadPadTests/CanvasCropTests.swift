@@ -99,4 +99,18 @@ final class CanvasCropTests: XCTestCase {
             orientation: .up
         ))
     }
+
+    func testFractionalCropRoundsInward() {
+        let layout = CanvasLayout(
+            canvas: CGRect(x: 0, y: 60.25, width: 1000, height: 739.5),
+            window: window
+        )
+        let rect = CanvasCrop.pixelRect(
+            for: layout,
+            bufferWidth: 1000,
+            bufferHeight: 800,
+            orientation: .up
+        )
+        XCTAssertEqual(rect, CanvasRect(x: 0, y: 61, width: 1000, height: 738))
+    }
 }

@@ -7,10 +7,6 @@ enum Theme {
         static let bar: CGFloat = 16
     }
 
-    enum Radius {
-        static let pill: CGFloat = 999
-    }
-
     enum Paper {
         static let gridSpacing: CGFloat = 32
         static let dotDiameter: CGFloat = 3
