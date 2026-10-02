@@ -9,12 +9,18 @@
     // layers are created on main and fed off-main only through their renderers.
     final class WirelessReceiver: WirelessFeeding, @unchecked Sendable {
         let displayLayer: AVSampleBufferDisplayLayer
-        let thumbnailLayer: AVSampleBufferDisplayLayer
+        let thumbnailDisplayLayer: AVSampleBufferDisplayLayer
+        let croppedDisplay: CroppedVideoLayer
+        let croppedThumbnail: CroppedVideoLayer
         let videoSizes: AsyncStream<CGSize>
         let statuses: AsyncStream<WirelessStatus>
 
         var hostedLayer: CALayer {
-            displayLayer
+            croppedDisplay
+        }
+
+        var thumbnailLayer: CALayer {
+            croppedThumbnail
         }
 
         private static let minThumbnailInterval = 1.0 / 15.0
@@ -36,6 +42,7 @@
         private var keyframes = KeyframeRequester()
         private var status = WirelessStatus()
         private var lastSize: CGSize?
+        private var lastCrop: FeedCrop?
         private var thumbnailActive = false
         private var lastThumbnailAt: Double?
         private var frameWaiter: (@Sendable (Bool) -> Void)?
@@ -47,11 +54,11 @@
         init(deviceName: String = SCDynamicStoreCopyComputerName(nil, nil) as String? ?? "Mac") {
             identity = Hello(deviceID: UUID(), deviceName: deviceName)
             displayLayer = AVSampleBufferDisplayLayer()
-            displayLayer.videoGravity = .resizeAspect
-            thumbnailLayer = AVSampleBufferDisplayLayer()
-            thumbnailLayer.videoGravity = .resizeAspect
+            thumbnailDisplayLayer = AVSampleBufferDisplayLayer()
+            croppedDisplay = CroppedVideoLayer(video: displayLayer)
+            croppedThumbnail = CroppedVideoLayer(video: thumbnailDisplayLayer)
             displayRenderer = displayLayer.sampleBufferRenderer
-            thumbnailRenderer = thumbnailLayer.sampleBufferRenderer
+            thumbnailRenderer = thumbnailDisplayLayer.sampleBufferRenderer
             (videoSizes, sizeContinuation) = AsyncStream.makeStream(of: CGSize.self)
             (statuses, statusContinuation) = AsyncStream.makeStream(of: WirelessStatus.self)
             decoder.onDecodedFrame = { [weak self] frame in
@@ -250,11 +257,11 @@
             switch message {
             case let .config(config):
                 decoder.configure(parameterSets: config.parameterSets)
-                let size = CGSize(width: Int(config.width), height: Int(config.height))
-                if size.width > 0, size.height > 0, size != lastSize {
-                    lastSize = size
-                    sizeContinuation.yield(size)
-                }
+                applyCrop(FeedCrop(
+                    width: config.width,
+                    height: config.height,
+                    canvas: config.canvas
+                ))
             case let .frame(frame):
                 let effects = keyframes.reduce(
                     .frameArrived(isKeyframe: frame.isKeyframe, at: Self.uptime)
@@ -287,6 +294,25 @@
     // ── Decoded frames ──
 
     extension WirelessReceiver {
+        private func applyCrop(_ crop: FeedCrop?) {
+            guard let crop, crop != lastCrop else { return }
+            lastCrop = crop
+            log.notice("""
+            crop video=\(Int(crop.video.width))x\(Int(crop.video.height)) \
+            canvas=\(String(describing: crop.canvas), privacy: .public)
+            """)
+            let layers = [croppedDisplay, croppedThumbnail]
+            DispatchQueue.main.async {
+                for layer in layers {
+                    layer.crop = crop
+                }
+            }
+            if crop.visibleSize != lastSize {
+                lastSize = crop.visibleSize
+                sizeContinuation.yield(crop.visibleSize)
+            }
+        }
+
         private func show(_ pixelBuffer: CVPixelBuffer) {
             guard status.peer != nil, let sample = Self.immediateSample(pixelBuffer) else { return }
             let renderer = displayRenderer

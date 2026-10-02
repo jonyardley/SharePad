@@ -604,7 +604,7 @@ extension AppModel {
         access == .denied
     }
 
-    var thumbnailLayer: AVSampleBufferDisplayLayer {
+    var thumbnailLayer: CALayer {
         source(for: hostedFeed).thumbnailLayer
     }
 

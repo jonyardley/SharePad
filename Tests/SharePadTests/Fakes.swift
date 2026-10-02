@@ -6,7 +6,7 @@ import AVFoundation
 final class FakeCaptureController: CaptureControlling, @unchecked Sendable {
     let videoSizes = AsyncStream<CGSize> { _ in }
     let hostedLayer = CALayer()
-    let thumbnailLayer = AVSampleBufferDisplayLayer()
+    let thumbnailLayer: CALayer = AVSampleBufferDisplayLayer()
     let restarts: AsyncStream<Void>
     private let restartContinuation: AsyncStream<Void>.Continuation
 
@@ -57,7 +57,7 @@ final class FakeCaptureController: CaptureControlling, @unchecked Sendable {
 /// @unchecked Sendable: driven from the main actor in tests only.
 final class FakeWirelessFeed: WirelessFeeding, @unchecked Sendable {
     let hostedLayer = CALayer()
-    let thumbnailLayer = AVSampleBufferDisplayLayer()
+    let thumbnailLayer: CALayer = AVSampleBufferDisplayLayer()
     let videoSizes = AsyncStream<CGSize> { _ in }
     let statuses = AsyncStream<WirelessStatus> { _ in }
     private(set) var thumbnailActive: Bool?

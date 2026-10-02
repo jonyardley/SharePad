@@ -4,7 +4,7 @@ import AVFoundation
 // its pipeline; AppModel hosts its layers and reads its sizes.
 protocol FeedSource: AnyObject, Sendable {
     var hostedLayer: CALayer { get }
-    var thumbnailLayer: AVSampleBufferDisplayLayer { get }
+    var thumbnailLayer: CALayer { get }
     var videoSizes: AsyncStream<CGSize> { get }
     func stop() async
     func setThumbnailActive(_ active: Bool)

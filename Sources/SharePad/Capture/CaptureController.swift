@@ -8,17 +8,21 @@ protocol CaptureControlling: FeedSource {
 
 /// @unchecked Sendable: `session` and the output/connection wiring are mutated only
 /// on `sessionQueue`; `frameListener`'s state is touched only on `sampleQueue`;
-/// `previewLayer`, `thumbnailLayer`, and `frameListener` are immutable references
+/// `previewLayer`, `thumbnailDisplayLayer`, and `frameListener` are immutable references
 /// (created on main, fed only off-main); the continuations are Sendable and
 /// `sessionObservers` is set up once in `init`.
 final class CaptureController: CaptureControlling, @unchecked Sendable {
     let previewLayer: AVCaptureVideoPreviewLayer
-    let thumbnailLayer: AVSampleBufferDisplayLayer
+    let thumbnailDisplayLayer: AVSampleBufferDisplayLayer
     let videoSizes: AsyncStream<CGSize>
     let restarts: AsyncStream<Void>
 
     var hostedLayer: CALayer {
         previewLayer
+    }
+
+    var thumbnailLayer: CALayer {
+        thumbnailDisplayLayer
     }
 
     private let session = AVCaptureSession()
@@ -35,7 +39,7 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         previewLayer.videoGravity = .resizeAspect
         let thumbnailLayer = AVSampleBufferDisplayLayer()
         thumbnailLayer.videoGravity = .resizeAspect
-        self.thumbnailLayer = thumbnailLayer
+        thumbnailDisplayLayer = thumbnailLayer
         (videoSizes, sizeContinuation) = AsyncStream.makeStream(of: CGSize.self)
         (restarts, restartContinuation) = AsyncStream.makeStream(of: Void.self)
         let renderer = thumbnailLayer.sampleBufferRenderer
