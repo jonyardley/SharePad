@@ -8,6 +8,16 @@ import os
 // on it, so Network.framework's callbacks (send completions included) land there
 // too; only the encoder's output hops in explicitly.
 public final class StreamSender: @unchecked Sendable {
+    public enum Security: Sendable {
+        case unauthenticated
+        case paired([PairingRecord])
+    }
+
+    public enum PairedEvent: Equatable, Sendable {
+        case connected(macID: UUID)
+        case handshakeFailed(macID: UUID)
+    }
+
     public struct Stats: Sendable {
         public var framesPerSecond: Double = 0
         public var kilobitsPerSecond: Double = 0
@@ -20,6 +30,7 @@ public final class StreamSender: @unchecked Sendable {
     private let onPhase: @Sendable (SenderLink.Phase) -> Void
     private let onStats: @Sendable (Stats) -> Void
     private let onLocalNetworkDenied: @Sendable (Bool) -> Void
+    private let onPairedEvent: @Sendable (PairedEvent) -> Void
 
     private let identity: Hello
     private let encoder: H264Encoder
@@ -31,6 +42,10 @@ public final class StreamSender: @unchecked Sendable {
     private var browser: WireBrowser?
     private var connection: WireConnection?
     private var endpoints: [String: NWEndpoint] = [:]
+    private var security: Security
+    private var lastResults: [NWBrowser.Result] = []
+    private var pairedServices: [String: PairingRecord] = [:]
+    private var dialled: PairingRecord?
     private var isStreaming = false
     private var canvas: CanvasRect?
     private var lastConfig: StreamConfig?
@@ -45,13 +60,17 @@ public final class StreamSender: @unchecked Sendable {
         deviceName: String,
         settings: EncoderSettings = EncoderSettings(),
         lastPeer: String? = nil,
+        security: Security = .unauthenticated,
         onPhase: @escaping @Sendable (SenderLink.Phase) -> Void = { _ in },
         onStats: @escaping @Sendable (Stats) -> Void = { _ in },
-        onLocalNetworkDenied: @escaping @Sendable (Bool) -> Void = { _ in }
+        onLocalNetworkDenied: @escaping @Sendable (Bool) -> Void = { _ in },
+        onPairedEvent: @escaping @Sendable (PairedEvent) -> Void = { _ in }
     ) {
         self.onPhase = onPhase
         self.onStats = onStats
         self.onLocalNetworkDenied = onLocalNetworkDenied
+        self.onPairedEvent = onPairedEvent
+        self.security = security
         identity = Hello(deviceID: deviceID, deviceName: deviceName)
         encoder = H264Encoder(settings: settings)
         link = SenderLink(lastPeer: lastPeer)
@@ -67,6 +86,10 @@ public final class StreamSender: @unchecked Sendable {
 
     public func stop() {
         queue.async { [weak self] in self?.send(.stop) }
+    }
+
+    public func setPairings(_ records: [PairingRecord]) {
+        queue.async { [weak self] in self?.pairingsChanged(records) }
     }
 
     public func setCanvas(_ rect: CanvasRect?) {
@@ -110,11 +133,7 @@ public final class StreamSender: @unchecked Sendable {
             browser?.cancel()
             browser = nil
         case let .connect(name):
-            guard let endpoint = endpoints[name] else {
-                send(.connectionLost)
-                return
-            }
-            open(WireConnection.outbound(to: endpoint, queue: queue))
+            connect(to: name)
         case let .scheduleConnectTimeout(attempt, delay):
             queue.asyncAfter(deadline: .now() + delay) { [weak self] in
                 self?.send(.connectTimedOut(attempt: attempt))
@@ -126,8 +145,9 @@ public final class StreamSender: @unchecked Sendable {
         case .closeConnection:
             connection?.cancel()
             connection = nil
+            dialled = nil
         case .sendHello:
-            connection?.send(.hello(identity))
+            sendHello()
         case .startStreaming, .pauseStreaming, .resumeStreaming, .stopStreaming:
             performStreaming(effect)
         }
@@ -153,11 +173,26 @@ public final class StreamSender: @unchecked Sendable {
     }
 
     private func found(_ results: [NWBrowser.Result]) {
-        endpoints = Dictionary(
+        lastResults = results
+        let all = Dictionary(
             results.map { ($0.serviceName, $0.endpoint) },
             uniquingKeysWith: { first, _ in first }
         )
-        send(.found(results.map(\.serviceName)))
+        guard case let .paired(records) = security else {
+            endpoints = all
+            send(.found(results.map(\.serviceName)))
+            return
+        }
+        let ranked = PairedServices.rank(
+            results.map { AdvertisedService(name: $0.serviceName, deviceID: $0.deviceID) },
+            pairings: records
+        )
+        pairedServices = Dictionary(
+            ranked.map { ($0.name, $0.record) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        endpoints = all.filter { pairedServices[$0.key] != nil }
+        send(.found(ranked.map(\.name)))
     }
 
     private func open(_ connection: WireConnection) {
@@ -175,10 +210,21 @@ public final class StreamSender: @unchecked Sendable {
             send(.connectionReady)
         case let .message(message):
             handle(message)
+        case let .waiting(error) where error.isLinkAuthenticationFailure:
+            handshakeFailed()
         case let .waiting(error):
             log.info("waiting: \(String(describing: error))")
-        case .failed, .cancelled:
+        case let .failed(error):
+            if error?.isLinkAuthenticationFailure == true {
+                handshakeFailed()
+            } else {
+                connection = nil
+                dialled = nil
+                send(.connectionLost)
+            }
+        case .cancelled:
             connection = nil
+            dialled = nil
             send(.connectionLost)
         }
     }
@@ -186,7 +232,7 @@ public final class StreamSender: @unchecked Sendable {
     private func handle(_ message: WireMessage) {
         switch message {
         case let .hello(hello):
-            send(.helloReceived(hello))
+            helloReceived(hello)
         case .requestKeyframe:
             _ = rules.reduce(.keyframeRequested)
         case .pause:
@@ -277,6 +323,80 @@ public final class StreamSender: @unchecked Sendable {
 }
 
 private extension StreamSender {
+    func connect(to name: String) {
+        guard let endpoint = endpoints[name] else {
+            send(.connectionLost)
+            return
+        }
+        switch security {
+        case .unauthenticated:
+            dialled = nil
+            open(WireConnection.outbound(to: endpoint, queue: queue))
+        case .paired:
+            guard let record = pairedServices[name] else {
+                send(.connectionLost)
+                return
+            }
+            dialled = record
+            open(WireConnection.outbound(to: endpoint, security: .paired(record), queue: queue))
+        }
+    }
+
+    func sendHello() {
+        guard let connection else { return }
+        if let dialled {
+            guard let exporter = connection.linkExporter() else {
+                dropConnection()
+                return
+            }
+            connection.send(.authenticate(.paired(dialled, exporter: exporter)))
+        }
+        connection.send(.hello(identity))
+    }
+
+    func helloReceived(_ hello: Hello) {
+        if let dialled {
+            guard hello.deviceID == dialled.peerID else {
+                dropConnection()
+                return
+            }
+            report(.connected(macID: dialled.peerID))
+        }
+        send(.helloReceived(hello))
+    }
+
+    func handshakeFailed() {
+        if let dialled { report(.handshakeFailed(macID: dialled.peerID)) }
+        dropConnection()
+    }
+
+    func dropConnection() {
+        connection?.cancel()
+        connection = nil
+        dialled = nil
+        send(.connectionLost)
+    }
+
+    func report(_ event: PairedEvent) {
+        let onPairedEvent = onPairedEvent
+        DispatchQueue.main.async { onPairedEvent(event) }
+    }
+
+    // Forgetting the Mac this link is on tells it first, best effort, so its row can
+    // read "Needs pairing again" (specs/wireless-pairing-ui.md, decision 2).
+    func pairingsChanged(_ records: [PairingRecord]) {
+        guard case .paired = security else { return }
+        security = .paired(records)
+        if let dialled, !records.contains(where: { $0.pairingID == dialled.pairingID }) {
+            let forgotten = connection
+            connection = nil
+            self.dialled = nil
+            forgotten?.send(.forgotten(pairingID: dialled.pairingID)) { forgotten?.cancel() }
+            send(.connectionLost)
+        }
+        found(lastResults)
+    }
+
     func startBrowsing() {
         browser?.cancel()
         let browser = WireBrowser()

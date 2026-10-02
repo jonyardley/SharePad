@@ -75,6 +75,8 @@ private final class MacShell: @unchecked Sendable {
             apply(window.reduce(.stored(id, pairingID: pairingID, at: 2)))
         case .grant:
             close(id, "grant from an iPad")
+        case .forgotten:
+            gate(id, .forgetNotice)
         }
     }
 

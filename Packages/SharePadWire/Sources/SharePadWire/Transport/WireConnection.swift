@@ -240,9 +240,20 @@ public final class WireListener: @unchecked Sendable {
         try self.init(serviceName: serviceName, security: .unauthenticated, queue: queue)
     }
 
-    public init(serviceName: String?, security: LinkSecurity, queue: DispatchQueue) throws {
+    public init(
+        serviceName: String?,
+        security: LinkSecurity,
+        deviceID: UUID? = nil,
+        queue: DispatchQueue
+    ) throws {
         listener = try NWListener(using: WireParameters.stream(security: security))
-        if let serviceName {
+        if let serviceName, let deviceID {
+            listener.service = NWListener.Service(
+                name: serviceName,
+                type: WireService.type,
+                txtRecord: WireService.txtRecord(deviceID: deviceID)
+            )
+        } else if let serviceName {
             listener.service = NWListener.Service(name: serviceName, type: WireService.type)
         }
         self.queue = queue
@@ -278,7 +289,7 @@ public final class WireBrowser: @unchecked Sendable {
 
     public init() {
         browser = NWBrowser(
-            for: .bonjour(type: WireService.type, domain: nil),
+            for: .bonjourWithTXTRecord(type: WireService.type, domain: nil),
             using: WireParameters.browse()
         )
     }
@@ -315,5 +326,10 @@ public extension NWBrowser.Result {
             return name
         }
         return "\(endpoint)"
+    }
+
+    var deviceID: UUID? {
+        guard case let .bonjour(record) = metadata else { return nil }
+        return WireService.deviceID(in: record)
     }
 }

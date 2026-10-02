@@ -368,6 +368,7 @@ public struct PairingHealth: Equatable, Sendable {
     public enum Event: Equatable, Sendable {
         case handshakeFailed(UUID)
         case handshakeSucceeded(UUID)
+        case peerForgot(UUID)
     }
 
     public enum Effect: Equatable, Sendable {
@@ -392,6 +393,10 @@ public struct PairingHealth: Equatable, Sendable {
             let wasBroken = isBroken(id)
             consecutiveFailures[id] = nil
             return wasBroken ? [.markHealthy(id)] : []
+        case let .peerForgot(id):
+            let wasBroken = isBroken(id)
+            consecutiveFailures[id] = Self.failuresBeforeBroken
+            return wasBroken ? [] : [.markBroken(id)]
         }
     }
 }

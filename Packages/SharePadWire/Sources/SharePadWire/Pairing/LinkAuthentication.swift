@@ -102,15 +102,17 @@ public enum PairingMessage: Equatable, Sendable {
     case authenticate(LinkCredential)
     case grant(PairingGrant)
     case stored(pairingID: UUID)
+    case forgotten(pairingID: UUID)
 
     // Separate from WireMessage so the stream enum stays exhaustive for its users;
     // codes are permanent and sit clear of the stream range.
     static let authenticateCode: UInt8 = 16
     static let grantCode: UInt8 = 17
     static let storedCode: UInt8 = 18
+    static let forgottenCode: UInt8 = 19
 
     public static func handles(_ typeCode: UInt8) -> Bool {
-        (authenticateCode ... storedCode).contains(typeCode)
+        (authenticateCode ... forgottenCode).contains(typeCode)
     }
 
     var typeCode: UInt8 {
@@ -118,6 +120,7 @@ public enum PairingMessage: Equatable, Sendable {
         case .authenticate: Self.authenticateCode
         case .grant: Self.grantCode
         case .stored: Self.storedCode
+        case .forgotten: Self.forgottenCode
         }
     }
 
@@ -134,7 +137,7 @@ public enum PairingMessage: Equatable, Sendable {
         case let .grant(grant):
             body.uuid(grant.pairingID)
             body.bytes(grant.secret.bytes)
-        case let .stored(pairingID):
+        case let .stored(pairingID), let .forgotten(pairingID):
             body.uuid(pairingID)
         }
         var out = ByteWriter()
@@ -169,6 +172,8 @@ public enum PairingMessage: Equatable, Sendable {
             message = .grant(PairingGrant(pairingID: pairingID, secret: secret))
         case storedCode:
             message = try .stored(pairingID: reader.uuid())
+        case forgottenCode:
+            message = try .forgotten(pairingID: reader.uuid())
         default:
             throw WireError.unknownMessageType(typeCode)
         }
@@ -184,6 +189,7 @@ extension PairingMessage: CustomStringConvertible {
         case let .authenticate(.paired(pairingID, _)): "authenticate(paired \(pairingID))"
         case let .grant(grant): "grant(\(grant.pairingID))"
         case let .stored(pairingID): "stored(\(pairingID))"
+        case let .forgotten(pairingID): "forgotten(\(pairingID))"
         }
     }
 }
@@ -201,6 +207,7 @@ public struct LinkGate: Equatable, Sendable {
         case helloReceived(Hello)
         case streamMessage
         case pairingMessage
+        case forgetNotice
     }
 
     public enum CloseReason: Equatable, Sendable {
@@ -244,7 +251,7 @@ public struct LinkGate: Equatable, Sendable {
         switch event {
         case let .helloReceived(hello): admitHello(hello, from: peer)
         case .credentialChecked: close(.unexpectedCredential)
-        case .streamMessage, .pairingMessage: close(.unauthenticated)
+        case .streamMessage, .pairingMessage, .forgetNotice: close(.unauthenticated)
         }
     }
 
@@ -255,9 +262,9 @@ public struct LinkGate: Equatable, Sendable {
             hello.deviceID == current.deviceID ? .pass : close(.identityMismatch)
         case (_, .credentialChecked):
             close(.unexpectedCredential)
-        case (.pairing, .pairingMessage), (.paired, .streamMessage):
+        case (.pairing, .pairingMessage), (.paired, .streamMessage), (.paired, .forgetNotice):
             .pass
-        case (.pairing, .streamMessage):
+        case (.pairing, .streamMessage), (.pairing, .forgetNotice):
             close(.notPaired)
         case (.paired, .pairingMessage):
             close(.notPairing)

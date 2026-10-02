@@ -20,6 +20,7 @@ final class PairingMessageTests: XCTestCase {
             .authenticate(.paired(pairingID: UUID(), proof: Data(repeating: 2, count: 32))),
             .grant(PairingGrant(pairingID: UUID(), secret: LinkSecret.generate())),
             .stored(pairingID: UUID()),
+            .forgotten(pairingID: UUID()),
         ]
         for message in messages {
             XCTAssertEqual(try roundTrip(message), message)
@@ -264,5 +265,25 @@ final class LinkGateTests: XCTestCase {
         XCTAssertEqual(pairing.reduce(.helloReceived(pad)), .admitHello(.pairing, pad))
         XCTAssertEqual(pairing.reduce(.pairingMessage), .pass)
         XCTAssertEqual(pairing.reduce(.streamMessage), .close(.notPaired))
+    }
+
+    func testOnlyAnAdmittedPairedIPadMaySayItForgotThisMac() {
+        let paired = record(for: pad)
+        var admitted = LinkGate()
+        _ = admitted.reduce(.credentialChecked(.paired(paired)))
+        _ = admitted.reduce(.helloReceived(pad))
+        XCTAssertEqual(admitted.reduce(.forgetNotice), .pass)
+
+        var early = LinkGate()
+        _ = early.reduce(.credentialChecked(.paired(paired)))
+        XCTAssertEqual(early.reduce(.forgetNotice), .close(.unauthenticated))
+
+        var pairing = LinkGate()
+        _ = pairing.reduce(.credentialChecked(.pairing))
+        _ = pairing.reduce(.helloReceived(pad))
+        XCTAssertEqual(pairing.reduce(.forgetNotice), .close(.notPaired))
+
+        var stranger = LinkGate()
+        XCTAssertEqual(stranger.reduce(.forgetNotice), .close(.unauthenticated))
     }
 }
