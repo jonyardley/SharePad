@@ -153,7 +153,7 @@ struct PopoverView: View {
             HStack(spacing: Theme.Spacing.row) {
                 Image(systemName: "cable.connector.slash")
                     .foregroundStyle(.secondary)
-                Text("iPad disconnected. Plug it back in to carry on.")
+                Text("iPad disconnected. Reconnect it to carry on.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()

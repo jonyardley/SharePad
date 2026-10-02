@@ -16,7 +16,7 @@ size. Connect the iPad to your Mac and its window is already waiting in the
 screen**, without the per-call QuickTime faff.
 
 <p align="center">
-  <img src="docs/assets/popover.png" alt="The SharePad menu-bar popover: a live preview of the connected iPad, the device name, a Hide window button, and toggles for auto-show on connect, keep window on top, and launch at login" width="280">
+  <img src="docs/assets/popover.png" alt="The SharePad menu-bar popover: a live preview of the connected iPad, the device name, a Hide Window button, and toggles for show window on connect, keep window on top, and launch at login" width="280">
   <br />
   <em>The menu-bar popover: a live preview and every control in one place.</em>
 </p>

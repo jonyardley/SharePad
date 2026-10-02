@@ -32,7 +32,7 @@ tag a release.
 - If your iPad disconnects while you're sharing, SharePad now tells you: a
   brief alert appears in the menu-bar icon and the popover so you're not left
   wondering why your share went black.
-- Privacy: only the iPad feed window can be picked in a video call's window
+- Privacy: only the iPad window can be picked in a video call's window
   picker. Other SharePad surfaces (the About panel, update dialogs) can't be
   shared by mistake.
 - If the iPad stalls while connecting, SharePad now says so instead of looking
