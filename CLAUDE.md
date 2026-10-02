@@ -80,7 +80,7 @@ just scan          # gitleaks secret scan over full history (same check CI runs)
 just downloads     # GitHub Release download counts (DMG installs + appcast update-checks)
 just appcast-stats # active installs + version adoption from the appcast Worker (Analytics Engine)
 just telemetry-stats # crash/hang/error counts from the telemetry Worker (opt-in; Analytics Engine)
-just install-hooks # enable the pre-commit secret scan (run once per clone/worktree)
+just install-hooks # enable the pre-commit and pre-push secret scans (run once per clone/worktree)
 just release-build # Release build, Hardened Runtime, ad-hoc (for local on-iPad checks)
 just release       # full pipeline: build → Developer ID sign → notarize → DMG (needs creds)
 ```
@@ -91,7 +91,7 @@ First-time setup:
 
 ```bash
 brew install xcodegen just swiftformat swiftlint gitleaks
-just install-hooks   # enable the pre-commit secret scan
+just install-hooks   # enable the pre-commit and pre-push secret scans
 just gen && just run
 ```
 

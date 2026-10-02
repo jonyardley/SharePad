@@ -1,5 +1,5 @@
 # Secret-scanning rules for SharePad — run in CI (full history) and the
-# pre-commit hook (staged changes). The Sparkle EdDSA *private* key leaked in
+# pre-commit (staged) and pre-push (outgoing commits) hooks. The Sparkle EdDSA *private* key leaked in
 # #40 was a bare 44-char base64 string with no provider signature, so GitHub's
 # native scanner missed it. The explicit rules below close that gap.
 
