@@ -92,6 +92,20 @@ final class AppModelWirelessTests: AppModelTestCase {
         XCTAssertFalse(model.isConnected)
     }
 
+    func testLosingTheLinkHidesAWindowStillOnScreenEvenIfTheFlagSaysHidden() throws {
+        let window = FakeShareWindow()
+        let model = try makeWirelessModel(window: window)
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+        model.toggleWindow()
+        window.isShowing = true
+
+        model.applyWireless(WirelessStatus())
+
+        XCTAssertFalse(window.isShowing)
+        XCTAssertEqual(window.hideCount, 2)
+        XCTAssertTrue(model.shareLostSignal)
+    }
+
     func testReconnectingKeepsTheWindowUp() throws {
         let model = try makeWirelessModel()
         model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))

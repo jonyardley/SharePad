@@ -84,11 +84,15 @@ final class FakeShareWindow: ShareWindowControlling {
 
     func show(size: CGSize) {
         shownSizes.append(size)
+        isShowing = true
     }
 
     func hide() {
         hideCount += 1
+        isShowing = false
     }
+
+    var isShowing = false
 
     func updateSize(_ size: CGSize) {
         updatedSizes.append(size)

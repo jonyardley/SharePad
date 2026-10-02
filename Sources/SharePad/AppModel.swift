@@ -196,7 +196,7 @@ final class AppModel {
     func toggleWindow() {
         if isWindowVisible {
             window.hide()
-            isWindowVisible = false
+            setWindowVisible(false, "toggle")
             suspendTrialSession()
         } else if isConnected {
             presentWindow()
@@ -283,7 +283,7 @@ final class AppModel {
 
     private func presentWindow() {
         window.show(size: hostedVideoSize ?? Self.defaultSize)
-        isWindowVisible = true
+        setWindowVisible(true, "present")
         armOrResumeTrialSession()
     }
 
@@ -693,14 +693,28 @@ extension AppModel {
         visible=\(visible) autoShow=\(autoShow)
         """)
         guard hostedFeed == .wireless else { return }
-        if lostPeer, isWindowVisible {
+        if lostPeer, isWindowVisible || window.isShowing {
             window.hide()
-            isWindowVisible = false
+            setWindowVisible(false, "wireless link ended")
             suspendTrialSession()
             raiseShareLost()
         } else {
             autoShowWirelessIfDue()
         }
+    }
+
+    // Every change goes through here so the W1 hardware log shows which path moved
+    // it; the window itself is reported alongside, since the two have diverged.
+    private func setWindowVisible(_ visible: Bool, _ reason: StaticString) {
+        #if DEBUG
+            let was = isWindowVisible
+            let showing = window.isShowing
+            let why = String(describing: reason)
+            Self.wirelessLog.notice("""
+            windowVisible \(was) -> \(visible) by \(why, privacy: .public) showing=\(showing)
+            """)
+        #endif
+        isWindowVisible = visible
     }
 
     // Once per link, level-triggered: the first frame can land before the wireless
@@ -722,7 +736,7 @@ extension AppModel {
         syncHostedFeed()
         guard hostedFeed == .usb else { return false }
         window.hide()
-        isWindowVisible = false
+        setWindowVisible(false, "cable share ended")
         suspendTrialSession()
         return true
     }

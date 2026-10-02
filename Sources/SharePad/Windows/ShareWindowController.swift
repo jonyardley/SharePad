@@ -44,11 +44,22 @@ final class ShareWindowController: ShareWindowControlling {
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
         #if DEBUG
+            logIdentity("shown")
             logPresentation(of: window)
         #endif
     }
 
     #if DEBUG
+        private func logIdentity(_ moment: String) {
+            let shareWindows = NSApp.windows.filter { $0.identifier == WindowSharing.shareWindowID }
+            let identity = window.map { String(describing: ObjectIdentifier($0)) } ?? "none"
+            let onScreen = shareWindows.filter(\.isVisible).count
+            Logger(subsystem: "com.jonyardley.sharepad", category: "window").notice("""
+            \(moment, privacy: .public) window=\(identity, privacy: .public) \
+            shareWindows=\(shareWindows.count) onScreen=\(onScreen)
+            """)
+        }
+
         // Wireless W1 hardware check: records whether a shown window is really on
         // screen and hosting the feed layer, since a call shares only what composites.
         private func logPresentation(of window: NSWindow) {
@@ -93,6 +104,13 @@ final class ShareWindowController: ShareWindowControlling {
 
     func hide() {
         window?.orderOut(nil)
+        #if DEBUG
+            logIdentity("hidden")
+        #endif
+    }
+
+    var isShowing: Bool {
+        window?.isVisible ?? false
     }
 
     func setTrialOverlay(_ visible: Bool) {
