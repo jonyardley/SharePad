@@ -28,8 +28,6 @@ public struct PairingOffer: Equatable, Sendable {
     }
 }
 
-// The Mac side of pairing. The code only opens a one-time channel; the long-lived
-// secret is fresh, sent inside that channel, and stored once the iPad confirms.
 public struct PairingWindow: Equatable, Sendable {
     public enum Phase: Equatable, Sendable {
         case closed

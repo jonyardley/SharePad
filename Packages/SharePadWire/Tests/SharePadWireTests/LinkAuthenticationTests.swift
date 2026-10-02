@@ -158,6 +158,29 @@ final class LinkProofTests: XCTestCase {
         ))
     }
 
+    func testAMissingOrShortExporterNeverVerifies() {
+        let mine = record()
+        for exporter in [Data(), Data(repeating: 0, count: 16)] {
+            let credential = LinkCredential.paired(mine, exporter: exporter)
+            XCTAssertNil(LinkAuthentication.verify(
+                credential,
+                exporter: exporter,
+                pairingCode: nil,
+                paired: [mine]
+            ))
+            let pairing = LinkCredential.pairing(code: code, exporter: exporter)
+            XCTAssertNil(LinkAuthentication.verify(
+                pairing,
+                exporter: exporter,
+                pairingCode: code,
+                paired: []
+            ))
+        }
+        XCTAssertNil(LinkAuthentication.verify(
+            .paired(mine, exporter: exporter), exporter: nil, pairingCode: nil, paired: [mine]
+        ))
+    }
+
     func testAForgottenPairingNoLongerVerifies() {
         let mine = record()
         let credential = LinkCredential.paired(mine, exporter: exporter)

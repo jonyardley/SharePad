@@ -3,8 +3,6 @@ import Network
 @testable import SharePadWire
 import XCTest
 
-// A Mac shell and an iPad shell, each as thin as the app's will be, driving the pure
-// rules over real loopback TLS: pair with the code, then reconnect on the new secret.
 // @unchecked: all state is touched only on `queue`.
 private final class MacShell: @unchecked Sendable {
     let queue: DispatchQueue
@@ -64,7 +62,7 @@ private final class MacShell: @unchecked Sendable {
     private func pairingMessage(_ message: PairingMessage, from id: ConnectionID) {
         switch message {
         case let .authenticate(credential):
-            let exporter = connections[id]?.linkExporter() ?? Data()
+            let exporter = connections[id]?.linkExporter()
             let peer = LinkAuthentication.verify(
                 credential,
                 exporter: exporter,

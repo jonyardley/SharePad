@@ -40,10 +40,11 @@ public enum LinkAuthentication {
 
     public static func verify(
         _ credential: LinkCredential,
-        exporter: Data,
+        exporter: Data?,
         pairingCode: PairingCode?,
         paired: [PairingRecord]
     ) -> Peer? {
+        guard let exporter, exporter.count == exporterLength else { return nil }
         switch credential {
         case let .pairing(proof):
             guard let pairingCode else { return nil }
@@ -187,8 +188,6 @@ extension PairingMessage: CustomStringConvertible {
     }
 }
 
-// Per connection on the Mac: nothing reaches the stream or pairing rules until the
-// peer has proved a credential and sent a hello that matches it.
 public struct LinkGate: Equatable, Sendable {
     public enum Phase: Equatable, Sendable {
         case awaitingCredential

@@ -314,6 +314,19 @@ then fails, and both sides say so instead of failing silently
   with a short code it would not be (open question 9). Network.framework has no
   public password-authenticated key exchange (PAKE) that would make a short code
   safe.
+- **The PSK identity is sent in the clear.** TLS 1.2 does not encrypt it, so each
+  connection shows `co.sharepad.link.v1:` plus that pairing's id to anyone on the
+  network. It reveals nothing secret but lets an observer recognise the same iPad
+  across connections. Accepted for v1; a rotating identity derived from the
+  secret is the fix if it matters.
+- **On the Mac, "this device only" is not enforced by the Keychain.** The Mac
+  store uses the file-based keychain, which ignores the accessibility class and
+  ties access to the app's code signature (ad-hoc Debug builds will prompt).
+  Moving to the data-protection keychain needs a keychain-access-groups
+  entitlement; W2b decides.
+- **The session proof relies on TLS 1.2 exporters**, which are strongest with the
+  Extended Master Secret extension (RFC 7627). Both ends need the same PSK anyway,
+  so the exposure is negligible.
 - **A scan without the app installed leaves the link in Safari's history** on
   that iPad. Single use and the 5-minute expiry make it worthless by the time
   anyone could read it.

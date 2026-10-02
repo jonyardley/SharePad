@@ -20,8 +20,7 @@ public struct LinkKeys: Sendable {
     }
 }
 
-// The one-time code behind both the QR and the typed fallback. 120 bits is far past
-// what an attacker could guess offline inside the 5-minute window (specs §6, Q9).
+// 120 bits stays far past an offline guess inside the 5-minute window (specs §6, Q9).
 public struct PairingCode: Equatable, Sendable {
     public static let byteCount = 15
     public static let alphabet = Array("0123456789ABCDEFGHJKMNPQRSTVWXYZ")
@@ -47,7 +46,7 @@ public struct PairingCode: Equatable, Sendable {
         return generate(using: &generator)
     }
 
-    public static func generate(using generator: inout some RandomNumberGenerator) -> PairingCode {
+    static func generate(using generator: inout some RandomNumberGenerator) -> PairingCode {
         let bytes = Data((0 ..< byteCount).map { _ in UInt8.random(
             in: .min ... .max,
             using: &generator

@@ -212,6 +212,8 @@ public final class WireConnection: @unchecked Sendable {
                 try onPairingMessage?(PairingMessage.decode(typeCode: typeCode, payload: payload))
             } catch {
                 log.error("undecodable pairing message \(typeCode): \(String(describing: error))")
+                connection.cancel()
+                return
             }
             readHeader()
             return

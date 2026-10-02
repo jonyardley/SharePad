@@ -263,6 +263,34 @@ final class SecureLinkTests: XCTestCase {
         )
     }
 
+    func testAListenerOfferingACodeStillTakesPairedIPads() throws {
+        let code = PairingCode.generate()
+        let first = record()
+        let second = record()
+        let port = try listen(.server(pairingCode: code, paired: [first, second]))
+        XCTAssertEqual(connect(port: port, security: .paired(second)), .ready)
+        client?.cancel()
+        XCTAssertEqual(connect(port: port, security: .pairing(code)), .ready)
+        client?.cancel()
+        XCTAssertEqual(
+            connect(port: port, security: .paired(record())),
+            .rejected(authentication: true)
+        )
+    }
+
+    func testAMalformedPairingFrameEndsTheConnection() throws {
+        let paired = record()
+        let port = try listen(.server(pairingCode: nil, paired: [paired]))
+        XCTAssertEqual(connect(port: port, security: .paired(paired)), .ready)
+        client?.send(.authenticate(.pairing(proof: Data(repeating: 0, count: 5))))
+        client?.send(.hello(Hello(deviceID: paired.peerID, deviceName: paired.peerName)))
+        let quiet = expectation(description: "nothing after the bad frame")
+        quiet.isInverted = true
+        wait(for: [quiet], timeout: 1)
+        XCTAssertTrue(recorder.streamMessages.isEmpty)
+        XCTAssertTrue(recorder.pairingMessages.isEmpty)
+    }
+
     func testAnUnauthenticatedLinkHasNoExporter() throws {
         let listener = try WireListener(serviceName: nil, security: .unauthenticated, queue: queue)
         self.listener = listener
