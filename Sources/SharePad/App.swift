@@ -22,7 +22,7 @@ private struct StatusItemLabel: View {
         // Menu-bar items render monochrome (template), so signal state with a symbol swap,
         // not a colour the menu bar strips. A lost share shows no alarm glyph here — the
         // iPad is simply gone, so the idle symbol is honest; the popover banner is the notice.
-        Image(systemName: model.isLive ? "ipad.landscape.badge.play" : "ipad.landscape")
+        Image(systemName: model.isSharing ? "ipad.landscape.badge.play" : "ipad.landscape")
     }
 }
 

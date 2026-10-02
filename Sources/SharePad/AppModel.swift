@@ -1,6 +1,7 @@
 import AppKit
 import AVFoundation
 import Observation
+import os
 
 @MainActor
 @Observable
@@ -12,6 +13,13 @@ final class AppModel {
     private(set) var failed = false
     private(set) var videoSize: CGSize?
     private(set) var isWindowVisible = false
+    private(set) var wirelessStatus = WirelessStatus()
+    private(set) var preferredFeed: FeedKind?
+    // The feed whose layer the share window hosts. It only moves when another feed
+    // becomes the active one, so a feed that goes away leaves its last frame up.
+    private(set) var hostedFeed: FeedKind = .usb
+    private var wirelessVideoSize: CGSize?
+    private var autoShownPeerID: UUID?
 
     /// A one-shot, self-expiring event (not a steady AppState case): the iPad vanished
     /// while its share window was up, so the user — possibly mid-call — lost their share.
@@ -34,7 +42,7 @@ final class AppModel {
     private(set) var sessionEndsAt: Date?
 
     var isConnected: Bool {
-        currentDeviceName != nil
+        currentDeviceName != nil || wirelessStatus.peer != nil
     }
 
     var sessionLimitMinutes: Int {
@@ -46,7 +54,13 @@ final class AppModel {
     }
 
     var state: AppState {
-        AppState.reduce(access: access, hasDevice: isConnected, isRunning: isLive, failed: failed)
+        AppState.reduce(
+            camera: access,
+            usb: usbInput,
+            wireless: wirelessStatus.input,
+            localNetwork: wirelessStatus.localNetwork,
+            preferred: preferredFeed
+        )
     }
 
     private var access: CameraAccess {
@@ -58,9 +72,8 @@ final class AppModel {
         }
     }
 
-    let thumbnailLayer: AVSampleBufferDisplayLayer
-
     private let capture: CaptureControlling
+    private let wireless: WirelessFeeding?
     private let monitor: DeviceMonitor
     private let window: ShareWindowControlling
     private let preferences: Preferences
@@ -106,8 +119,8 @@ final class AppModel {
         self.init(
             preferences: preferences,
             capture: controller,
+            wireless: Self.debugWirelessSource(),
             window: window,
-            thumbnailLayer: controller.thumbnailLayer,
             reporter: DiagnosticsReporter.shared,
             sessionLimit: Self.debugSessionLimitOverride ?? 5 * 60
         )
@@ -128,8 +141,8 @@ final class AppModel {
     init(
         preferences: Preferences,
         capture: CaptureControlling,
+        wireless: WirelessFeeding? = nil,
         window: ShareWindowControlling,
-        thumbnailLayer: AVSampleBufferDisplayLayer,
         sleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
         validator: LicenseValidator = .production,
         reporter: DiagnosticsReporting = .disabled,
@@ -138,8 +151,8 @@ final class AppModel {
     ) {
         self.preferences = preferences
         self.capture = capture
+        self.wireless = wireless
         self.window = window
-        self.thumbnailLayer = thumbnailLayer
         self.sleep = sleep
         self.validator = validator
         self.reporter = reporter
@@ -173,12 +186,17 @@ final class AppModel {
         Task { await observeVideoSize() }
         Task { await observeRestarts() }
         Task { await observeWake() }
+        if let wireless {
+            wireless.start()
+            Task { await observeWireless(wireless) }
+            Task { await observeWirelessSizes(wireless) }
+        }
     }
 
     func toggleWindow() {
         if isWindowVisible {
             window.hide()
-            isWindowVisible = false
+            setWindowVisible(false, "toggle")
             suspendTrialSession()
         } else if isConnected {
             presentWindow()
@@ -186,6 +204,10 @@ final class AppModel {
     }
 
     func selectDevice(id: String) {
+        if preferredFeed == .wireless {
+            preferredFeed = .usb
+            syncHostedFeed()
+        }
         guard id != currentDeviceID, devices.contains(where: { $0.id == id }) else { return }
         Task { await switchTo(deviceID: id) }
     }
@@ -231,10 +253,12 @@ final class AppModel {
     func popoverDidAppear() {
         refreshEntitlement()
         capture.setThumbnailActive(true)
+        wireless?.setThumbnailActive(true)
     }
 
     func popoverDidDisappear() {
         capture.setThumbnailActive(false)
+        wireless?.setThumbnailActive(false)
     }
 
     func dismissShareLost() {
@@ -258,15 +282,15 @@ final class AppModel {
     }
 
     private func presentWindow() {
-        window.show(size: videoSize ?? Self.defaultSize)
-        isWindowVisible = true
+        window.show(size: hostedVideoSize ?? Self.defaultSize)
+        setWindowVisible(true, "present")
         armOrResumeTrialSession()
     }
 
     private func observeVideoSize() async {
         for await size in capture.videoSizes {
             videoSize = size
-            if isWindowVisible {
+            if isWindowVisible, hostedFeed == .usb {
                 window.updateSize(size)
             }
         }
@@ -348,9 +372,7 @@ extension AppModel {
             suspendTrialSession()
             armOrResumeTrialSession()
         } else {
-            window.hide()
-            isWindowVisible = false
-            suspendTrialSession()
+            hideIfShowingUSB()
         }
         isReconfiguring = false
     }
@@ -372,16 +394,15 @@ extension AppModel {
             isLive = false
             failed = false
             videoSize = nil
-            window.hide()
-            isWindowVisible = false
-            suspendTrialSession()
+            let usbWasShown = hideIfShowingUSB()
             await capture.stop()
-            if wasSharing { raiseShareLost() }
+            if wasSharing, usbWasShown { raiseShareLost() }
         case let .keep(device):
             currentDeviceName = device.name
         case let .switchTo(device):
             await beginAutoConnect(device: device)
         }
+        syncHostedFeed()
     }
 
     private enum ConnectOutcome { case live, notLive, superseded }
@@ -397,7 +418,7 @@ extension AppModel {
         // Suspend the prior device's countdown/overlay before connecting. The new
         // device's budget is decided in armOrResumeTrialSession: a different iPad
         // starts fresh, the same one resumes — so this must not reset it here.
-        suspendTrialSession()
+        if hostedFeed == .usb { suspendTrialSession() }
         currentDeviceID = device.id
         currentDeviceName = device.name
         isLive = false
@@ -429,9 +450,7 @@ extension AppModel {
         guard generation == connectGeneration, !isLive else { return }
         failed = true
         reporter.report(.retryExhausted)
-        window.hide()
-        isWindowVisible = false
-        suspendTrialSession()
+        hideIfShowingUSB()
     }
 
     private func connectOnce(deviceID: String, generation: Int) async -> ConnectOutcome {
@@ -447,6 +466,7 @@ extension AppModel {
             failed = false
             dismissShareLost() // a reconnect supersedes a prior lost-share banner
             preferences.lastDeviceID = deviceID
+            syncHostedFeed()
             if autoShowOnConnect, !isWindowVisible {
                 presentWindow()
             } else if isWindowVisible {
@@ -505,7 +525,7 @@ extension AppModel {
         refreshEntitlement()
         guard entitlement == .trialExpired, isWindowVisible,
               sessionTimer == nil, !isTrialOverlayShown,
-              let deviceID = currentDeviceID else { return }
+              let deviceID = trialDeviceKey else { return }
         let remaining = sessionBudgets[deviceID] ?? sessionLimit
         activeSessionDeviceID = deviceID
         guard remaining > 0 else {
@@ -555,5 +575,186 @@ extension AppModel {
         suspendTrialSession()
         sessionBudgets.removeAll()
         activeSessionDeviceID = nil
+    }
+}
+
+/// ── Wireless feed: status, hosted layer, lost share ──
+extension AppModel {
+    static let wirelessSourceID = "wireless"
+    private static let wirelessLog = Logger(
+        subsystem: "com.jonyardley.sharepad",
+        category: "wireless"
+    )
+
+    // Wireless W1 is unauthenticated, so it never ships: Debug builds only until
+    // pairing lands (specs/wireless-product.md §10, W2).
+    fileprivate static func debugWirelessSource() -> WirelessFeeding? {
+        #if DEBUG
+            WirelessReceiver()
+        #else
+            nil
+        #endif
+    }
+
+    var isSharing: Bool {
+        state.isLive
+    }
+
+    var isCameraAccessDenied: Bool {
+        access == .denied
+    }
+
+    var thumbnailLayer: AVSampleBufferDisplayLayer {
+        source(for: hostedFeed).thumbnailLayer
+    }
+
+    private var usbInput: SourceInput {
+        SourceInput(available: currentDeviceName != nil, running: isLive, failed: failed)
+    }
+
+    func selectSource(id: String) {
+        if id == Self.wirelessSourceID {
+            selectWireless()
+        } else {
+            selectDevice(id: id)
+        }
+    }
+
+    func selectWireless() {
+        preferredFeed = .wireless
+        syncHostedFeed()
+    }
+
+    func openLocalNetworkSettings() {
+        guard let url = URL(
+            string: "x-apple.systempreferences:com.apple.preference.security?Privacy_LocalNetwork"
+        ) else { return }
+        NSWorkspace.shared.open(url)
+    }
+
+    var sourceOptions: [SourceOption] {
+        let peer = wirelessStatus.peer
+        var options = devices.map {
+            SourceOption(id: $0.id, label: peer == nil ? $0.name : "\($0.name) · Cable")
+        }
+        if let peer {
+            options.append(SourceOption(id: Self.wirelessSourceID, label: "\(peer.name) · Wi-Fi"))
+        }
+        return options
+    }
+
+    var selectedSourceID: String {
+        hostedFeed == .wireless ? Self.wirelessSourceID : currentDeviceID ?? ""
+    }
+
+    private var hostedVideoSize: CGSize? {
+        hostedFeed == .usb ? videoSize : wirelessVideoSize
+    }
+
+    private var trialDeviceKey: String? {
+        guard hostedFeed == .wireless else { return currentDeviceID }
+        return wirelessStatus.peer.map { "wireless:\($0.id.uuidString)" }
+    }
+
+    private func source(for feed: FeedKind) -> FeedSource {
+        if feed == .wireless, let wireless { return wireless }
+        return capture
+    }
+
+    private func observeWireless(_ source: WirelessFeeding) async {
+        for await status in source.statuses {
+            applyWireless(status)
+        }
+    }
+
+    private func observeWirelessSizes(_ source: WirelessFeeding) async {
+        for await size in source.videoSizes {
+            wirelessVideoSize = size
+            if isWindowVisible, hostedFeed == .wireless {
+                window.updateSize(size)
+            }
+        }
+    }
+
+    func applyWireless(_ status: WirelessStatus) {
+        let lostPeer = wirelessStatus.peer != nil && status.peer == nil
+        wirelessStatus = status
+        if status.peer == nil {
+            wirelessVideoSize = nil
+            autoShownPeerID = nil
+        }
+        syncHostedFeed()
+        let hosted = String(describing: hostedFeed)
+        let visible = isWindowVisible
+        let autoShow = autoShowOnConnect
+        Self.wirelessLog.notice("""
+        status peer=\(status.peer != nil) receiving=\(status.isReceiving) \
+        reconnecting=\(status.isReconnecting) hosted=\(hosted, privacy: .public) \
+        visible=\(visible) autoShow=\(autoShow)
+        """)
+        guard hostedFeed == .wireless else { return }
+        if lostPeer, isWindowVisible || window.isShowing {
+            window.hide()
+            setWindowVisible(false, "wireless link ended")
+            suspendTrialSession()
+            raiseShareLost()
+        } else {
+            autoShowWirelessIfDue()
+        }
+    }
+
+    // Every change goes through here so the W1 hardware log shows which path moved
+    // it; the window itself is reported alongside, since the two have diverged.
+    private func setWindowVisible(_ visible: Bool, _ reason: StaticString) {
+        #if DEBUG
+            let was = isWindowVisible
+            let showing = window.isShowing
+            let why = String(describing: reason)
+            Self.wirelessLog.notice("""
+            windowVisible \(was) -> \(visible) by \(why, privacy: .public) showing=\(showing)
+            """)
+        #endif
+        isWindowVisible = visible
+    }
+
+    // Once per link, level-triggered: the first frame can land before the wireless
+    // feed is the hosted one, and a user who hides the window keeps it hidden.
+    private func autoShowWirelessIfDue() {
+        guard hostedFeed == .wireless, wirelessStatus.isReceiving,
+              let peer = wirelessStatus.peer, autoShownPeerID != peer.id else { return }
+        autoShownPeerID = peer.id
+        dismissShareLost()
+        guard autoShowOnConnect, !isWindowVisible else { return }
+        Self.wirelessLog.notice("auto-showing the share window for a wireless feed")
+        presentWindow()
+    }
+
+    // A cable that fails or goes while another feed can take over hands the window
+    // to that feed instead of ending the share.
+    @discardableResult
+    private func hideIfShowingUSB() -> Bool {
+        syncHostedFeed()
+        guard hostedFeed == .usb else { return false }
+        window.hide()
+        setWindowVisible(false, "cable share ended")
+        suspendTrialSession()
+        return true
+    }
+
+    func syncHostedFeed() {
+        guard let feed = AppState.activeFeed(
+            camera: access,
+            usb: usbInput,
+            wireless: wirelessStatus.input,
+            preferred: preferredFeed
+        ), feed != hostedFeed else { return }
+        hostedFeed = feed
+        window.setFeedLayer(source(for: feed).hostedLayer)
+        if isWindowVisible {
+            if let size = hostedVideoSize { window.updateSize(size) }
+            suspendTrialSession()
+            armOrResumeTrialSession()
+        }
+        autoShowWirelessIfDue()
     }
 }

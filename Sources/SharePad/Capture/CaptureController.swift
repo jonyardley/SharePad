@@ -1,13 +1,9 @@
 import AVFoundation
 
-protocol CaptureControlling: Sendable {
-    var videoSizes: AsyncStream<CGSize> { get }
+protocol CaptureControlling: FeedSource {
     var restarts: AsyncStream<Void> { get }
     func start(deviceID: String) async -> Bool
     func resume() async -> Bool
-    func stop() async
-    func setThumbnailActive(_ active: Bool)
-    func awaitFrame(timeout: TimeInterval) async -> Bool
 }
 
 /// @unchecked Sendable: `session` and the output/connection wiring are mutated only
@@ -20,6 +16,10 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
     let thumbnailLayer: AVSampleBufferDisplayLayer
     let videoSizes: AsyncStream<CGSize>
     let restarts: AsyncStream<Void>
+
+    var hostedLayer: CALayer {
+        previewLayer
+    }
 
     private let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "com.jonyardley.sharepad.session")

@@ -33,6 +33,7 @@ targets:
       - Sources/SharePad
     dependencies:
       - package: Sparkle
+      - package: SharePadWire
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.jonyardley.sharepad
@@ -45,6 +46,26 @@ targets:
         ENABLE_HARDENED_RUNTIME: "YES"
         CODE_SIGN_ENTITLEMENTS: Sources/SharePad/SharePad.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+      configs:
+        # The wireless Info.plist script below edits the built product's plist,
+        # which the user-script sandbox would block.
+        Debug:
+          ENABLE_USER_SCRIPT_SANDBOXING: "NO"
+    # Wireless is Debug only until pairing ships (specs/wireless-product.md §10,
+    # W1), so its Info.plist keys are added to Debug products only. `info:` below
+    # applies to every configuration and can't express that.
+    postBuildScripts:
+      - name: Debug-only wireless Info.plist keys
+        basedOnDependencyAnalysis: false
+        script: |
+          [ "$CONFIGURATION" = "Debug" ] || exit 0
+          PLIST="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+          BUDDY=/usr/libexec/PlistBuddy
+          $BUDDY -c "Delete :NSLocalNetworkUsageDescription" "$PLIST" 2>/dev/null || true
+          $BUDDY -c "Delete :NSBonjourServices" "$PLIST" 2>/dev/null || true
+          $BUDDY -c "Add :NSLocalNetworkUsageDescription string SharePad finds your iPad on your Wi-Fi network so it can show it without the cable." "$PLIST"
+          $BUDDY -c "Add :NSBonjourServices array" "$PLIST"
+          $BUDDY -c "Add :NSBonjourServices:0 string _sharepad._tcp" "$PLIST"
     # Explicit Info.plist (not GENERATE_INFOPLIST_FILE) because Sparkle's SU* keys are
     # custom — Xcode's INFOPLIST_KEY_* only emits Apple's allowlisted keys. xcodegen
     # fills the standard bundle/version keys; we add the rest here. The plist is

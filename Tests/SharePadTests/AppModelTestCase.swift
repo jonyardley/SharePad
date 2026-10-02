@@ -20,13 +20,14 @@ class AppModelTestCase: XCTestCase {
         capture: FakeCaptureController,
         window: FakeShareWindow,
         preferences: Preferences,
-        reporter: DiagnosticsReporting = .disabled
+        reporter: DiagnosticsReporting = .disabled,
+        wireless: WirelessFeeding? = nil
     ) -> AppModel {
         AppModel(
             preferences: preferences,
             capture: capture,
+            wireless: wireless,
             window: window,
-            thumbnailLayer: AVSampleBufferDisplayLayer(),
             sleep: { _ in }, // retries run without real delay
             reporter: reporter
         )

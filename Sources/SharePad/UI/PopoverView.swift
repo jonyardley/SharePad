@@ -163,7 +163,7 @@ struct PopoverView: View {
     }
 
     @ViewBuilder private var thumbnail: some View {
-        if model.isLive {
+        if model.isSharing {
             PreviewView(layer: model.thumbnailLayer)
                 .frame(maxWidth: .infinity)
                 .frame(height: 146)
@@ -173,13 +173,13 @@ struct PopoverView: View {
     }
 
     @ViewBuilder private var devicePicker: some View {
-        if model.devices.count > 1 {
+        if model.sourceOptions.count > 1 {
             Picker("Source", selection: Binding(
-                get: { model.currentDeviceID ?? "" },
-                set: { model.selectDevice(id: $0) }
+                get: { model.selectedSourceID },
+                set: { model.selectSource(id: $0) }
             )) {
-                ForEach(model.devices) { device in
-                    Text(device.name).tag(device.id)
+                ForEach(model.sourceOptions) { option in
+                    Text(option.label).tag(option.id)
                 }
             }
             .labelsHidden()
@@ -191,7 +191,9 @@ struct PopoverView: View {
         switch model.state {
         case .permissionDenied:
             Button("Open System Settings") { model.openCameraSettings() }
-        case .failed:
+        case .localNetworkDenied:
+            Button("Open System Settings") { model.openLocalNetworkSettings() }
+        case .failed(.usb):
             Button("Retry") { model.retry() }
         default:
             EmptyView()
@@ -203,11 +205,22 @@ struct PopoverView: View {
         case .checkingPermission: Text("Requesting camera access…")
         case .permissionDenied: Text("Camera access denied.")
         case .permissionRestricted: Text("Camera access is blocked by a device policy.")
+        case .localNetworkDenied: Text("Local network access is off.")
         case .noDevice: Text("No iPad connected")
-        case .starting: Text("Connecting…")
-        case .live: Text(model.currentDeviceName ?? "iPad")
-        case .failed: Text("Couldn't start the iPad feed.")
+        case .starting(.usb): Text("Connecting…")
+        case .starting(.wireless): Text("Connecting to \(wirelessName) over Wi-Fi…")
+        case .live(.usb): Text(model.currentDeviceName ?? "iPad")
+        case .live(.wireless):
+            Text(model.wirelessStatus.isReconnecting
+                ? "Reconnecting to \(wirelessName)…"
+                : "\(wirelessName) · Wi-Fi")
+        case .failed(.usb): Text("Couldn't start the iPad feed.")
+        case .failed(.wireless): Text("Couldn't show the Wi-Fi feed.")
         }
+    }
+
+    private var wirelessName: String {
+        model.wirelessStatus.peer?.name ?? "iPad"
     }
 
     // A connected-but-locked or not-yet-trusted iPad shows up to discovery but never
@@ -215,9 +228,14 @@ struct PopoverView: View {
     // briefly on a healthy connect). The app can't tell "locked" from "still trusting".
     private var statusHint: String? {
         switch model.state {
+        case .noDevice where model.wirelessStatus.listenerFailed:
+            "Wi-Fi sharing couldn't start; SharePad keeps retrying. The cable still works."
         case .noDevice: "Plug your iPad in with its cable to begin."
-        case .starting: "Unlock your iPad and tap Trust if it asks."
-        case .failed: "Check your iPad is unlocked and connected, then Retry."
+        case .starting(.usb): "Unlock your iPad and tap Trust if it asks."
+        case .failed(.usb): "Check your iPad is unlocked and connected, then Retry."
+        case .localNetworkDenied: "Turn SharePad on under Local Network to share over Wi-Fi."
+        case .live(.wireless) where model.isCameraAccessDenied:
+            "Sharing over the cable needs camera access."
         default: nil
         }
     }

@@ -5,6 +5,8 @@ import AVFoundation
 /// tests only after the awaited call returns, so there is no concurrent access.
 final class FakeCaptureController: CaptureControlling, @unchecked Sendable {
     let videoSizes = AsyncStream<CGSize> { _ in }
+    let hostedLayer = CALayer()
+    let thumbnailLayer = AVSampleBufferDisplayLayer()
     let restarts: AsyncStream<Void>
     private let restartContinuation: AsyncStream<Void>.Continuation
 
@@ -52,6 +54,27 @@ final class FakeCaptureController: CaptureControlling, @unchecked Sendable {
     }
 }
 
+/// @unchecked Sendable: driven from the main actor in tests only.
+final class FakeWirelessFeed: WirelessFeeding, @unchecked Sendable {
+    let hostedLayer = CALayer()
+    let thumbnailLayer = AVSampleBufferDisplayLayer()
+    let videoSizes = AsyncStream<CGSize> { _ in }
+    let statuses = AsyncStream<WirelessStatus> { _ in }
+    private(set) var thumbnailActive: Bool?
+
+    func start() {}
+
+    func stop() async {}
+
+    func setThumbnailActive(_ active: Bool) {
+        thumbnailActive = active
+    }
+
+    func awaitFrame(timeout _: TimeInterval) async -> Bool {
+        true
+    }
+}
+
 @MainActor
 final class FakeShareWindow: ShareWindowControlling {
     private(set) var shownSizes: [CGSize] = []
@@ -61,14 +84,24 @@ final class FakeShareWindow: ShareWindowControlling {
 
     func show(size: CGSize) {
         shownSizes.append(size)
+        isShowing = true
     }
 
     func hide() {
         hideCount += 1
+        isShowing = false
     }
+
+    var isShowing = false
 
     func updateSize(_ size: CGSize) {
         updatedSizes.append(size)
+    }
+
+    private(set) var feedLayers: [CALayer] = []
+
+    func setFeedLayer(_ layer: CALayer) {
+        feedLayers.append(layer)
     }
 
     func setKeepOnTop(_ enabled: Bool) {
