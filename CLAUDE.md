@@ -39,7 +39,7 @@ CLAUDE.md                   # this file
 specs/                      # per-feature specs, Tier 3 only (see Workflow)
 Sources/SharePad/         # app code (see DESIGN.md §8 for the module map)
 Tests/SharePadTests/      # pure-logic tests (reducer, preferences)
-Packages/SharePadWire/      # local Swift package: wireless wire format, codec, link + rules
+Packages/SharePadWire/      # local Swift package: wireless wire format, codec, link, pairing + rules
 Sources/SharePadPad/        # iPad companion app (specs/wireless-product.md §4), GPLv3 + App Store permission
 Tests/SharePadPadTests/     # iPad pure-logic tests (start/stop rules, crop, frame gate, persistence)
 spike/wireless/             # throwaway wireless spike, now built on SharePadWire
@@ -286,6 +286,12 @@ before touching capture.
   only when the user turns it on. It is first-party MetricKit (crashes/hangs) plus
   five named non-fatals, never any content, licence, or device id. Never flip the
   default to on without a privacy-page change and a deliberate decision.
+- **Wireless TLS-PSK is TLS 1.2 only, and the suite must be pinned**
+  (`specs/wireless-product.md` §6, open question 3). Network.framework's default
+  PSK suite has no forward secrecy, so `LinkSecurity` pins ECDHE-PSK and a loopback
+  test asserts it. The listener also cannot see which PSK a client used: trust a
+  peer's id only after `LinkAuthentication.verify` and `LinkGate`, never from the
+  hello alone.
 
 ## Workflow
 
