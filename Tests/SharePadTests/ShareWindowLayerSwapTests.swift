@@ -70,6 +70,12 @@ final class ShareWindowLayerSwapTests: XCTestCase {
         model.applyWireless(WirelessStatus(localNetwork: .granted))
         model.applyWireless(WirelessStatus(peer: peer, localNetwork: .granted))
         model.applyWireless(WirelessStatus(peer: peer, isReceiving: true, localNetwork: .granted))
+
+        let atShow = try XCTUnwrap(NSApp.windows
+            .first { $0.identifier == WindowSharing.shareWindowID })
+        let content = try XCTUnwrap(atShow.contentView).bounds.size
+        XCTAssertEqual(wireless.hostedLayer.bounds.size, content, "sized before any run-loop turn")
+        XCTAssertGreaterThan(content.width, 1)
         pump()
 
         let shown = NSApp.windows.first { $0.identifier == WindowSharing.shareWindowID }

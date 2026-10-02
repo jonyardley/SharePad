@@ -25,6 +25,7 @@ final class ShareWindowController: ShareWindowControlling {
 
     func setFeedLayer(_ layer: CALayer) {
         overlayModel.feedLayer = layer
+        window?.layoutIfNeeded()
     }
 
     func setKeepOnTop(_ enabled: Bool) {
@@ -41,6 +42,7 @@ final class ShareWindowController: ShareWindowControlling {
         apply(size: size, to: window)
         restoreOrigin(of: window)
         appliedFrame = window.frame
+        window.layoutIfNeeded()
         window.makeKeyAndOrderFront(nil)
         NSApp.activate()
         #if DEBUG
