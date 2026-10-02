@@ -40,6 +40,8 @@ specs/                      # per-feature specs, Tier 3 only (see Workflow)
 Sources/SharePad/         # app code (see DESIGN.md §8 for the module map)
 Tests/SharePadTests/      # pure-logic tests (reducer, preferences)
 Packages/SharePadWire/      # local Swift package: wireless wire format, codec, link + rules
+Sources/SharePadPad/        # iPad companion app (specs/wireless-product.md §4), GPLv3 + App Store permission
+Tests/SharePadPadTests/     # iPad pure-logic tests (start/stop rules, crop, frame gate, persistence)
 spike/wireless/             # throwaway wireless spike, now built on SharePadWire
 workers/licenses/           # Cloudflare Worker: licence key issuance (Stripe, trial gate)
 workers/purchase-email/     # Cloudflare Worker: post-purchase licence + download email (Resend)
@@ -69,6 +71,9 @@ just run           # build + launch the app
 just open          # open the generated project in Xcode
 just test          # run the unit tests
 just wire-test     # run the SharePadWire package tests
+just pad-build     # build the iPad app for the iOS Simulator (PAD_SIMULATOR picks a device id)
+just pad-test      # run the iPad app's unit tests on the iOS Simulator
+just pad-run NAME  # install + launch the Debug iPad app on a device (needs SHAREPAD_TEAM_ID)
 just fmt           # swiftformat .   (must pass before commit)
 just lint          # swiftlint + swiftformat --lint (must pass before push)
 just scan          # gitleaks secret scan over full history (same check CI runs)
@@ -268,6 +273,13 @@ before touching capture.
   subview added on top of the hosting view: that does **not** reliably composite
   above the layer-backed preview (the overlay silently never renders). Keep new
   share-window chrome inside this root, not as added subviews.
+- **The iPad app streams only in Debug builds until W2b.** `StreamLinks.make` picks
+  the unauthenticated `DevelopmentLink` under `#if DEBUG` and `UnpairedLink` (pill:
+  "Not paired") otherwise, so a Release or TestFlight build never sends an
+  unencrypted stream. Pairing replaces `UnpairedLink`, not the model.
+- **iPad frames leave only with a known canvas rectangle.** `CaptureContext` drops
+  any frame without a layout or while a sheet or popover covers the canvas. New
+  chrome that draws over the canvas must register an `Overlay` with the model.
 - **Telemetry is opt-in and off by default** (`specs/telemetry.md`). The privacy
   page promises nothing leaves the machine bar the update check, so
   `Preferences.diagnosticsEnabled` defaults false and `DiagnosticsReporter` sends

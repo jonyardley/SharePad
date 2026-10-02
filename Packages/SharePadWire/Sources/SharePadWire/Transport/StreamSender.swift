@@ -19,6 +19,7 @@ public final class StreamSender: @unchecked Sendable {
 
     private let onPhase: @Sendable (SenderLink.Phase) -> Void
     private let onStats: @Sendable (Stats) -> Void
+    private let onLocalNetworkDenied: @Sendable (Bool) -> Void
 
     private let identity: Hello
     private let encoder: H264Encoder
@@ -45,10 +46,12 @@ public final class StreamSender: @unchecked Sendable {
         settings: EncoderSettings = EncoderSettings(),
         lastPeer: String? = nil,
         onPhase: @escaping @Sendable (SenderLink.Phase) -> Void = { _ in },
-        onStats: @escaping @Sendable (Stats) -> Void = { _ in }
+        onStats: @escaping @Sendable (Stats) -> Void = { _ in },
+        onLocalNetworkDenied: @escaping @Sendable (Bool) -> Void = { _ in }
     ) {
         self.onPhase = onPhase
         self.onStats = onStats
+        self.onLocalNetworkDenied = onLocalNetworkDenied
         identity = Hello(deviceID: deviceID, deviceName: deviceName)
         encoder = H264Encoder(settings: settings)
         link = SenderLink(lastPeer: lastPeer)
@@ -102,11 +105,7 @@ public final class StreamSender: @unchecked Sendable {
     private func perform(_ effect: SenderLink.Effect) {
         switch effect {
         case .startBrowsing:
-            browser?.cancel()
-            let browser = WireBrowser()
-            browser.onResults = { [weak self] results in self?.found(results) }
-            browser.start(queue: queue)
-            self.browser = browser
+            startBrowsing()
         case .stopBrowsing:
             browser?.cancel()
             browser = nil
@@ -274,5 +273,19 @@ public final class StreamSender: @unchecked Sendable {
             let onStats = onStats
             DispatchQueue.main.async { onStats(snapshot) }
         }
+    }
+}
+
+private extension StreamSender {
+    func startBrowsing() {
+        browser?.cancel()
+        let browser = WireBrowser()
+        browser.onResults = { [weak self] results in self?.found(results) }
+        let onDenied = onLocalNetworkDenied
+        browser.onLocalNetworkDenied = { denied in
+            DispatchQueue.main.async { onDenied(denied) }
+        }
+        browser.start(queue: queue)
+        self.browser = browser
     }
 }

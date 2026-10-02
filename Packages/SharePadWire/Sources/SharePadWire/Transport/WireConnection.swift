@@ -194,6 +194,7 @@ public final class WireListener: @unchecked Sendable {
 // queue it was started on, which is also where Network.framework calls back.
 public final class WireBrowser: @unchecked Sendable {
     public var onResults: (@Sendable ([NWBrowser.Result]) -> Void)?
+    public var onLocalNetworkDenied: (@Sendable (Bool) -> Void)?
 
     private let browser: NWBrowser
 
@@ -208,11 +209,25 @@ public final class WireBrowser: @unchecked Sendable {
         browser.browseResultsChangedHandler = { [weak self] results, _ in
             self?.onResults?(Array(results))
         }
+        browser.stateUpdateHandler = { [weak self] state in
+            self?.onLocalNetworkDenied?(Self.isLocalNetworkDenied(state))
+        }
         browser.start(queue: queue)
     }
 
     public func cancel() {
         browser.cancel()
+    }
+
+    // A refused local network prompt surfaces as a DNS-SD policy error, not a
+    // state of its own (Apple TN3179, "Understanding local network privacy").
+    public static func isLocalNetworkDenied(_ state: NWBrowser.State) -> Bool {
+        switch state {
+        case let .waiting(error), let .failed(error):
+            error == .dns(DNSServiceErrorType(kDNSServiceErr_PolicyDenied))
+        default:
+            false
+        }
     }
 }
 

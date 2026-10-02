@@ -1,0 +1,19 @@
+SharePadWire
+Copyright (C) 2026 Jon Yardley
+
+This package is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. The full text is in LICENSE at the root of this repository.
+
+This package is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+Additional permission under GNU GPL version 3 section 7
+
+This package is linked into SharePad for iPad and carries the same additional
+permission, set out in full in Sources/SharePadPad/LICENSE: you may convey it in
+object code form through Apple's App Store, TestFlight or any other distribution
+channel operated by Apple, on condition that the Corresponding Source stays
+available under the GNU GPL version 3, with that permission, to every recipient.

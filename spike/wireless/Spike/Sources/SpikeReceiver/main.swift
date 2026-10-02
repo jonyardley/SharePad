@@ -249,6 +249,7 @@ final class Receiver {
         case let .config(config):
             dimensions = "\(config.width)x\(config.height)"
             decoder.configure(parameterSets: config.parameterSets)
+            crop(to: config)
         case let .frame(frame):
             let arrival = Date().timeIntervalSince1970
             var interval: Double = 0
@@ -282,6 +283,23 @@ final class Receiver {
     private func sendPing() {
         active?.send(.ping(t1: Date().timeIntervalSince1970))
         queue.asyncAfter(deadline: .now() + 1) { [weak self] in self?.sendPing() }
+    }
+
+    // Unit rect, origin bottom left: macOS layers are not flipped. Aspect is not
+    // corrected here; the real share window (W1) owns that.
+    private func crop(to config: StreamConfig) {
+        guard config.width > 0, config.height > 0 else { return }
+        let width = Double(config.width)
+        let height = Double(config.height)
+        let canvas = config.canvas
+        let rect = CGRect(
+            x: Double(canvas.x) / width,
+            y: 1 - Double(canvas.y + canvas.height) / height,
+            width: Double(canvas.width) / width,
+            height: Double(canvas.height) / height
+        )
+        let layer = displayLayer
+        DispatchQueue.main.async { layer.contentsRect = rect }
     }
 
     private func handleDecoded(_ frame: H264Decoder.DecodedFrame) {

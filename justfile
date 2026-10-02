@@ -46,6 +46,39 @@ test: gen
 wire-test:
     cd Packages/SharePadWire && swift test
 
+# ── iPad app (Sources/SharePadPad) ──
+# The simulator is the first available iPad unless PAD_SIMULATOR holds a device id
+# from `xcrun simctl list devices available`.
+
+# print the iPad simulator id the pad recipes use
+_pad-simulator:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    SIM="${PAD_SIMULATOR:-$(xcrun simctl list devices available | awk '/iPad/ && !found && match($0, /[0-9A-F]{8}-[0-9A-F-]{27}/) { print substr($0, RSTART, RLENGTH); found = 1 }')}"
+    [ -n "$SIM" ] || { echo "no iPad simulator found; install an iOS runtime in Xcode" >&2; exit 1; }
+    echo "$SIM"
+
+# build the iPad app for the iOS Simulator (Debug, no signing needed)
+pad-build: gen
+    #!/usr/bin/env bash
+    set -euo pipefail
+    SIM="$(just _pad-simulator)"
+    xcodebuild -project SharePad.xcodeproj -scheme SharePadPad -configuration Debug -destination "platform=iOS Simulator,id=$SIM" -derivedDataPath .build/pad build
+
+# run the iPad app's unit tests on the iOS Simulator
+pad-test: gen
+    #!/usr/bin/env bash
+    set -euo pipefail
+    SIM="$(just _pad-simulator)"
+    xcodebuild -project SharePad.xcodeproj -scheme SharePadPad -configuration Debug -destination "platform=iOS Simulator,id=$SIM" -derivedDataPath .build/pad test
+
+# install and launch the Debug iPad app on a connected iPad. Needs SHAREPAD_TEAM_ID
+# (Apple team ID) and a trusted device; the name comes from `xcrun devicectl list devices`.
+pad-run device: gen
+    xcodebuild -project SharePad.xcodeproj -scheme SharePadPad -configuration Debug -destination "platform=iOS,name={{ device }}" -derivedDataPath .build/pad -allowProvisioningUpdates DEVELOPMENT_TEAM="${SHAREPAD_TEAM_ID:?set SHAREPAD_TEAM_ID}" build
+    xcrun devicectl device install app --device "{{ device }}" .build/pad/Build/Products/Debug-iphoneos/SharePadPad.app
+    xcrun devicectl device process launch --device "{{ device }}" com.jonyardley.sharepad.ipad
+
 # print the per-target coverage summary from the latest `just test` run
 coverage:
     #!/usr/bin/env bash

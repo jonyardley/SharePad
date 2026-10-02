@@ -81,6 +81,13 @@ the canvas rectangle (in pixels) with every config message, and the Mac crops to
 it on the display layer (`contentsRect`). The call sees only paper and ink, and
 the share window's aspect lock follows the canvas, not the iPad.
 
+The rectangle also excludes the tool picker: when it floats over the canvas, the
+crop keeps the largest clear strip beside it. Anything the app presents over the
+canvas (the paper popover, the settings sheet) holds frames back until it has
+closed and its animation has finished, so the Mac shows the last clean frame. A
+frame with no known canvas rectangle is never sent (W3a, `CanvasCrop` and
+`FrameGate`).
+
 ### What it stores
 
 The current drawing (one `PKDrawing`, kept until **Clear**), the paired Mac's
@@ -529,7 +536,8 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 | **W0: Wire and tail** | `Packages/SharePadWire` (versioned handshake, config with canvas rectangle, `requestKeyframe`, `pause`, `resume`); keyframe and send-queue fixes (§8); spike sender and receiver rebuilt on it | Spike method re-run on home Wi-Fi: about one keyframe per 10 s in the CSV, capture-to-decoded median under 30 ms |
 | **W1: Mac wireless source** | `FeedSource` protocol; `WirelessReceiver`; reducer with source inputs and `localNetworkDenied`, with tests; share window hosts either layer; thumbnail from decoded frames. Unauthenticated, Debug builds only | Spike sender streams into the real share window; it picks cleanly in Zoom desktop and browser Meet; USB still works unchanged; denying local network on macOS 15 shows the popover fix |
 | **W2: Pairing and encryption** | Pairing window with QR and typed code; `PairingStore`; TLS-PSK link; Forget on both sides; listener only runs once paired | An unpaired iPad cannot connect; a capture of the traffic shows no readable stream; Forget on either side stops the next connection; the pairing window does not appear in a Zoom or Meet window share |
-| **W3: iPad app** | Canvas, tool picker, paper menu, connection pill, settings, canvas-rectangle crop, auto start and stop; TestFlight beta | On two iPad models: toolbar never appears on the Mac; open app streams within 3 s of the Mac being found; an hour on battery without a drop; backgrounding stops capture |
+| **W3a: iPad app shell** | `Sources/SharePadPad` target: canvas, tool picker, paper menu, connection pill, settings, canvas-rectangle crop, auto start and stop, frames held while a sheet or popover covers the canvas. Streams over the unauthenticated W0 link, Debug builds only; `StreamLink` is the seam W3b fills. GPLv3 with the App Store permission (§11, item 1) | On an iPad, against the spike receiver: toolbar never appears on the Mac; open app streams within 3 s of the Mac being found; backgrounding stops capture |
+| **W3b: iPad pairing and beta** | Pairing screen (scan and typed code) on the W2 link, Forget in settings, the "Not paired" pill driven by the pairing store; TestFlight beta | On two iPad models: everything in W3a over the paired link; an hour on battery without a drop |
 | **W4: Lifecycle** | Cable-wins switching, 5 s reconnect hold, Wi-Fi lost-share banner, `pause` while the cable is active, trial meter keyed to the paired iPad | Plugging the cable in mid-share switches with no window flicker; Wi-Fi off for 3 s recovers in place; off for 10 s hides and shows the banner; trial pause covers a wireless feed |
 | **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app); `sharepad.co/pair` page and the universal-link association file; what's-new window with its tested show-once rule; signposting copy (§9); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; scanning the pairing QR with the Camera app on an iPad without the app reaches the App Store, and with it opens pairing; updating from 1.2 shows what's new once, a fresh install never shows it, and an update while sharing waits until the share ends; on a busy office network: about one keyframe per 10 s, capture-to-decoded median under 30 ms, p95 under 60 ms and no camera reading over 100 ms in 15 |
 | **W6: Whole screen** | Spike first: a Broadcast Upload Extension encoding inside the ~50 MB cap on the largest iPad Pro. On GO, add it as a second capture mode in the iPad app | Spike: steady frame rate, memory under the cap for 30 minutes, glass to glass within the latency bar (§8). Product: drawing in Notes or Procreate streams to the Mac |
@@ -544,7 +552,8 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
    Lands with W3.
 2. **ReplayKit consent prompt frequency.** In-app capture asks the user to allow
    recording; how often it re-asks across launches decides whether "open the app
-   and it streams" holds. Measure in W3.
+   and it streams" holds. Measure in W3a's hardware check. The app holds capture
+   for 10 s after the link drops so a Wi-Fi blip does not restart it.
 3. **Forward secrecy mode** of Network.framework's PSK TLS (§6). Confirm in W2.
 4. **Detecting local-network denial on macOS** reliably enough to drive a state.
    Confirm in W1.

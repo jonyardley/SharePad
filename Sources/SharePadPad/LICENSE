@@ -1,0 +1,28 @@
+SharePad for iPad
+Copyright (C) 2026 Jon Yardley
+
+This program is free software: you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software
+Foundation, either version 3 of the License, or (at your option) any later
+version. The full text is in LICENSE at the root of this repository.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+Additional permission under GNU GPL version 3 section 7
+
+The copyright holders of the files in this directory and in
+Packages/SharePadWire give you additional permission to convey copies of this
+program, and of works based on it, in object code form through Apple's App
+Store, TestFlight or any other distribution channel operated by Apple, even
+though the usage rules and terms of service of those channels add restrictions
+that the GNU GPL does not otherwise allow (for example, limits on the number of
+devices a copy may run on). The permission applies only on condition that the
+Corresponding Source of the conveyed work stays available under the GNU GPL
+version 3, with this additional permission, to every recipient.
+
+You may remove this additional permission from your own modified copies of
+this program; a modified copy without it is covered by the GNU GPL version 3
+alone. Contributions to the files covered here are accepted under the same
+terms, this additional permission included.

@@ -16,6 +16,8 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     from: "2.9.2"
+  SharePadWire:
+    path: Packages/SharePadWire
 
 settings:
   base:
@@ -83,3 +85,65 @@ targets:
       base:
         GENERATE_INFOPLIST_FILE: "YES"
         PRODUCT_BUNDLE_IDENTIFIER: com.jonyardley.SharePadTests
+
+  # ── iPad companion app (specs/wireless-product.md §4) ──
+  # Self-contained block: nothing above depends on it, so the Mac targets are untouched.
+  # Device builds need DEVELOPMENT_TEAM (see `just pad-run`); simulator builds need none.
+  SharePadPad:
+    type: application
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: Sources/SharePadPad
+        excludes:
+          - LICENSE
+    dependencies:
+      - package: SharePadWire
+        product: SharePadWire
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jonyardley.sharepad.ipad
+        TARGETED_DEVICE_FAMILY: "2"
+        CODE_SIGN_STYLE: Automatic
+        SUPPORTS_MACCATALYST: "NO"
+        SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: "NO"
+        SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: "NO"
+    info:
+      path: Sources/SharePadPad/Info.plist
+      properties:
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        CFBundleDisplayName: SharePad
+        LSRequiresIPhoneOS: true
+        ITSAppUsesNonExemptEncryption: false
+        NSLocalNetworkUsageDescription: SharePad finds your Mac on this Wi-Fi so your drawing can appear on it.
+        NSBonjourServices:
+          - _sharepad._tcp
+        UILaunchScreen: {}
+        UIRequiresFullScreen: true
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UIRequiredDeviceCapabilities:
+          - arm64
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    scheme:
+      testTargets:
+        - SharePadPadTests
+
+  SharePadPadTests:
+    type: bundle.unit-test
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - Tests/SharePadPadTests
+    dependencies:
+      - target: SharePadPad
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+        PRODUCT_BUNDLE_IDENTIFIER: com.jonyardley.SharePadPadTests
+        TARGETED_DEVICE_FAMILY: "2"
