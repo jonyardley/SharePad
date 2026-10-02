@@ -69,20 +69,44 @@ final class ShareWindowController: ShareWindowControlling {
                 let frame = String(describing: window.frame)
                 let kind = String(describing: type(of: layer))
                 let bounds = String(describing: layer.bounds)
+                let chain = Self.layerChain(from: layer, upTo: window.contentView?.layer)
+                let content = String(describing: window.contentView?.frame ?? .zero)
                 log.notice("""
                 \(moment, privacy: .public): visible=\(window.isVisible) \
                 occludedVisible=\(window.occlusionState.contains(.visible)) \
                 activeSpace=\(window.isOnActiveSpace) appActive=\(NSApp.isActive) \
                 level=\(window.level.rawValue) frame=\(frame, privacy: .public) \
                 layer=\(kind, privacy: .public) attached=\(layer.superlayer != nil) \
-                bounds=\(bounds, privacy: .public)
+                bounds=\(bounds, privacy: .public) content=\(content, privacy: .public)
                 """)
+                log.notice("\(moment, privacy: .public) chain: \(chain, privacy: .public)")
             }
             describe("shown")
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(1))
                 describe("one second after show")
             }
+        }
+    #endif
+
+    #if DEBUG
+        // Each step from the feed layer up to the window's root: what would stop it
+        // compositing (zero bounds, hidden, transparent, or a sibling above it).
+        static func layerChain(from layer: CALayer, upTo root: CALayer?) -> String {
+            var steps: [String] = []
+            var current: CALayer? = layer
+            while let step = current {
+                let siblings = step.superlayer?.sublayers ?? [step]
+                let index = siblings.firstIndex { $0 === step } ?? -1
+                steps.append(
+                    "\(type(of: step))[\(step.bounds.integral) hidden=\(step.isHidden) " +
+                        "opacity=\(step.opacity) z=\(step.zPosition) scale=\(step.contentsScale) " +
+                        "at=\(index + 1)/\(siblings.count)]"
+                )
+                if step === root { break }
+                current = step.superlayer
+            }
+            return steps.joined(separator: " < ")
         }
     #endif
 

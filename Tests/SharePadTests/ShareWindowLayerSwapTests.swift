@@ -74,7 +74,16 @@ final class ShareWindowLayerSwapTests: XCTestCase {
 
         let shown = NSApp.windows.first { $0.identifier == WindowSharing.shareWindowID }
         XCTAssertEqual(shown?.isVisible, true)
-        XCTAssertNotNil(wireless.hostedLayer.superlayer)
+        let layer = wireless.hostedLayer
+        let parent = try XCTUnwrap(layer.superlayer)
+        XCTAssertTrue(parent.sublayers?.last === layer)
+        XCTAssertEqual(layer.frame, parent.bounds)
+        XCTAssertGreaterThan(layer.bounds.width, 1)
+        XCTAssertFalse(layer.isHidden)
+        XCTAssertEqual(layer.opacity, 1)
+        let chain = ShareWindowController.layerChain(from: layer, upTo: shown?.contentView?.layer)
+        XCTAssertTrue(chain.hasPrefix("CALayer["), chain)
+        XCTAssertFalse(chain.contains("hidden=true"), chain)
     }
 
     private func pump() {
