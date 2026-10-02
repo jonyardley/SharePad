@@ -36,11 +36,11 @@ final class FrameGateTests: XCTestCase {
         XCTAssertTrue(gate.allowsFrame(at: 10 + FrameGate.recrop))
     }
 
-    func testFloatingToolsHoldFramesUntilDocked() {
+    func testUnlocatedToolsHoldFramesUntilFound() {
         var gate = FrameGate()
-        gate.overlay(.floatingTools, shown: true, at: 0)
+        gate.overlay(.unlocatedTools, shown: true, at: 0)
         XCTAssertFalse(gate.allowsFrame(at: 60))
-        gate.overlay(.floatingTools, shown: false, at: 60)
+        gate.overlay(.unlocatedTools, shown: false, at: 60)
         XCTAssertTrue(gate.allowsFrame(at: 60 + FrameGate.settle))
     }
 }

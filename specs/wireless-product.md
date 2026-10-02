@@ -83,8 +83,11 @@ the canvas rectangle (in pixels) with every config message, and the Mac crops to
 it on the display layer (`contentsRect`). The call sees only paper and ink, and
 the share window's aspect lock follows the canvas, not the iPad.
 
-The rectangle also excludes the tool picker: when it floats over the canvas, the
-crop keeps the largest clear strip beside it. Anything the app presents over the
+The rectangle also excludes the tool picker: the crop keeps the largest clear
+strip beside it. PencilKit reports no frame for a movable picker, and the iPadOS 26
+palette always is one, so the app measures the palette from its own window hierarchy
+every display frame (`PaletteLocator`). If the palette is visible but cannot be
+found, frames are held and the pill says sharing is paused. Anything the app presents over the
 canvas (the paper popover, the settings sheet) holds frames back until it has
 closed and its animation has finished, so the Mac shows the last clean frame. A
 frame with no known canvas rectangle is never sent (W3a, `CanvasCrop` and

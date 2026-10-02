@@ -14,7 +14,7 @@ final class PadModel {
     private(set) var localNetworkDenied = false
     private(set) var canUndo = false
     private(set) var canRedo = false
-    private(set) var toolsFloating = false
+    private(set) var toolsUnlocated = false
     private(set) var rules = StreamingRules()
 
     var isPaperMenuShown = false {
@@ -33,7 +33,7 @@ final class PadModel {
             link: linkStatus,
             localNetworkDenied: localNetworkDenied,
             captureDeclined: rules.captureDeclined,
-            toolsFloating: toolsFloating
+            toolsUnlocated: toolsUnlocated
         )
     }
 
@@ -83,7 +83,8 @@ final class PadModel {
         canvas.onLayoutChange = { layout in
             context.setLayout(layout, at: ProcessInfo.processInfo.systemUptime)
         }
-        canvas.onToolsFloating = { [weak self] floating in self?.toolsFloatingChanged(floating) }
+        canvas
+            .onToolsUnlocated = { [weak self] unlocated in self?.toolsUnlocatedChanged(unlocated) }
         UIApplication.shared.applicationSupportsShakeToEdit = false
     }
 
@@ -180,12 +181,12 @@ final class PadModel {
         }
     }
 
-    private func toolsFloatingChanged(_ floating: Bool) {
-        guard floating != toolsFloating else { return }
-        toolsFloating = floating
+    private func toolsUnlocatedChanged(_ unlocated: Bool) {
+        guard unlocated != toolsUnlocated else { return }
+        toolsUnlocated = unlocated
         captureContext.overlay(
-            .floatingTools,
-            shown: floating,
+            .unlocatedTools,
+            shown: unlocated,
             at: ProcessInfo.processInfo.systemUptime
         )
     }

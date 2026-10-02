@@ -23,10 +23,13 @@ final class CanvasController: NSObject {
     var onDrawingChange: ((PKDrawing) -> Void)?
     var onUndoChange: ((_ canUndo: Bool, _ canRedo: Bool) -> Void)?
     var onLayoutChange: ((CanvasLayout) -> Void)?
-    var onToolsFloating: ((Bool) -> Void)?
+    var onToolsUnlocated: ((Bool) -> Void)?
 
     private let canvasView = PKCanvasView()
     private let toolPicker = PKToolPicker()
+    private var displayLink: CADisplayLink?
+    private var lastLayout: CanvasLayout?
+    private var lastToolsUnknown: Bool?
 
     init(drawing: PKDrawing) {
         super.init()
@@ -87,25 +90,46 @@ final class CanvasController: NSObject {
     }
 
     private func movedToWindow() {
+        displayLink?.invalidate()
+        displayLink = nil
         if hostView.window != nil {
             showToolPicker()
+            let link = CADisplayLink(target: self, selector: #selector(tick))
+            link.preferredFrameRateRange = CAFrameRateRange(minimum: 30, maximum: 60, preferred: 60)
+            link.add(to: .main, forMode: .common)
+            displayLink = link
         }
+        reportLayout()
+    }
+
+    // The palette can be dragged without any PKToolPickerObserver callback carrying
+    // its position, so it is re-measured every display frame.
+    @objc private func tick() {
         reportLayout()
     }
 
     private func reportLayout() {
         guard let window = hostView.window else { return }
         let obscured = toolPicker.frameObscured(in: hostView)
-        let unknown = obscured.isNull || obscured.isEmpty
-        let obstructions = unknown ? [] : [hostView.convert(obscured, to: window)]
-        // frameObscured(in:) is null for a floating picker (PKToolPicker docs), so its
-        // position over the canvas cannot be cropped out.
-        onToolsFloating?(unknown && toolPicker.isVisible)
-        onLayoutChange?(CanvasLayout(
+        let placement = ToolsPlacement.resolve(
+            pickerVisible: toolPicker.isVisible,
+            reported: obscured.isNull ? .null : hostView.convert(obscured, to: window),
+            measured: PaletteLocator.paletteFrames(over: window),
+            window: window.bounds
+        )
+        let layout = CanvasLayout(
             canvas: hostView.convert(hostView.bounds, to: window),
             window: window.bounds.size,
-            obstructions: obstructions
-        ))
+            obstructions: placement.obstructions
+        )
+        if placement.isUnknown != lastToolsUnknown {
+            lastToolsUnknown = placement.isUnknown
+            onToolsUnlocated?(placement.isUnknown)
+        }
+        if layout != lastLayout {
+            lastLayout = layout
+            onLayoutChange?(layout)
+        }
     }
 
     private func reportUndo() {
