@@ -1,6 +1,6 @@
 # Wireless sharing (product spec)
 
-> Status: **draft, Tier 3. W0 done** (`Packages/SharePadWire`, spike rebuilt on
+> Status: **draft, Tier 3. W0 and W2a done** (`Packages/SharePadWire`, spike rebuilt on
 > it; measured on home Wi-Fi 2026-10-02). The latency tail is accepted for v1 as a
 > known gap ([#160](https://github.com/jonyardley/SharePad/issues/160)). Follows the GO verdict in
 > [`specs/wireless.md`](wireless.md#spike-result) (2026-10-01). Touches the
@@ -41,8 +41,8 @@ companion app's own canvas only.
 | 4 | Trial | Wireless counts against the existing Mac trial meter (`specs/licensing.md` §5). The paired iPad's id stands in for `sessionDeviceID` | The gate already lives in the share window, so it covers any source. No iPad-side gate to build |
 | 5 | Source owners | **One owner per source.** `CaptureController` keeps the `AVCaptureSession`; a new `WirelessReceiver` owns the listener, the connection and the decoder. Both sit behind one protocol. `AppModel` picks the active one | Extends Non-Negotiable 1 instead of breaking it: nothing outside a source touches its pipeline |
 | 6 | USB versus wireless | **Cable wins** when both are present, unless the user picks otherwise in the source picker (remembered, as today) | The cable is lower latency and needs no radio. Plugging in mid-call must not lose the share |
-| 7 | Pairing | **QR code** shown on the Mac, scanned by the iPad, carrying a 256-bit secret. A typed code is the fallback | Physical presence to pair, no weak short code to brute force |
-| 8 | Link security | **TLS with that secret as a pre-shared key** (Network.framework), pinned per pair | Only paired iPads can feed the share window; the drawing is encrypted on the network |
+| 7 | Pairing | **QR code** shown on the Mac, scanned by the iPad, carrying a one-time 120-bit code; typing the same code is the fallback. The code only opens a pairing channel, inside which the Mac hands over a fresh 256-bit secret | Physical presence to pair, no weak short code to brute force, and the code is worthless once used (§6) |
+| 8 | Link security | **TLS 1.2 ECDHE-PSK with that secret** (Network.framework), one secret per pair | Only paired iPads can feed the share window; the drawing is encrypted on the network, with forward secrecy |
 | 9 | Keyframes | **Every 10 s as a safety net, plus on demand** from the Mac; burst-capped bitrate; a send-queue cap that drops and recovers instead of queuing | Fixes the 0.5 s keyframe bug; the remaining tail is a Wi-Fi stall, accepted for v1 (§8, [#160](https://github.com/jonyardley/SharePad/issues/160)) |
 | 10 | Wireless is opt-in on the Mac | The listener only runs once the user has paired an iPad (or opened the pairing window) | USB-only users never see a local-network prompt and nothing new listens on their network |
 
@@ -218,19 +218,24 @@ happen:
 1. On the Mac: popover › **Pair an iPad…** opens a small pairing window. It is a
    window, not the popover, because the popover closes when focus leaves it and
    the user is about to pick up the iPad.
-2. The window shows a QR code and, underneath, the same secret as a typed code
-   (24 characters, six groups of four, no ambiguous letters). It expires after
+2. The window shows a QR code and, underneath, the same code to type
+   (24 characters, six groups of four, Crockford base32: no I, L, O or U, and
+   typing O, I or L is read as 0 or 1). That is 120 random bits. It expires after
    **5 minutes** and is single use. The Mac starts advertising `_sharepad._tcp`
    only now.
 3. On the iPad: scan the code, either with **Scan code** in the app or with the
-   iPad's own Camera app. The QR is a link,
-   `https://sharepad.co/pair#<pairing id>.<secret>`, carrying the Mac's pairing
-   id, its name and a 256-bit secret. It is a universal link: with the app
-   installed it opens straight into pairing; without it, Safari opens a small
-   sharepad.co page that sends the user to the App Store (§9). The secret sits
-   after the `#`, which browsers never send to a server. The iPad connects, and
-   both sides store the secret against the other's id in the Keychain.
-4. Both screens confirm: "Paired with {Mac}" and "Paired with {iPad}". The
+   iPad's own Camera app. The QR is a link, `https://sharepad.co/pair#v1.<code>`.
+   It is a universal link: with the app installed it opens straight into pairing;
+   without it, Safari opens a small sharepad.co page that sends the user to the
+   App Store (§9). The code sits after the `#`, which browsers never send to a
+   server. The iPad tries each advertising Mac with the code until one accepts it
+   (a wrong Mac fails the handshake).
+4. Over that pairing channel the iPad proves the code, both sides say hello (id
+   and name), and the Mac sends a **fresh 256-bit secret** and a pairing id. The
+   iPad stores them and confirms; only then does the Mac store its side and close
+   the channel. The iPad reconnects on the new secret. The code never becomes the
+   long-lived key, so a code that leaks after use is worthless.
+5. Both screens confirm: "Paired with {Mac}" and "Paired with {iPad}". The
    pairing window closes itself after 2 seconds.
 
 Unpairing works from either side (Mac popover › paired iPads › **Forget**; iPad
@@ -276,8 +281,18 @@ then fails, and both sides say so instead of failing silently
   (`sec_protocol_options_add_pre_shared_key`), the approach Apple's own
   peer-to-peer sample takes ([Building a custom peer-to-peer protocol,
   Apple](https://developer.apple.com/documentation/network/building_a_custom_peer-to-peer_protocol)).
-  The key is the 256-bit pairing secret; the PSK identity is the pairing id. A
-  peer without the secret fails the handshake and never reaches the decoder.
+  Both ends pin **TLS 1.2 with `TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256`**
+  (open question 3). The key is derived (HKDF-SHA256) from the 256-bit pairing
+  secret; the PSK identity is `co.sharepad.link.v1:` plus the pairing id. A peer
+  without the secret fails the handshake and never reaches the decoder.
+- **The server cannot tell which key a client used**: Network.framework gives the
+  listener no way to read the negotiated PSK identity. So the first message on
+  every link is `authenticate`: the pairing id plus an HMAC, under a key derived
+  from the secret, over the session's exported keying material (RFC 5705). It is
+  bound to that one TLS session, so it cannot be replayed, and to one pairing, so a
+  paired iPad cannot claim another's id. A per-connection gate (`LinkGate`) lets
+  nothing through until that proof checks out and the hello's device id matches
+  the pairing. This matters for the trial meter, which is keyed to that id.
 - The Mac accepts **one** wireless stream at a time. A second paired iPad that
   connects while one is live is told **Paused on your Mac** and listed in the
   source picker.
@@ -286,9 +301,19 @@ then fails, and both sides say so instead of failing silently
 
 ### Known gaps, accepted for v1
 
-- **Forward secrecy depends on the TLS mode.** TLS 1.3 PSK with (EC)DHE gives it;
-  plain PSK does not. W2 confirms which mode Network.framework negotiates and
-  forces the DHE mode if it can.
+- ~~**Forward secrecy depends on the TLS mode.**~~ Settled in W2a (open question
+  3): we pin the ECDHE-PSK suite, which has it.
+- **A Mac cannot say which iPad failed a handshake.** A failed TLS handshake
+  carries no identity the listener can read, so the Mac side of the three-strikes
+  rule cannot attribute failures to a paired iPad. The iPad side can (it knows
+  which Mac it dialled). On the Mac, **Needs pairing again** shows only when the
+  iPad tells it (W2b: a best-effort note on Forget while connected) or the user
+  re-pairs, which replaces the row.
+- **An attacker on the network during the 5 minutes** could pose as the Mac to the
+  iPad and test guesses at the code offline. With 120 bits that is out of reach;
+  with a short code it would not be (open question 9). Network.framework has no
+  public password-authenticated key exchange (PAKE) that would make a short code
+  safe.
 - **A scan without the app installed leaves the link in Safari's history** on
   that iPad. Single use and the 5-minute expiry make it worthless by the time
   anyone could read it.
@@ -528,7 +553,8 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 |---|---|---|
 | **W0: Wire and tail** | `Packages/SharePadWire` (versioned handshake, config with canvas rectangle, `requestKeyframe`, `pause`, `resume`); keyframe and send-queue fixes (§8); spike sender and receiver rebuilt on it | Spike method re-run on home Wi-Fi: about one keyframe per 10 s in the CSV, capture-to-decoded median under 30 ms |
 | **W1: Mac wireless source** | `FeedSource` protocol; `WirelessReceiver`; reducer with source inputs and `localNetworkDenied`, with tests; share window hosts either layer; thumbnail from decoded frames. Unauthenticated, Debug builds only | Spike sender streams into the real share window; it picks cleanly in Zoom desktop and browser Meet; USB still works unchanged; denying local network on macOS 15 shows the popover fix |
-| **W2: Pairing and encryption** | Pairing window with QR and typed code; `PairingStore`; TLS-PSK link; Forget on both sides; listener only runs once paired | An unpaired iPad cannot connect; a capture of the traffic shows no readable stream; Forget on either side stops the next connection; the pairing window does not appear in a Zoom or Meet window share |
+| **W2a: Pairing core** (done) | In `SharePadWire`, no UI: pairing code and QR link; `PairingStore` (Keychain, with an in-memory fake); TLS-PSK link as an option beside the unauthenticated one; `authenticate` proof and `LinkGate`; pure reducers for the Mac pairing window, iPad pairing, the paired list (replace and Forget) and pairing health | Package tests: loopback TLS negotiates ECDHE-PSK; wrong, forgotten and unauthenticated peers fail; an end-to-end loopback pair then reconnect on the new secret; a spent code is refused |
+| **W2b: Pairing UI and switch-over** | Pairing window with QR and typed code; iPad pairing screen; Forget on both sides; listener only runs once paired; the W1 receiver switched to the TLS link | An unpaired iPad cannot connect; a capture of the traffic shows no readable stream; Forget on either side stops the next connection; the pairing window does not appear in a Zoom or Meet window share |
 | **W3: iPad app** | Canvas, tool picker, paper menu, connection pill, settings, canvas-rectangle crop, auto start and stop; TestFlight beta | On two iPad models: toolbar never appears on the Mac; open app streams within 3 s of the Mac being found; an hour on battery without a drop; backgrounding stops capture |
 | **W4: Lifecycle** | Cable-wins switching, 5 s reconnect hold, Wi-Fi lost-share banner, `pause` while the cable is active, trial meter keyed to the paired iPad | Plugging the cable in mid-share switches with no window flicker; Wi-Fi off for 3 s recovers in place; off for 10 s hides and shows the banner; trial pause covers a wireless feed |
 | **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app); `sharepad.co/pair` page and the universal-link association file; what's-new window with its tested show-once rule; signposting copy (§9); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; scanning the pairing QR with the Camera app on an iPad without the app reaches the App Store, and with it opens pairing; updating from 1.2 shows what's new once, a fresh install never shows it, and an update while sharing waits until the share ends; on a busy office network: about one keyframe per 10 s, capture-to-decoded median under 30 ms, p95 under 60 ms and no camera reading over 100 ms in 15 |
@@ -545,7 +571,17 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 2. **ReplayKit consent prompt frequency.** In-app capture asks the user to allow
    recording; how often it re-asks across launches decides whether "open the app
    and it streams" holds. Measure in W3.
-3. **Forward secrecy mode** of Network.framework's PSK TLS (§6). Confirm in W2.
+3. ~~**Forward secrecy mode** of Network.framework's PSK TLS (§6).~~ **Answered
+   in W2a (2026-10-02).** Network.framework does external PSKs over **TLS 1.2
+   only**: a TLS 1.3-only PSK handshake fails on loopback, matching Apple DTS
+   ([forums thread 688508](https://developer.apple.com/forums/thread/688508)).
+   Left to its default it negotiates `TLS_PSK_WITH_AES_128_GCM_SHA256` (0x00A8),
+   which has **no** forward secrecy. Pinning
+   `TLS_ECDHE_PSK_WITH_CHACHA20_POLY1305_SHA256` (0xCCAC) on both ends works and
+   adds an ephemeral ECDH share, so a later leak of the secret does not decrypt
+   recorded sessions. Loopback tests (`SecureLinkTests`) assert both facts on every
+   run. Measured on macOS 27 with the Xcode 27 SDK; iPadOS runs the same stack but
+   is unverified until W3.
 4. **Detecting local-network denial on macOS** reliably enough to drive a state.
    Confirm in W1.
 5. **Does the pairing window stay out of whole-screen shares** on current macOS
@@ -559,12 +595,27 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
    pairing, reconnect and keyframe rules in `SharePadWire` are written as
    event-in, effect-out reducers so a later port is translation, not redesign.
 8. **Export of drawings** from the iPad app: not v1, revisit after launch.
-9. **Typed code length.** §6 says the typed code is "the same secret" as the QR,
-   but 24 characters from a 32-letter alphabet carry 120 bits, not 256. Either
-   the typed code is longer (52 characters), or it is a separate, shorter code
-   that is safe only because it is single use and expires in 5 minutes. Decide
-   in W2.
-10. **Which id a re-pair replaces.** `PairedDevices` replaces by the iPad's
-    device id, but `identifierForVendor` changes when the iPad app is
-    reinstalled, which is one of the ways §6 says a pairing breaks. W2 needs an
-    id that survives a reinstall (a Keychain-held UUID) or a different match.
+9. **Typed code length. Proposed in W2a, waiting on Jon.** The QR and the typed
+   code are the same 24-character, 120-bit one-time code, and the code never
+   becomes the long-lived key (§6 Flow, step 4). A short code is unsafe even when
+   single use: anyone on the network can pose as the Mac to the iPad and test
+   guesses offline against the handshake, and 40 bits falls to a GPU inside the 5
+   minutes. ECDHE stops a passive recording being used that way, not an active
+   attacker. A PAKE (SPAKE2+) would make a short code safe, but there is no public
+   one: CryptoKit has none, and Security.framework exports
+   `sec_identity_create_client_SPAKE2PLUSV1_identity` and related symbols in its
+   `.tbd` with **no public header** in the macOS 27 SDK, so it is private API.
+   Alternatives: a 52-character typed code carrying 256 bits (too long to type),
+   or a short code (unsafe, as above).
+10. **Which id a re-pair replaces. Proposed in W2a, waiting on Jon.** A random
+    UUID made once and kept in the Keychain beside the pairings, with the same
+    after-first-unlock, this-device-only, never-synced class (`localDeviceID()`).
+    Keychain items survive an app delete on iOS today, but Apple DTS calls that an
+    implementation detail, not a promise ([forums thread
+    36442](https://developer.apple.com/forums/thread/36442)). Keeping the id and
+    the secrets together means they survive or vanish as one: today a reinstall
+    keeps the pairing and nothing needs repairing; if Apple ever clears the
+    Keychain on delete, the id and the secret go together, the re-pair adds a new
+    row and the old one stays until Forget. `identifierForVendor` was ruled out
+    (it changes on reinstall when no other app of ours is installed), and matching
+    by name was ruled out (names collide and anyone can set one).

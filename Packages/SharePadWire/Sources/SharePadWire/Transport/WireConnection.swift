@@ -1,16 +1,21 @@
 import Foundation
 import Network
 import os
+import Security
 
 public enum WireParameters {
     public static func stream() -> NWParameters {
+        stream(security: .unauthenticated)
+    }
+
+    public static func stream(security: LinkSecurity) -> NWParameters {
         let options = NWProtocolTCP.Options()
         // Nagle would hold small frames back by tens of milliseconds.
         options.noDelay = true
         options.enableKeepalive = true
         options.keepaliveIdle = 2
 
-        let parameters = NWParameters(tls: nil, tcp: options)
+        let parameters = NWParameters(tls: security.tlsOptions(), tcp: options)
         parameters.includePeerToPeer = true
         parameters.serviceClass = .interactiveVideo
         return parameters
@@ -35,6 +40,7 @@ public final class WireConnection: @unchecked Sendable {
     }
 
     public var onEvent: (@Sendable (Event) -> Void)?
+    public var onPairingMessage: (@Sendable (PairingMessage) -> Void)?
 
     private let connection: NWConnection
     private let queue: DispatchQueue
@@ -46,8 +52,19 @@ public final class WireConnection: @unchecked Sendable {
     }
 
     public static func outbound(to endpoint: NWEndpoint, queue: DispatchQueue) -> WireConnection {
+        outbound(to: endpoint, security: .unauthenticated, queue: queue)
+    }
+
+    public static func outbound(
+        to endpoint: NWEndpoint,
+        security: LinkSecurity,
+        queue: DispatchQueue
+    ) -> WireConnection {
         WireConnection(
-            connection: NWConnection(to: endpoint, using: WireParameters.stream()),
+            connection: NWConnection(
+                to: endpoint,
+                using: WireParameters.stream(security: security)
+            ),
             queue: queue
         )
     }
@@ -99,6 +116,50 @@ public final class WireConnection: @unchecked Sendable {
         })
     }
 
+    public func send(_ message: PairingMessage, whenSent: (@Sendable () -> Void)? = nil) {
+        connection.send(content: message.encoded(), completion: .contentProcessed { _ in
+            whenSent?()
+        })
+    }
+
+    public func linkExporter() -> Data? {
+        guard let metadata = tlsMetadata else { return nil }
+        let label = LinkAuthentication.exporterLabel
+        let secret = label.withCString { pointer in
+            sec_protocol_metadata_create_secret(
+                metadata,
+                label.utf8.count,
+                pointer,
+                LinkAuthentication.exporterLength
+            )
+        }
+        guard let secret else { return nil }
+        let bytes = Data(secret as DispatchData)
+        return bytes.count == LinkAuthentication.exporterLength ? bytes : nil
+    }
+
+    public var negotiatedTLS: (version: UInt16, suite: UInt16)? {
+        Self.negotiatedTLS(of: connection)
+    }
+
+    static func negotiatedTLS(of connection: NWConnection) -> (version: UInt16, suite: UInt16)? {
+        guard let metadata = tlsMetadata(of: connection) else { return nil }
+        return (
+            sec_protocol_metadata_get_negotiated_tls_protocol_version(metadata).rawValue,
+            sec_protocol_metadata_get_negotiated_tls_ciphersuite(metadata).rawValue
+        )
+    }
+
+    private var tlsMetadata: sec_protocol_metadata_t? {
+        Self.tlsMetadata(of: connection)
+    }
+
+    private static func tlsMetadata(of connection: NWConnection) -> sec_protocol_metadata_t? {
+        let metadata = connection.metadata(definition: NWProtocolTLS.definition) as? NWProtocolTLS
+            .Metadata
+        return metadata?.securityProtocolMetadata
+    }
+
     private func readHeader() {
         connection.receive(
             minimumIncompleteLength: WireService.headerLength,
@@ -146,6 +207,15 @@ public final class WireConnection: @unchecked Sendable {
     }
 
     private func deliver(typeCode: UInt8, payload: Data) {
+        if PairingMessage.handles(typeCode) {
+            do {
+                try onPairingMessage?(PairingMessage.decode(typeCode: typeCode, payload: payload))
+            } catch {
+                log.error("undecodable pairing message \(typeCode): \(String(describing: error))")
+            }
+            readHeader()
+            return
+        }
         do {
             try onEvent?(.message(WireMessage.decode(typeCode: typeCode, payload: payload)))
         } catch {
@@ -164,9 +234,15 @@ public final class WireListener: @unchecked Sendable {
     private let listener: NWListener
     private let queue: DispatchQueue
 
-    public init(serviceName: String, queue: DispatchQueue) throws {
-        listener = try NWListener(using: WireParameters.stream())
-        listener.service = NWListener.Service(name: serviceName, type: WireService.type)
+    public convenience init(serviceName: String, queue: DispatchQueue) throws {
+        try self.init(serviceName: serviceName, security: .unauthenticated, queue: queue)
+    }
+
+    public init(serviceName: String?, security: LinkSecurity, queue: DispatchQueue) throws {
+        listener = try NWListener(using: WireParameters.stream(security: security))
+        if let serviceName {
+            listener.service = NWListener.Service(name: serviceName, type: WireService.type)
+        }
         self.queue = queue
     }
 
