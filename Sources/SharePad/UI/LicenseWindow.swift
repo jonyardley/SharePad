@@ -29,7 +29,7 @@ enum LicenseWindow {
             backing: .buffered,
             defer: false
         )
-        win.title = "Enter your SharePad licence"
+        win.title = "Enter Licence Key"
         win.isReleasedWhenClosed = false
         // The share window floats when "Keep window on top" is on, so a normal-level
         // entry window would open behind it (and the trial-pause overlay) where the
@@ -61,7 +61,7 @@ struct LicenseEntryView: View {
 
     private var form: some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
-            Text("A one-time licence. Works offline — no account, no sign-in.")
+            Text("Enter the email you bought with and the key from your purchase email.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             TextField("Email used at purchase", text: $email)
@@ -100,7 +100,7 @@ struct LicenseEntryView: View {
         case .malformedKey:
             "That licence key looks incomplete. Paste the whole key from your purchase email."
         case .mismatch:
-            "That key does not match this email. Use the address you bought with."
+            "That key doesn't match this email. Use the address you bought with."
         case .valid, .none:
             nil
         }
@@ -111,7 +111,7 @@ struct LicenseEntryView: View {
             Label("Licence activated", systemImage: "checkmark.circle.fill")
                 .font(.headline)
                 .foregroundStyle(.green)
-            Text("Thanks for buying SharePad — the pause is gone for good.")
+            Text("Thanks for buying SharePad. Sharing won't pause again.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             HStack {

@@ -103,7 +103,7 @@ final class PairingPanelContentTests: XCTestCase {
         XCTAssertTrue(interrupted.offersNewCode)
         XCTAssertEqual(
             interrupted.status,
-            "Pairing didn’t finish. Show a new code to try again."
+            "Pairing didn’t finish. Click Show New Code to try again."
         )
     }
 

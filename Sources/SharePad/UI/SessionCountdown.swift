@@ -25,7 +25,7 @@ struct TrialCountdownWatermark: View {
                     let remaining = SessionCountdown.remainingText(until: endsAt, now: context.date)
                     // Monospaced digits keep every "M:SS" the same width, so the pill
                     // doesn't reflow each second as proportional glyphs change size.
-                    Label("Free trial — pauses in \(remaining)", systemImage: "hourglass")
+                    Label("Trial ended · pauses in \(remaining)", systemImage: "hourglass")
                         .font(.callout.weight(.semibold).monospacedDigit())
                         .foregroundStyle(.white)
                         .padding(.vertical, Theme.Spacing.row)

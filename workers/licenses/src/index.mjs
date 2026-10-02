@@ -14,7 +14,7 @@ export default {
       if (error instanceof StripeUnavailableError) {
         return htmlResponse(messagePage(
           'Temporary problem',
-          'We could not reach Stripe just now — please try again in a minute.',
+          "Couldn't reach the payment system just now. Please try again in a minute.",
         ), 502);
       }
       if (error instanceof EmailUnavailableError) {
@@ -23,13 +23,12 @@ export default {
         console.error('recover email send failed:', error.message);
         return htmlResponse(messagePage(
           'Could not send the email',
-          'We found your purchase but could not send the email just now — please try again in a minute.',
+          "I found your purchase but couldn't send the email just now. Please try again in a minute.",
         ), 502);
       }
-      return htmlResponse(messagePage(
-        'Something went wrong',
-        'An unexpected error occurred on our end. If you completed checkout, contact support and we will sort it out.',
-      ), 500);
+      return htmlResponse(page('Something went wrong', `
+    <p>Something broke on my end. If you've paid, email
+    <a href="mailto:hello@sharepad.co">hello@sharepad.co</a> and I'll sort it out.</p>`), 500);
     }
   },
 };
@@ -40,10 +39,9 @@ async function keyPage(url, env) {
   const session = await stripeGet(`/v1/checkout/sessions/${encodeURIComponent(sessionId)}`, env);
   const email = session?.customer_details?.email;
   if (!session || session.payment_status !== 'paid' || !email) {
-    return htmlResponse(messagePage(
-      'Purchase not found',
-      'We could not verify this checkout. If you paid, recover your key at /recover.',
-    ), 404);
+    return htmlResponse(page('Purchase not found', `
+    <p>I couldn't find this checkout. If you've paid, you can
+    <a href="/recover">get your key by email</a>.</p>`), 404);
   }
   // The licence EMAIL is sent by the sharepad-purchase-email webhook worker
   // (exactly-once on checkout.session.completed). This page just shows the key.
@@ -56,7 +54,7 @@ async function recoverPage(url, env, request) {
   const ip = request.headers.get('cf-connecting-ip') ?? 'unknown';
   const { success } = await env.RECOVER_LIMITER.limit({ key: ip });
   if (!success) {
-    return htmlResponse(messagePage('Slow down', 'Too many attempts — please wait a minute and try again.'), 429, { 'retry-after': '60' });
+    return htmlResponse(messagePage('Slow down', 'Too many tries. Please wait a minute and try again.'), 429, { 'retry-after': '60' });
   }
   const sessions = await stripeGet(
     `/v1/checkout/sessions?customer_details[email]=${encodeURIComponent(normalizeEmail(email))}&status=complete&limit=100`,
@@ -70,7 +68,7 @@ async function recoverPage(url, env, request) {
   if (!paid) {
     return htmlResponse(messagePage(
       'No purchase found',
-      'No SharePad purchase matches that email. Check you used the email from checkout.',
+      "I can't find a SharePad purchase for that email. Check it's the one you used at checkout.",
     ), 404);
   }
   // /recover is unauthenticated — rendering the key would hand it to anyone who can
@@ -105,25 +103,26 @@ function htmlResponse(body, status = 200, extraHeaders = {}) {
 
 function keyHtml(email, key) {
   return page('Your SharePad licence', `
-    <p>Thanks for buying SharePad — here's your one-time licence:</p>
+    <p>Thanks for buying SharePad. Here's your licence:</p>
     <p><strong>Email:</strong> <code>${escapeHtml(normalizeEmail(email))}</code></p>
     <p><strong>Key:</strong></p>
     <pre>${escapeHtml(key)}</pre>
-    <p>In SharePad's menu-bar popover, choose <em>Enter licence…</em> and paste both.
-    It takes effect straight away and works offline — SharePad never checks in with a server.</p>
-    <p>No need to save this page: you can recover your key anytime at
-    <a href="/recover">/recover</a> with the email above — no account needed.</p>`);
+    <p>Click the SharePad icon in your menu bar, choose <strong>Enter Licence…</strong>,
+    paste your email and key, then click <strong>Activate</strong>.
+    It takes effect straight away and works offline. The licence check never contacts a server.</p>
+    <p>No need to save this page: you can get your key again any time from the
+    <a href="/recover">recovery page</a> with the email above. No account needed.</p>`);
 }
 
 function sentPage(email) {
   return page('Check your inbox', `
-    <p>If <code>${escapeHtml(normalizeEmail(email))}</code> bought SharePad, we've
-    just emailed your licence key there — check your inbox (and spam folder).</p>
-    <p>Open the email, copy the key, then in SharePad's menu-bar popover choose
-    <em>Enter licence…</em> and paste it with the email above. It works offline —
-    SharePad never checks in with a server.</p>
-    <p>No email after a minute or two? Double-check you used your checkout email and
-    try <a href="/recover">/recover</a> again.</p>`);
+    <p>Your licence key is on its way to <code>${escapeHtml(normalizeEmail(email))}</code>.
+    Check your inbox, and your spam folder if it isn't there in a minute or two.</p>
+    <p>Open the email and copy the key. Click the SharePad icon in your menu bar, choose <strong>Enter Licence…</strong>,
+    paste your email and key, then click <strong>Activate</strong>.
+    It works offline. The licence check never contacts a server.</p>
+    <p>No email after a few minutes? Check you used your checkout email and try the
+    <a href="/recover">recovery page</a> again.</p>`);
 }
 
 // ── Recover email (Resend) ──
@@ -178,7 +177,7 @@ function recoverEmailHtml(downloadUrl, email, key) {
             <td style="background:#FFFFFF;border:1px solid #E6E7F2;border-radius:24px;padding:36px 32px;font-family:${font};color:#181C44;">
               <h1 style="font-size:22px;line-height:1.25;margin:0 0 12px;color:#181C44;">Your SharePad licence key</h1>
               <p style="font-size:15px;line-height:1.6;color:#4A4F78;margin:0 0 24px;">
-                You asked to recover your key — here it is. You don't need to buy again;
+                You asked for your key again, so here it is. You don't need to buy again;
                 the same key works on every Mac.
               </p>
               <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 4px;">Email: <span style="font-family:${mono};color:#181C44;">${address}</span></p>
@@ -189,8 +188,9 @@ function recoverEmailHtml(downloadUrl, email, key) {
                 </tr>
               </table>
               <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 24px;">
-                In SharePad's menu bar, choose "Enter licence..." and paste both. It takes
-                effect straight away and works offline &mdash; SharePad never checks in with a server.
+                Click the SharePad icon in your menu bar, choose <strong>Enter Licence…</strong>,
+                paste your email and key, then click <strong>Activate</strong>. It takes effect
+                straight away and works offline. The licence check never contacts a server.
               </p>
               <table role="presentation" cellpadding="0" cellspacing="0" border="0">
                 <tr>
@@ -222,15 +222,16 @@ function recoverEmailText(downloadUrl, email, key) {
   const address = normalizeEmail(email);
   return `Your SharePad licence key
 
-You asked to recover your key -- here it is. You don't need to buy again; the same
-key works on every Mac.
+You asked for your key again, so here it is. You don't need to buy again; the
+same key works on every Mac.
 
 Email: ${address}
 Key:
 ${key}
 
-In SharePad's menu bar, choose "Enter licence..." and paste both. It takes effect
-straight away and works offline -- SharePad never checks in with a server.
+Click the SharePad icon in your menu bar, choose "Enter Licence…", paste your
+email and key, then click "Activate". It takes effect straight away and works
+offline. The licence check never contacts a server.
 
 Download SharePad: ${downloadUrl}
 
@@ -259,7 +260,7 @@ function page(title, body) {
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light only">
-<title>${escapeHtml(title)} — SharePad</title>
+<title>${escapeHtml(title)} · SharePad</title>
 <style>
   :root {
     --bg: #F3F4FB; --card: #FFFFFF; --border: #E6E7F2;

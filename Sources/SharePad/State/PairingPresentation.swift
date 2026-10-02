@@ -25,7 +25,7 @@ struct PairingPanelContent: Equatable {
         case .offering, .expired:
             self.init(status: "This code has expired.", offersNewCode: true)
         case .interrupted, .closed:
-            self.init(status: "Pairing didn’t finish. Show a new code to try again.",
+            self.init(status: "Pairing didn’t finish. Click Show New Code to try again.",
                       offersNewCode: true)
         }
     }

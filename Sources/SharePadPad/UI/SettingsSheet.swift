@@ -15,7 +15,7 @@ struct SettingsSheet: View {
                         HStack {
                             Text(mac.peerName)
                             Spacer()
-                            Button("Forget this Mac", role: .destructive) {
+                            Button("Forget This Mac", role: .destructive) {
                                 model.pairings.forget(id: mac.peerID)
                             }
                             .buttonStyle(.borderless)

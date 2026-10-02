@@ -65,9 +65,9 @@ struct ConnectionPillView: View {
     private func title(for action: ConnectionPill.Action) -> String {
         switch action {
         case .openSettings: "Settings"
-        case .retryCapture: "Try again"
+        case .retryCapture: "Try Again"
         case .pair: "Pair…"
-        case .pairAgain: "Pair again…"
+        case .pairAgain: "Pair Again…"
         }
     }
 }

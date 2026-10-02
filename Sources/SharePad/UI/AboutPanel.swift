@@ -7,7 +7,7 @@ enum AboutPanel {
     private static let tagline =
         "Turn a USB-connected iPad into an always-ready window for any video call."
     private static let licenceNotice =
-        "Free and open-source software under the GPLv3, provided with no warranty."
+        "Open source under the GPLv3, with no warranty."
 
     static func present() {
         // As an LSUIElement agent app the panel can open behind the frontmost
@@ -26,14 +26,14 @@ enum AboutPanel {
         )
         body.append(link("View Source", url: repo))
         body.append(separator)
-        body.append(link("View Licence", url: licence))
+        body.append(link("View GPL Licence", url: licence))
         body.append(separator)
         body.append(link("Report an Issue", url: issues))
         // Buy link uses the same decoupled buy path as the in-app gate
         // (buy.sharepad.co -> 302 -> processor), so it's the single source of truth.
         if let buy = License.buyURL?.absoluteString {
             body.append(separator)
-            body.append(link("Buy a licence", url: buy))
+            body.append(link("Buy a Licence", url: buy))
         }
 
         let centered = NSMutableParagraphStyle()

@@ -11,14 +11,14 @@ struct TrialOverlayView: View {
                 .foregroundStyle(.secondary)
             Text("Your free trial has ended")
                 .font(.title2.bold())
-            Text("Add your licence to resume sharing. Works offline, no account, no more pauses.")
+            Text("Enter a licence key to carry on sharing. It works offline and needs no account.")
                 .multilineTextAlignment(.center)
                 .foregroundStyle(.secondary)
             HStack(spacing: Theme.Spacing.section) {
                 if let onBuy {
-                    Button("Buy a licence", action: onBuy)
+                    Button("Buy a Licence", action: onBuy)
                 }
-                Button("Enter licence", action: onEnterLicense)
+                Button("Enter Licence…", action: onEnterLicense)
                     .buttonStyle(.borderedProminent)
             }
         }

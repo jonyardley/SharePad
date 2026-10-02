@@ -26,13 +26,13 @@ struct PopoverView: View {
 
             stateAction
 
-            Button(model.isWindowVisible ? "Hide window" : "Show window") {
+            Button(model.isWindowVisible ? "Hide Window" : "Show Window") {
                 model.toggleWindow()
             }
             .disabled(!model.isConnected)
 
             if model.isWindowHotkeyActive {
-                Text("Toggle from anywhere: \(GlobalHotkey.WindowToggle.display)")
+                Text("Show or hide from anywhere: \(GlobalHotkey.WindowToggle.display)")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -44,7 +44,7 @@ struct PopoverView: View {
                 Divider()
             }
 
-            Toggle("Auto-show on connect", isOn: Binding(
+            Toggle("Show window on connect", isOn: Binding(
                 get: { model.autoShowOnConnect },
                 set: { model.setAutoShow($0) }
             ))
@@ -57,16 +57,19 @@ struct PopoverView: View {
                 set: { model.setLaunchAtLogin($0) }
             ))
             if model.launchAtLoginFailed {
-                Text("Couldn't change the login item — open System Settings › Login Items.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text("""
+                Couldn't change Launch at login. \
+                Set it in System Settings › General › Login Items.
+                """)
+                .font(.caption)
+                .foregroundStyle(.secondary)
             }
 
-            Toggle("Send anonymous crash reports", isOn: Binding(
+            Toggle("Send crash reports", isOn: Binding(
                 get: { model.diagnosticsEnabled },
                 set: { model.setDiagnosticsEnabled($0) }
             ))
-            Text("Off by default. Crash and error diagnostics only, never your content or licence.")
+            Text("Crashes, hangs and errors only. Never what's on your iPad, or your licence.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -92,7 +95,7 @@ struct PopoverView: View {
         case .licensed:
             EmptyView()
         case let .trial(daysLeft):
-            licenseRow(status: "Free trial — \(daysLeft) day\(daysLeft == 1 ? "" : "s") left")
+            licenseRow(status: "Free trial: \(daysLeft) day\(daysLeft == 1 ? "" : "s") left")
         case .trialExpired:
             trialExpiredRow
         }
@@ -100,15 +103,16 @@ struct PopoverView: View {
 
     @ViewBuilder private var trialExpiredRow: some View {
         if model.isTrialOverlayShown {
-            licenseRow(status: "Sharing paused — enter your licence to resume")
+            licenseRow(status: "Sharing paused. Enter your licence key to resume.")
         } else if let endsAt = model.sessionEndsAt {
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                licenseRow(status: "Free trial ended — sharing pauses in "
-                    + SessionCountdown.remainingText(until: endsAt, now: context.date))
+                licenseRow(status: "Trial ended. Sharing pauses in "
+                    + SessionCountdown.remainingText(until: endsAt, now: context.date) + ".")
             }
         } else {
             licenseRow(
-                status: "Free trial ended — sharing pauses after \(model.sessionLimitMinutes) min"
+                status: "Trial ended. Sharing pauses after up to "
+                    + "\(model.sessionLimitMinutes) minutes."
             )
         }
     }
@@ -120,9 +124,9 @@ struct PopoverView: View {
                 .foregroundStyle(.secondary)
             HStack {
                 if License.buyURL != nil {
-                    Button("Buy a licence") { model.openBuyPage() }
+                    Button("Buy a Licence") { model.openBuyPage() }
                 }
-                Button("Enter licence…") { LicenseWindow.present(model: model) }
+                Button("Enter Licence…") { LicenseWindow.present(model: model) }
             }
             Divider()
         }
@@ -149,7 +153,7 @@ struct PopoverView: View {
             HStack(spacing: Theme.Spacing.row) {
                 Image(systemName: "cable.connector.slash")
                     .foregroundStyle(.secondary)
-                Text("iPad disconnected")
+                Text("iPad disconnected. Plug it back in to carry on.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -199,7 +203,7 @@ struct PopoverView: View {
         case .localNetworkDenied:
             Button("Open System Settings") { model.openLocalNetworkSettings() }
         case .failed(.usb):
-            Button("Retry") { model.retry() }
+            Button("Try Again") { model.retry() }
         default:
             EmptyView()
         }
@@ -208,9 +212,9 @@ struct PopoverView: View {
     private var statusText: Text {
         switch model.state {
         case .checkingPermission: Text("Requesting camera access…")
-        case .permissionDenied: Text("Camera access denied.")
-        case .permissionRestricted: Text("Camera access is blocked by a device policy.")
-        case .localNetworkDenied: Text("Local network access is off.")
+        case .permissionDenied: Text("Camera access is off")
+        case .permissionRestricted: Text("Camera access is blocked")
+        case .localNetworkDenied: Text("Local network access is off")
         case .noDevice: Text("No iPad connected")
         case .starting(.usb): Text("Connecting…")
         case .starting(.wireless): Text("Connecting to \(wirelessName) over Wi-Fi…")
@@ -219,8 +223,8 @@ struct PopoverView: View {
             Text(model.wirelessStatus.isReconnecting
                 ? "Reconnecting to \(wirelessName)…"
                 : "\(wirelessName) · Wi-Fi")
-        case .failed(.usb): Text("Couldn't start the iPad feed.")
-        case .failed(.wireless): Text("Couldn't show the Wi-Fi feed.")
+        case .failed(.usb): Text("Couldn't connect to your iPad")
+        case .failed(.wireless): Text("Couldn't connect to your iPad over Wi-Fi")
         }
     }
 
@@ -236,10 +240,17 @@ struct PopoverView: View {
         case .noDevice where model.wirelessStatus.pairingStoreFailed:
             "Couldn’t read paired iPads from the Keychain. The cable still works."
         case .noDevice where model.wirelessStatus.listenerFailed:
-            "Wi-Fi sharing couldn't start; SharePad keeps retrying. The cable still works."
+            "Wi-Fi sharing couldn't start. SharePad will keep trying. The cable still works."
         case .noDevice: "Plug your iPad in with its cable to begin."
         case .starting(.usb): "Unlock your iPad and tap Trust if it asks."
-        case .failed(.usb): "Check your iPad is unlocked and connected, then Retry."
+        case .failed(.usb): "Unlock it, check the cable, then try again."
+        case .permissionDenied:
+            """
+            SharePad sees your iPad through camera access. \
+            Turn it on in Privacy & Security › Camera.
+            """
+        case .permissionRestricted:
+            "SharePad needs it to see your iPad. Ask whoever manages this Mac."
         case .localNetworkDenied: "Turn SharePad on under Local Network to share over Wi-Fi."
         case .live(.wireless) where model.isCameraAccessDenied:
             "Sharing over the cable needs camera access."

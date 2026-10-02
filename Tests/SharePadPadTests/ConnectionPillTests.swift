@@ -22,7 +22,7 @@ final class ConnectionPillTests: XCTestCase {
     }
 
     func testPausedOnTheMac() {
-        XCTAssertEqual(pill(.paused("Studio")).text, "Paused on your Mac")
+        XCTAssertEqual(pill(.paused("Studio")).text, "Paused on Studio")
     }
 
     func testLocalNetworkOffOffersSettings() {
@@ -46,7 +46,7 @@ final class ConnectionPillTests: XCTestCase {
         )
         XCTAssertEqual(
             unpaired,
-            ConnectionPill(text: "Not paired", tone: .attention, action: .pair)
+            ConnectionPill(text: "Not paired with a Mac", tone: .attention, action: .pair)
         )
     }
 
@@ -103,7 +103,7 @@ final class ConnectionPillTests: XCTestCase {
             captureDeclined: false,
             toolsUnlocated: true
         )
-        XCTAssertEqual(live.text, "Sharing paused while the tools are shown")
+        XCTAssertEqual(live.text, "Sharing paused. Hide the tools to resume.")
         let looking = ConnectionPill(
             link: .looking(nil),
             localNetworkDenied: false,

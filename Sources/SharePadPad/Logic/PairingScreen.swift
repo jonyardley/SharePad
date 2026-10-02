@@ -47,7 +47,7 @@ enum TypedCode {
 struct PairingScreenContent: Equatable {
     static let macAppNote = "You also need SharePad on your Mac: sharepad.co"
     static let steps = [
-        "On your Mac, click SharePad in the menu bar, then Pair an iPad…",
+        "On your Mac, click the SharePad icon in the menu bar, then Pair an iPad…",
         "Scan the code it shows.",
     ]
 

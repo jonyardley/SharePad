@@ -20,8 +20,8 @@ enum PaperTone: String, CaseIterable, Sendable {
 
     var title: String {
         switch self {
-        case .light: "Light paper"
-        case .dark: "Dark paper"
+        case .light: "Light"
+        case .dark: "Dark"
         }
     }
 }

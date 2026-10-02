@@ -65,7 +65,7 @@ struct PairingSheet: View {
                 .frame(height: Theme.Pairing.scannerHeight)
                 .listRowInsets(EdgeInsets())
             } else {
-                Button("Scan code") {
+                Button("Scan Code") {
                     cameraUnavailable = false
                     isScanning = true
                 }

@@ -192,9 +192,10 @@ export function purchaseEmailHtml(downloadUrl, email, key, recoverUrl) {
                 </tr>
               </table>
               <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:24px 0 0;">
-                Signed &amp; notarised by Apple. Open the DMG, drag SharePad to Applications,
-                and it lives in your menu bar. Plug in your iPad over USB and the share window
-                appears automatically.
+                Signed by me and notarised by Apple, so it opens normally. Open the download,
+                drag SharePad to Applications and open it. It lives in your menu bar. Plug your
+                iPad in over USB and its window appears, ready to pick in your call's
+                "Share window" list.
               </p>
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:28px;">
                 <tr><td style="border-top:1px solid #E6E7F2;font-size:0;line-height:0;height:1px;">&nbsp;</td></tr>
@@ -208,17 +209,17 @@ export function purchaseEmailHtml(downloadUrl, email, key, recoverUrl) {
                 </tr>
               </table>
               <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0 0 12px;">
-                In SharePad's menu bar, choose "Enter licence..." and paste both. It takes
-                effect straight away and works offline &mdash; SharePad never checks in with a server.
+                Click the SharePad icon in your menu bar, choose <strong>Enter Licence…</strong>,
+                paste your email and key, then click <strong>Activate</strong>. It takes effect
+                straight away and works offline. The licence check never contacts a server.
               </p>
               <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:0;">
-                Lost your key later? Get it again anytime at
-                <a href="${recover}" style="color:#3E4CB3;">recover your licence</a>
-                with the email above &mdash; no account, no sign-in.
+                Lose your key? <a href="${recover}" style="color:#3E4CB3;">Get it again here</a>
+                with the email above. No account, no sign-in.
               </p>
               <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:24px 0 0;">
-                SharePad is open source (GPLv3) with automatic updates for life. Need a hand?
-                Just reply to this email.
+                Updates are included for the life of the app, and the code is open source
+                (GPLv3). Need a hand? Just reply to this email.
               </p>
             </td>
           </tr>
@@ -244,23 +245,25 @@ Keep this email; the link below always points at the latest version.
 
 Download SharePad: ${downloadUrl}
 
-Signed & notarised by Apple. Open the DMG, drag SharePad to Applications, and it
-lives in your menu bar. Plug in your iPad over USB and the share window appears
-automatically.
+Signed by me and notarised by Apple, so it opens normally. Open the download,
+drag SharePad to Applications and open it. It lives in your menu bar. Plug your
+iPad in over USB and its window appears, ready to pick in your call's
+"Share window" list.
 
 Your licence
 Email: ${address}
 Key:
 ${key}
 
-In SharePad's menu bar, choose "Enter licence..." and paste both. It takes effect
-straight away and works offline -- SharePad never checks in with a server.
+Click the SharePad icon in your menu bar, choose "Enter Licence…", paste your
+email and key, then click "Activate". It takes effect straight away and works
+offline. The licence check never contacts a server.
 
-Lost your key later? Get it again anytime at ${recoverUrl} with the email above
--- no account, no sign-in.
+Lose your key? Get it again at ${recoverUrl} with the email above.
+No account, no sign-in.
 
-SharePad is open source (GPLv3) with automatic updates for life. Need a hand?
-Just reply to this email.
+Updates are included for the life of the app, and the code is open source
+(GPLv3). Need a hand? Just reply to this email.
 
 sharepad.co`;
 }

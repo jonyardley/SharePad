@@ -69,17 +69,17 @@ struct ConnectionPill: Equatable {
         toolsUnlocated: Bool = false
     ) {
         if pairing == .unpaired {
-            self.init(text: "Not paired", tone: .attention, action: .pair)
+            self.init(text: "Not paired with a Mac", tone: .attention, action: .pair)
         } else if localNetworkDenied {
             self.init(text: "Local network is off", tone: .attention, action: .openSettings)
         } else if captureDeclined, link.isUp {
             self.init(
-                text: "Screen recording did not start",
+                text: "Screen recording not allowed",
                 tone: .attention,
                 action: .retryCapture
             )
         } else if toolsUnlocated, link.isUp {
-            self.init(text: "Sharing paused while the tools are shown", tone: .attention)
+            self.init(text: "Sharing paused. Hide the tools to resume.", tone: .attention)
         } else if case let .broken(mac) = pairing, !link.isUp {
             self.init(text: "Not paired with \(mac)", tone: .attention, action: .pairAgain)
         } else {
@@ -91,8 +91,8 @@ struct ConnectionPill: Equatable {
         switch link {
         case let .live(mac):
             self.init(text: "Live on \(mac)", tone: .live)
-        case .paused:
-            self.init(text: "Paused on your Mac", tone: .waiting)
+        case let .paused(mac):
+            self.init(text: "Paused on \(mac)", tone: .waiting)
         case let .incompatible(mac):
             self.init(text: "Update SharePad here and on \(mac)", tone: .attention)
         case let .looking(mac?):

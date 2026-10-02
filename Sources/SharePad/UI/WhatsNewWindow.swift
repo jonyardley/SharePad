@@ -47,7 +47,7 @@ private final class WhatsNewPanel: NSWindow {
             backing: .buffered,
             defer: false
         )
-        title = "What's new in SharePad"
+        title = "What's New in SharePad"
         identifier = WhatsNewWindow.windowID
         isReleasedWhenClosed = false
         // Set before it is ordered in: the sharing guard sweeps on becoming key, and a
@@ -81,22 +81,22 @@ struct WhatsNewView: View {
                     .font(.title2.bold())
                 Text("""
                 Your iPad can now share over Wi-Fi. Install the SharePad iPad app, \
-                pair once, then just open it and draw.
+                pair once, then open it and draw.
                 """)
                 .fixedSize(horizontal: false, vertical: true)
             }
             if let pairing {
                 PairingCodeBlock(pairing: pairing)
             } else {
-                Text("To pair, click SharePad in the menu bar, then Pair an iPad…")
+                Text("To pair, click the SharePad icon in the menu bar, then Pair an iPad…")
                     .fixedSize(horizontal: false, vertical: true)
             }
-            Text("The cable still works exactly as before.")
+            Text("The cable still works as before.")
                 .foregroundStyle(.secondary)
             HStack {
                 Spacer()
                 if pairing != nil {
-                    Button("Not now", action: onDismiss)
+                    Button("Not Now", action: onDismiss)
                         .keyboardShortcut(.cancelAction)
                     Button("Pair an iPad…", action: onPair)
                         .keyboardShortcut(.defaultAction)
@@ -135,7 +135,7 @@ private struct PairingCodeBlock: View {
         case let .live(url):
             QRCodeView(url: url)
         case .expired:
-            Button("Show a new code") { pairing.requestNewOffer() }
+            Button("Show New Code") { pairing.requestNewOffer() }
         }
     }
 }

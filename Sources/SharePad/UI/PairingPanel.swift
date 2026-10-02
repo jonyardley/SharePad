@@ -85,7 +85,7 @@ struct PairingPanelView: View {
             Text(panel.status)
                 .font(panel.isConfirmation ? .headline : .body)
             if panel.offersNewCode {
-                Button("Show a new code") { model.pairIPad() }
+                Button("Show New Code") { model.pairIPad() }
                     .keyboardShortcut(.defaultAction)
             }
         }
