@@ -89,7 +89,12 @@ can stream.
    the iPad authenticates. TLS with a pre-shared key already proves the iPad
    holds one of the Mac's keys, and the hello carries only the name and id the
    Bonjour record already shows. `PadPairing` needs it to name the Mac.
-6. **The unauthenticated link is gone from both apps.** `spike/wireless` keeps
+6. **A universal link fills the code in; pairing waits for a Pair tap.** §6 says
+   the link "opens straight into pairing". It does open the pairing screen, but
+   without the tap anyone who can get a link onto the iPad could pair it with
+   their own Mac, and the newest pairing is dialled first. One tap costs nothing
+   on the happy path.
+7. **The unauthenticated link is gone from both apps.** `spike/wireless` keeps
    it for measurement; a spike sender can no longer reach the real app.
 
 ## Open questions

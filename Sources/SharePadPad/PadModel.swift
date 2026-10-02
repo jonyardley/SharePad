@@ -52,6 +52,7 @@ final class PadModel {
 
     @ObservationIgnored private let preferences: PadPreferences
     @ObservationIgnored private var pairAfterSettings = false
+    @ObservationIgnored private var pendingPairingCode: PairingCode?
     @ObservationIgnored private let drawingStore: DrawingStore
     @ObservationIgnored private let recorder: ScreenRecording
     @ObservationIgnored private let captureContext = CaptureContext()
@@ -149,21 +150,25 @@ final class PadModel {
     // ── Pairing ──
 
     func showPairing() {
+        showPairing(prefilled: nil)
+    }
+
+    // A link only fills the code in: pairing waits for a Pair tap, so a link someone
+    // else sends cannot pair this iPad with their Mac unseen.
+    func open(_ url: URL) {
+        guard let code = PairingCode(invitation: url) else { return }
+        showPairing(prefilled: code)
+    }
+
+    private func showPairing(prefilled code: PairingCode?) {
+        pendingPairingCode = code
         if isSettingsShown {
             pairAfterSettings = true
             isSettingsShown = false
             return
         }
-        pairings.reset()
+        pairings.reset(typedCode: code)
         isPairingShown = true
-    }
-
-    func open(_ url: URL) {
-        guard let code = PairingCode(invitation: url) else { return }
-        isSettingsShown = false
-        pairings.reset()
-        isPairingShown = true
-        pairings.start(code)
     }
 
     private func pairingShownChanged(was: Bool) {
@@ -241,7 +246,7 @@ final class PadModel {
             guard let self else { return }
             if overlay == .settings, pairAfterSettings {
                 pairAfterSettings = false
-                showPairing()
+                showPairing(prefilled: pendingPairingCode)
             } else {
                 canvas.showToolPicker()
             }

@@ -381,4 +381,11 @@ final class PairingHealthTests: XCTestCase {
         XCTAssertEqual(health.reduce(.handshakeSucceeded(id)), [.markHealthy(id)])
         XCTAssertFalse(health.isBroken(id))
     }
+
+    func testResetClearsABrokenPairingWithoutAnEffect() {
+        var health = PairingHealth()
+        _ = health.reduce(.peerForgot(id))
+        XCTAssertEqual(health.reduce(.reset(id)), [])
+        XCTAssertFalse(health.isBroken(id))
+    }
 }

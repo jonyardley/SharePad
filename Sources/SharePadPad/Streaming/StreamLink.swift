@@ -17,8 +17,6 @@ protocol StreamLink: AnyObject, Sendable {
     func submit(pixelBuffer: CVPixelBuffer, presentationTime: CMTime, captureWallClock: Double)
 }
 
-// Streams only to Macs this iPad is paired with, over the TLS-PSK link
-// (specs/wireless-pairing-ui.md).
 final class PairedLink: StreamLink {
     private let sender: StreamSender
 

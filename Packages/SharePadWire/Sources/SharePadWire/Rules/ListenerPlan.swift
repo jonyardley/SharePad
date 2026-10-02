@@ -1,7 +1,5 @@
 import Foundation
 
-// The Mac advertises only while a code is on offer, or while something is paired and
-// wireless is allowed; each key is carried only while its reason holds (specs §6).
 public struct ListenerPlan: Equatable, Sendable {
     public let pairingCode: PairingCode?
     public let paired: [PairingRecord]

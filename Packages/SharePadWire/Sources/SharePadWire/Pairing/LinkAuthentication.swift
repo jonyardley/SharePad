@@ -258,8 +258,10 @@ public struct LinkGate: Equatable, Sendable {
     private mutating func open(_ peer: LinkAuthentication.Peer, _ current: Hello,
                                _ event: Event) -> Decision {
         switch (peer, event) {
-        case let (_, .helloReceived(hello)):
+        case let (.paired, .helloReceived(hello)):
             hello.deviceID == current.deviceID ? .pass : close(.identityMismatch)
+        case (.pairing, .helloReceived):
+            close(.notPaired)
         case (_, .credentialChecked):
             close(.unexpectedCredential)
         case (.pairing, .pairingMessage), (.paired, .streamMessage), (.paired, .forgetNotice):

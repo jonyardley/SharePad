@@ -2,8 +2,6 @@ import Foundation
 import os
 import SharePadWire
 
-// The Macs this iPad is paired with, their health, and the pairing flow in progress.
-// The link reads `macs` through `onChange`; views read the derived state.
 @Observable
 @MainActor
 final class MacPairings {
@@ -26,6 +24,14 @@ final class MacPairings {
 
     var isTypedCodeComplete: Bool {
         TypedCode.code(from: typedCode) != nil
+    }
+
+    var closeButtonTitle: String {
+        screen.isPaired ? "Done" : "Close"
+    }
+
+    var showsTypedEntry: Bool {
+        !typedCode.isEmpty
     }
 
     var pairButtonTitle: String {
@@ -51,11 +57,11 @@ final class MacPairings {
 
     // ── Intents ──
 
-    func reset() {
+    func reset(typedCode code: PairingCode? = nil) {
         session?.cancel()
         phase = .idle
         saveFailed = false
-        typedCode = ""
+        typedCode = code?.typed ?? ""
     }
 
     func setTypedCode(_ text: String) {
@@ -90,7 +96,7 @@ final class MacPairings {
     }
 
     func forget(id: UUID) {
-        _ = health.reduce(.handshakeSucceeded(id))
+        _ = health.reduce(.reset(id))
         broken.remove(id)
         applyBook(book.reduce(.forget(peerID: id)))
     }
@@ -112,7 +118,7 @@ final class MacPairings {
         case let .phase(phase):
             self.phase = phase
         case let .saved(record):
-            _ = health.reduce(.handshakeSucceeded(record.peerID))
+            _ = health.reduce(.reset(record.peerID))
             broken.remove(record.peerID)
             applyBook(book.reduce(.paired(record)))
         case .saveFailed:

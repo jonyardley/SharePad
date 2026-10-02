@@ -42,7 +42,7 @@ struct PairingSheet: View {
                     }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button(screen.isPaired ? "Done" : "Close") { model.isPairingShown = false }
+                    Button(model.pairings.closeButtonTitle) { model.isPairingShown = false }
                 }
             }
         }
@@ -75,7 +75,7 @@ struct PairingSheet: View {
                 Text("The camera is off for SharePad. Type the code instead.")
                     .foregroundStyle(.secondary)
             }
-            if isTyping {
+            if isTyping || model.pairings.showsTypedEntry {
                 TextField("Code from your Mac", text: Binding(
                     get: { model.pairings.typedCode },
                     set: { model.pairings.setTypedCode($0) }

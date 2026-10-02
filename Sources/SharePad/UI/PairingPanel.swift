@@ -27,7 +27,7 @@ enum PairingPanel {
 
     private static func makeWindow() -> NSWindow {
         let win = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 340, height: 460),
+            contentRect: NSRect(x: 0, y: 0, width: Theme.Pairing.panelWidth, height: 460),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -57,7 +57,7 @@ struct PairingPanelView: View {
             content(model.pairingPanel(now: context.date))
         }
         .padding(Theme.Spacing.section)
-        .frame(width: 320)
+        .frame(width: Theme.Pairing.panelWidth)
     }
 
     private func content(_ panel: PairingPanelContent) -> some View {
@@ -83,7 +83,7 @@ struct PairingPanelView: View {
                     .monospacedDigit()
             }
             Text(panel.status)
-                .font(panel.closesAutomatically ? .headline : .body)
+                .font(panel.isConfirmation ? .headline : .body)
             if panel.offersNewCode {
                 Button("Show a new code") { model.pairIPad() }
                     .keyboardShortcut(.defaultAction)
@@ -92,7 +92,8 @@ struct PairingPanelView: View {
         .frame(maxWidth: .infinity)
         .task(id: panel.closesAutomatically) {
             guard panel.closesAutomatically else { return }
-            try? await Task.sleep(for: PairingPanelContent.closeDelay)
+            guard await (try? Task.sleep(for: PairingPanelContent.closeDelay)) != nil
+            else { return }
             onClose()
         }
     }

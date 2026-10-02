@@ -89,4 +89,15 @@ final class MacPairingsTests: XCTestCase {
         XCTAssertFalse(pairings.pairWithScannedCode("https://example.com"))
         XCTAssertEqual(pairings.phase, .idle)
     }
+
+    func testALinkOnlyFillsTheCodeInAndWaitsForATap() throws {
+        let (pairings, _) = try pairings([])
+        let code = PairingCode.generate()
+        pairings.reset(typedCode: code)
+        XCTAssertEqual(pairings.typedCode, code.typed)
+        XCTAssertTrue(pairings.showsTypedEntry)
+        XCTAssertTrue(pairings.isTypedCodeComplete)
+        XCTAssertEqual(pairings.phase, .idle)
+        XCTAssertEqual(pairings.closeButtonTitle, "Close")
+    }
 }

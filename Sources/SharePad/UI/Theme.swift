@@ -14,5 +14,6 @@ enum Theme {
 
     enum Pairing {
         static let qrSide: CGFloat = 200
+        static let panelWidth: CGFloat = 340
     }
 }

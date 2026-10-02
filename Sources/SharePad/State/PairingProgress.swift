@@ -14,7 +14,8 @@ struct PairingInvitation: Equatable, Sendable {
     let expiresAt: Date
 }
 
-// What the pairing window may show: never the secret, only the one-time code.
+// Never the secret, only the one-time code: the secret is never shown again after
+// pairing (specs/wireless-product.md §6, The link).
 enum PairingProgress: Equatable, Sendable {
     case closed
     case offering(PairingInvitation)

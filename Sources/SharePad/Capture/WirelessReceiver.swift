@@ -26,9 +26,9 @@
         private static let minThumbnailInterval = 1.0 / 15.0
         private static let listenerRetryDelay: TimeInterval = 2
 
-        let queue = DispatchQueue(label: "com.jonyardley.sharepad.wireless")
-        let log = Logger(subsystem: "com.jonyardley.sharepad", category: "wireless")
-        let decoder = H264Decoder()
+        private let queue = DispatchQueue(label: "com.jonyardley.sharepad.wireless")
+        private let log = Logger(subsystem: "com.jonyardley.sharepad", category: "wireless")
+        private let decoder = H264Decoder()
         private let displayRenderer: AVSampleBufferVideoRenderer
         private let thumbnailRenderer: AVSampleBufferVideoRenderer
         private let deviceName: String
@@ -36,20 +36,20 @@
         private let sizeContinuation: AsyncStream<CGSize>.Continuation
         private let statusContinuation: AsyncStream<WirelessStatus>.Continuation
 
-        var identity: Hello?
+        private var identity: Hello?
         private var listener: WireListener?
         private var plan: ListenerPlan?
-        var connections: [ConnectionID: WireConnection] = [:]
-        var gates: [ConnectionID: LinkGate] = [:]
+        private var connections: [ConnectionID: WireConnection] = [:]
+        private var gates: [ConnectionID: LinkGate] = [:]
         private var nextConnectionID = 0
-        var link = ReceiverLink()
-        var window = PairingWindow()
-        var book = PairingBook()
-        var health = PairingHealth()
+        private var link = ReceiverLink()
+        private var window = PairingWindow()
+        private var book = PairingBook()
+        private var health = PairingHealth()
         private var allowWireless = true
         private var hasLoaded = false
-        var keyframes = KeyframeRequester()
-        var status = WirelessStatus()
+        private var keyframes = KeyframeRequester()
+        private var status = WirelessStatus()
         private var lastSize: CGSize?
         private var lastCrop: FeedCrop?
         private var thumbnailActive = false
@@ -157,7 +157,7 @@
             queue.async { [self] in
                 let offer = PairingOffer.generate(at: Self.wallClock)
                 applyWindow(window.reduce(.open(offer)))
-                queue.asyncAfter(deadline: .now() + PairingOffer.lifetime) { [self] in
+                queue.asyncAfter(wallDeadline: .now() + PairingOffer.lifetime) { [self] in
                     applyWindow(window.reduce(.tick(at: Self.wallClock)))
                 }
             }
@@ -171,7 +171,7 @@
 
         func forget(iPad id: UUID) {
             queue.async { [self] in
-                _ = health.reduce(.handshakeSucceeded(id))
+                _ = health.reduce(.reset(id))
                 applyBook(book.reduce(.forget(peerID: id)))
             }
         }
@@ -193,7 +193,7 @@
 
         // Network.framework fixes a listener's keys when it is made, so a changed plan
         // replaces the listener; connections it already accepted carry on.
-        func applyPlan() {
+        private func applyPlan() {
             let next = ListenerPlan.make(
                 offering: window.acceptingCode,
                 paired: book.records,
@@ -258,7 +258,7 @@
             }
         }
 
-        func publishPairings() {
+        private func publishPairings() {
             status.paired = book.records
                 .sorted { $0.pairedAt < $1.pairedAt }
                 .map { PairedIPad($0, needsPairing: health.isBroken($0.peerID)) }
@@ -266,7 +266,7 @@
             publish(status)
         }
 
-        func accept(_ connection: WireConnection) {
+        private func accept(_ connection: WireConnection) {
             nextConnectionID += 1
             let id = nextConnectionID
             connections[id] = connection
@@ -284,11 +284,11 @@
     // ── Connections: the gate, pairing and the link rules ──
 
     extension WirelessReceiver {
-        static var uptime: TimeInterval {
+        private static var uptime: TimeInterval {
             ProcessInfo.processInfo.systemUptime
         }
 
-        static var wallClock: TimeInterval {
+        private static var wallClock: TimeInterval {
             Date().timeIntervalSince1970
         }
 
@@ -331,6 +331,7 @@
         }
 
         private func authenticate(_ credential: LinkCredential, from id: ConnectionID) {
+            applyWindow(window.reduce(.tick(at: Self.wallClock)))
             let paired = plan?.paired ?? []
             let peer = LinkAuthentication.verify(
                 credential,
@@ -350,6 +351,8 @@
             let decision = gate.reduce(.helloReceived(hello))
             gates[id] = gate
             switch decision {
+            case let .admitHello(.paired(record), _) where !isAllowed(record):
+                close(id)
             case let .admitHello(.paired(record), hello):
                 applyHealth(health.reduce(.handshakeSucceeded(record.peerID)))
                 applyBook(book.reduce(.connected(peerID: record.peerID, at: Self.wallClock)))
@@ -357,6 +360,7 @@
             case let .admitHello(.pairing, hello):
                 applyWindow(window.reduce(.pairingHello(id, hello, at: Self.wallClock)))
             case .pass:
+                guard case .open(.paired, _) = gate.phase else { return }
                 apply(link.reduce(.helloReceived(id, hello)))
             case .wait:
                 break
@@ -383,16 +387,25 @@
             }
         }
 
-        func close(_ id: ConnectionID) {
+        private func close(_ id: ConnectionID) {
             connections[id]?.cancel()
         }
 
-        func pairedConnections(peerID: UUID?) -> [ConnectionID] {
+        private func pairedConnections(peerID: UUID?) -> [ConnectionID] {
             gates.compactMap { id, gate in
-                guard case let .open(.paired(record), _) = gate.phase,
-                      peerID == nil || record.peerID == peerID else { return nil }
-                return id
+                let record: PairingRecord
+                switch gate.phase {
+                case let .open(.paired(paired), _), let .awaitingHello(.paired(paired)):
+                    record = paired
+                default:
+                    return nil
+                }
+                return peerID == nil || record.peerID == peerID ? id : nil
             }
+        }
+
+        private func isAllowed(_ record: PairingRecord) -> Bool {
+            plan?.paired.contains { $0.pairingID == record.pairingID } ?? false
         }
 
         private func applyWindow(_ effects: [PairingWindow.Effect]) {
@@ -403,7 +416,7 @@
                 case let .sendGrant(id, grant):
                     connections[id]?.send(.grant(grant))
                 case let .store(record):
-                    _ = health.reduce(.handshakeSucceeded(record.peerID))
+                    _ = health.reduce(.reset(record.peerID))
                     applyBook(book.reduce(.paired(record)))
                 case let .close(id, _):
                     close(id)
@@ -412,7 +425,7 @@
             publishPairings()
         }
 
-        func applyBook(_ effects: [PairingBook.Effect]) {
+        private func applyBook(_ effects: [PairingBook.Effect]) {
             for effect in effects {
                 switch effect {
                 case let .save(record):
@@ -511,7 +524,7 @@
             }
         }
 
-        func requestKeyframe(after event: KeyframeRequester.Event) {
+        private func requestKeyframe(after event: KeyframeRequester.Event) {
             sendRequests(keyframes.reduce(event))
         }
 

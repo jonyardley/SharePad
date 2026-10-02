@@ -3,9 +3,8 @@ import Network
 import os
 import SharePadWire
 
-// Runs PadPairing against the network: tries each advertising Mac with the code until
-// one grants a pairing. The record is saved before the Mac is told, so the Mac never
-// keeps a pairing this iPad lost (specs/wireless-product.md §6, Flow step 4).
+// The record is saved before the Mac is told, so the Mac never keeps a pairing this
+// iPad lost (specs/wireless-product.md §6, Flow step 4).
 // @unchecked Sendable: all state lives on `queue`, where Network.framework calls back.
 final class PairingSession: @unchecked Sendable {
     enum Update: Sendable {
@@ -94,6 +93,8 @@ final class PairingSession: @unchecked Sendable {
             log.error("could not save the pairing: \(String(describing: error))")
             connection?.cancel()
             connection = nil
+            browser?.cancel()
+            browser = nil
             _ = pairing.reduce(.cancel)
             report(.saveFailed)
             return false

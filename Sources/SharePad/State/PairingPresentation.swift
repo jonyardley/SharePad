@@ -10,6 +10,10 @@ struct PairingPanelContent: Equatable {
     let offersNewCode: Bool
     let closesAutomatically: Bool
 
+    var isConfirmation: Bool {
+        closesAutomatically
+    }
+
     init(_ progress: PairingProgress, now: Date) {
         switch progress {
         case let .offering(invitation) where now < invitation.expiresAt:

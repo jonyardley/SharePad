@@ -267,6 +267,13 @@ final class LinkGateTests: XCTestCase {
         XCTAssertEqual(pairing.reduce(.streamMessage), .close(.notPaired))
     }
 
+    func testAPairingPeerCannotSayHelloAgainToPassAsAStreamingIPad() {
+        var pairing = LinkGate()
+        _ = pairing.reduce(.credentialChecked(.pairing))
+        _ = pairing.reduce(.helloReceived(pad))
+        XCTAssertEqual(pairing.reduce(.helloReceived(pad)), .close(.notPaired))
+    }
+
     func testOnlyAnAdmittedPairedIPadMaySayItForgotThisMac() {
         let paired = record(for: pad)
         var admitted = LinkGate()

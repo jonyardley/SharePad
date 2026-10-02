@@ -7,6 +7,7 @@ public struct PairingHealth: Equatable, Sendable {
         case handshakeFailed(UUID)
         case handshakeSucceeded(UUID)
         case peerForgot(UUID)
+        case reset(UUID)
     }
 
     public enum Effect: Equatable, Sendable {
@@ -34,6 +35,9 @@ public struct PairingHealth: Equatable, Sendable {
         case let .peerForgot(id):
             defer { consecutiveFailures[id] = Self.failuresBeforeBroken }
             return isBroken(id) ? [] : [.markBroken(id)]
+        case let .reset(id):
+            consecutiveFailures[id] = nil
+            return []
         }
     }
 }
