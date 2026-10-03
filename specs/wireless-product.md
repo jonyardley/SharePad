@@ -695,8 +695,8 @@ the 4 s keepalive.
    Contributions are taken under the same terms, so the permission covers them.
    Lands with W3.
 2. **ReplayKit consent prompt frequency.** **Measured in W3b (2026-10-03): it
-   asks on every open**, on both the iPad mini and the iPad Pro, so "open the app
-   and it streams" does not hold with in-app capture. Within one open, the app
+   asks on every open**, so "open the app and it streams" does not hold with
+   in-app capture. Within one open, the app
    holds capture for 10 s after the link drops so a Wi-Fi blip does not restart
    it. **Decision 1a (Jon, 2026-10-03):** spike rendering the app's
    own canvas into pixel buffers for the existing encoder, in place of ReplayKit;
