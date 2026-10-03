@@ -707,8 +707,10 @@ the 4 s keepalive.
    in-app capture. Within one open, the app
    holds capture for 10 s after the link drops so a Wi-Fi blip does not restart
    it. **Decision 1a (Jon, 2026-10-03):** spike rendering the app's
-   own canvas into pixel buffers for the existing encoder, in place of ReplayKit;
-   its spec follows in `specs/canvas-render-spike.md`.
+   own canvas into pixel buffers for the existing encoder, in place of ReplayKit
+   (`specs/canvas-render-spike.md`). **NO-GO (2026-10-03):** the snapshot
+   stuttered on the 2020 iPad Pro and the spike was abandoned. Still open: live
+   with the prompt on every open, or find another route.
 3. ~~**Forward secrecy mode** of Network.framework's PSK TLS (§6).~~ **Answered
    in W2a (2026-10-02).** Network.framework does external PSKs over **TLS 1.2
    only**: a TLS 1.3-only PSK handshake fails on loopback, matching Apple DTS

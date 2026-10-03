@@ -1,6 +1,6 @@
 # Canvas render spike (decision 1a)
 
-> Status: built, Debug only; device runs pending. Owner: Jon. Opened 2026-10-03.
+> Status: **NO-GO, abandoned (Jon, 2026-10-03).** The Debug code stays in place, unused. Owner: Jon. Opened 2026-10-03.
 
 ## 1. Problem
 
@@ -153,4 +153,16 @@ main-thread bar.
 
 ## 8. Results
 
-Pending.
+**2026-10-03, NO-GO.** Probed on the 2020 iPad Pro (A12Z) against the Debug Mac app.
+The hour runs were not done.
+
+- `hierarchy` at full size: the Mac share window stuttered at a visibly lower
+  frame rate than ReplayKit; the iPad felt normal.
+- `hierarchy` at half size: stuttered on both the Mac and the iPad, so image
+  size is not the cost. The likely cause is `drawHierarchy` itself taking a
+  synchronous snapshot every display frame on the main thread; the probe CSVs
+  could not be copied off the iPad over Wi-Fi, so this is unmeasured.
+- `layer` was not tried, and whether ink showed mid-stroke was not recorded.
+
+Abandoned rather than tuned: the cost of tuning an unproven method per iPad
+model outweighed the gain. §11 item 2 of `specs/wireless-product.md` stays open.
