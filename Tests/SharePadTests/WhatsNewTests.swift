@@ -114,17 +114,34 @@ final class WhatsNewTests: XCTestCase {
 
     // ── Pairing offer ──
 
-    func testPairingOfferDisplay() throws {
+    func testPairingCodeDisplayFollowsThePairingWindow() throws {
         let url = try XCTUnwrap(URL(string: "https://sharepad.co/pair#code"))
-        let offer = LivePairingCode(invitationURL: url, expiresAt: Date(timeIntervalSince1970: 300))
-        XCTAssertEqual(LivePairingCode.Display(nil, at: Date()), .waiting)
+        let invitation = PairingInvitation(
+            typedCode: "K7QM-4XRT",
+            link: url,
+            expiresAt: Date(timeIntervalSince1970: 300)
+        )
+        let before = Date(timeIntervalSince1970: 299)
+        let after = Date(timeIntervalSince1970: 300)
+        XCTAssertEqual(PairingCodeDisplay(.closed, at: before), .waiting)
+        XCTAssertEqual(PairingCodeDisplay(.offering(invitation), at: before), .live(url))
+        XCTAssertEqual(PairingCodeDisplay(.offering(invitation), at: after), .expired)
         XCTAssertEqual(
-            LivePairingCode.Display(offer, at: Date(timeIntervalSince1970: 299)),
-            .live(url)
+            PairingCodeDisplay(.pairing(invitation, iPad: "Jon’s iPad"), at: after),
+            .pairing(iPad: "Jon’s iPad")
         )
         XCTAssertEqual(
-            LivePairingCode.Display(offer, at: Date(timeIntervalSince1970: 300)),
-            .expired
+            PairingCodeDisplay(.paired(iPad: "Jon’s iPad"), at: after),
+            .paired(iPad: "Jon’s iPad")
         )
+        XCTAssertEqual(PairingCodeDisplay(.expired, at: before), .expired)
+        XCTAssertEqual(PairingCodeDisplay(.interrupted, at: before), .expired)
+    }
+
+    func testTheWirelessReleaseIsAFeatureRelease() {
+        XCTAssertTrue(WhatsNew.shouldShow(
+            lastSeen: "1.2.0", isFreshInstall: false, current: "1.3.0",
+            featureReleases: WhatsNew.featureReleases
+        ))
     }
 }

@@ -15,10 +15,14 @@ struct PairingSheet: View {
                         Text(verbatim: PairingScreenContent.macAppNote)
                     }
                 }
-                Section("Pair with your Mac") {
+                Section {
                     ForEach(Array(PairingScreenContent.steps.enumerated()), id: \.offset) { item in
                         Text("\(item.offset + 1). \(item.element)")
                     }
+                } header: {
+                    Text("Pair with your Mac")
+                } footer: {
+                    Text(PairingScreenContent.recordPromptNote)
                 }
                 if !screen.isPaired {
                     entry(working: screen.isWorking)

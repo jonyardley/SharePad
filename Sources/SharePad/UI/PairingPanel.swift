@@ -8,8 +8,8 @@ enum PairingPanel {
     private static var window: NSWindow?
     private static let closer = Closer()
 
-    static func present(model: AppModel) {
-        model.pairIPad()
+    static func present(model: AppModel, mintingCode: Bool = true) {
+        if mintingCode { model.pairIPad() }
         let win = window ?? makeWindow()
         closer.model = model
         win.contentViewController = NSHostingController(
@@ -63,7 +63,7 @@ struct PairingPanelView: View {
     private func content(_ panel: PairingPanelContent) -> some View {
         VStack(spacing: Theme.Spacing.section) {
             if let link = panel.link {
-                QRCodeView(text: link.absoluteString)
+                QRCodeView(link: link)
                 Text("Open SharePad on your iPad and scan this code.")
                     .multilineTextAlignment(.center)
                 Text("No iPad app yet? Scanning this with the Camera app takes you to it.")
@@ -100,10 +100,10 @@ struct PairingPanelView: View {
 }
 
 private struct QRCodeView: View {
-    let text: String
+    let link: URL
 
     var body: some View {
-        if let image = QRCode.image(for: text) {
+        if let image = QRCodeImage.make(for: link) {
             Image(decorative: image, scale: 1)
                 .interpolation(.none)
                 .resizable()

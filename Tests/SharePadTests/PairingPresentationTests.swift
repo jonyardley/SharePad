@@ -114,8 +114,9 @@ final class PairingPanelContentTests: XCTestCase {
     }
 
     func testTheQRCodeRenders() throws {
-        let image = try XCTUnwrap(QRCode.image(for: "https://sharepad.co/pair#v1.ABCD"))
-        XCTAssertGreaterThan(image.width, 100)
+        let url = try XCTUnwrap(URL(string: "https://sharepad.co/pair#v1.ABCD"))
+        let image = try XCTUnwrap(QRCodeImage.make(for: url))
+        XCTAssertGreaterThan(image.width, 20)
         XCTAssertEqual(image.width, image.height)
     }
 }

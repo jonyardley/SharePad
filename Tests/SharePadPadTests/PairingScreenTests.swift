@@ -130,10 +130,11 @@ final class PairingScreenContentTests: XCTestCase {
     }
 
     func testIPadCopyNeverMentionsPriceTrialOrLicence() {
-        let texts = [PairingScreenContent.macAppNote] + PairingScreenContent.steps + [
-            content(.failed(.noMacAccepted)).status,
-            content(.idle, saveFailed: true).status,
-        ].compactMap(\.self)
+        let texts = [PairingScreenContent.macAppNote, PairingScreenContent.recordPromptNote]
+            + PairingScreenContent.steps + [
+                content(.failed(.noMacAccepted)).status,
+                content(.idle, saveFailed: true).status,
+            ].compactMap(\.self)
         for text in texts {
             for word in ["buy", "free", "trial", "licence", "license", "price"] {
                 XCTAssertFalse(text.lowercased().contains(word), text)

@@ -117,7 +117,7 @@ private struct PairingCodeBlock: View {
     var body: some View {
         HStack(spacing: Theme.Spacing.section) {
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                code(LivePairingCode.Display(pairing.currentOffer, at: context.date))
+                code(PairingCodeDisplay(pairing.progress, at: context.date))
             }
             .frame(width: Self.codeSide, height: Self.codeSide)
             Text("Scan with your iPad's camera to get the iPad app and pair in one go.")
@@ -128,12 +128,21 @@ private struct PairingCodeBlock: View {
     private static let codeSide: CGFloat = 132
 
     @ViewBuilder
-    private func code(_ display: LivePairingCode.Display) -> some View {
+    private func code(_ display: PairingCodeDisplay) -> some View {
         switch display {
         case .waiting:
             ProgressView()
         case let .live(url):
             QRCodeView(url: url)
+        case let .pairing(iPad):
+            VStack(spacing: Theme.Spacing.row) {
+                ProgressView()
+                Text("Pairing with \(iPad)…")
+                    .multilineTextAlignment(.center)
+            }
+        case let .paired(iPad):
+            Label("Paired with \(iPad)", systemImage: "checkmark.circle.fill")
+                .multilineTextAlignment(.center)
         case .expired:
             Button("Show New Code") { pairing.requestNewOffer() }
         }

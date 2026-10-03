@@ -101,3 +101,26 @@ struct WirelessSection: Equatable {
         return formatter
     }
 }
+
+enum PairingCodeDisplay: Equatable {
+    case waiting
+    case live(URL)
+    case pairing(iPad: String)
+    case paired(iPad: String)
+    case expired
+
+    init(_ progress: PairingProgress, at now: Date) {
+        switch progress {
+        case .closed:
+            self = .waiting
+        case let .offering(invitation):
+            self = now >= invitation.expiresAt ? .expired : .live(invitation.link)
+        case let .pairing(_, iPad):
+            self = .pairing(iPad: iPad)
+        case let .paired(iPad):
+            self = .paired(iPad: iPad)
+        case .expired, .interrupted:
+            self = .expired
+        }
+    }
+}
