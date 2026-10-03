@@ -1,6 +1,7 @@
 # Wireless pairing UI and the TLS switch-over (W2b)
 
-Status: built in W2b, hardware check pending. Parent spec:
+Status: built in W2b; hardware check passed 2026-10-03, bar the traffic
+capture. Parent spec:
 [`wireless-product.md`](wireless-product.md) §6 (pairing), §9 (screens and
 signposting), §10 (build plan).
 
@@ -67,8 +68,8 @@ can stream.
 1. **Wireless stays Debug-only on the Mac.** §5 says the Info.plist keys are
    Debug-only until pairing ships, and pairing now exists, but there is no iPad
    app to pair with until W5 (App Store). A Mac release with **Pair an iPad…**
-   and nothing to pair would be a dead end. The flip lands with W5, after the
-   W2b hardware check.
+   and nothing to pair would be a dead end. The flip lands with W5 (the W2b
+   hardware check passed 2026-10-03).
 2. **The Mac learns of a broken pairing in two ways, both attributable.** A
    failed TLS handshake carries no identity on the listener (§6 known gaps), so
    the Mac cannot count those. It counts what it can attribute: an
