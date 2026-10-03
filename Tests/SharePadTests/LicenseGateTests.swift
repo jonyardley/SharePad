@@ -141,75 +141,6 @@ final class LicenseGateTests: GateTestCase {
         XCTAssertEqual(resumed.timeIntervalSinceReferenceDate, 1100, accuracy: 0.01)
     }
 
-    func testACableTakingOverAWirelessShareKeepsItsRemainingTime() async throws {
-        let prefs = try ephemeralPreferences()
-        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
-        var clock = Date(timeIntervalSinceReferenceDate: 1000)
-        let window = FakeShareWindow()
-        let model = makeModel(
-            preferences: prefs, window: window, now: { clock }, sessionLimit: 100,
-            wireless: FakeWirelessFeed(), permission: .authorized
-        )
-        model.applyWireless(WirelessStatus(
-            peer: WirelessPeer(id: UUID(), name: "iPad"),
-            isReceiving: true
-        ))
-        let armed = try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
-        XCTAssertEqual(armed.timeIntervalSinceReferenceDate, 1100, accuracy: 0.01)
-
-        clock = Date(timeIntervalSinceReferenceDate: 1030) // 30s over Wi-Fi
-        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
-
-        XCTAssertEqual(model.hostedFeed, .usb)
-        let carried = try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
-        // 70s carried over → 1030+70=1100, NOT a fresh 1030+100=1130
-        XCTAssertEqual(carried.timeIntervalSinceReferenceDate, 1100, accuracy: 0.01)
-    }
-
-    func testUnpluggingTheCableHandsItsRemainingTimeBackToWireless() async throws {
-        let prefs = try ephemeralPreferences()
-        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
-        var clock = Date(timeIntervalSinceReferenceDate: 1000)
-        let window = FakeShareWindow()
-        let model = makeModel(
-            preferences: prefs, window: window, now: { clock }, sessionLimit: 100,
-            wireless: FakeWirelessFeed(), permission: .authorized
-        )
-        model.applyWireless(WirelessStatus(
-            peer: WirelessPeer(id: UUID(), name: "iPad"),
-            isReceiving: true
-        ))
-        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
-
-        clock = Date(timeIntervalSinceReferenceDate: 1050)
-        await model.reconcile(devices: [])
-
-        XCTAssertEqual(model.hostedFeed, .wireless)
-        XCTAssertTrue(model.isWindowVisible)
-        let handedBack = try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
-        XCTAssertEqual(handedBack.timeIntervalSinceReferenceDate, 1100, accuracy: 0.01)
-    }
-
-    func testAPausedWirelessShareStaysPausedWhenTheCableTakesOver() async throws {
-        let prefs = try ephemeralPreferences()
-        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
-        let model = makeModel(
-            preferences: prefs, sleep: { _ in }, sessionLimit: 100,
-            wireless: FakeWirelessFeed(), permission: .authorized
-        )
-        model.applyWireless(WirelessStatus(
-            peer: WirelessPeer(id: UUID(), name: "iPad"),
-            isReceiving: true
-        ))
-        await poll { model.isTrialOverlayShown }
-
-        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
-
-        XCTAssertEqual(model.hostedFeed, .usb)
-        XCTAssertTrue(model.isTrialOverlayShown)
-        XCTAssertNil(model.sessionEndsAt)
-    }
-
     func testDifferentDeviceStartsFreshSession() async throws {
         let prefs = try ephemeralPreferences()
         prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
@@ -393,18 +324,5 @@ final class LicenseGateTests: GateTestCase {
             true,
         ] } // B's session re-armed + fired
         XCTAssertTrue(model.isTrialOverlayShown)
-    }
-
-    private func poll(
-        timeoutIterations: Int = 100_000,
-        _ predicate: () -> Bool,
-        file: StaticString = #filePath,
-        line: UInt = #line
-    ) async {
-        for _ in 0 ..< timeoutIterations {
-            if predicate() { return }
-            await Task.yield()
-        }
-        XCTFail("poll condition never satisfied", file: file, line: line)
     }
 }

@@ -47,4 +47,17 @@ class GateTestCase: XCTestCase {
             permission: permission
         )
     }
+
+    func poll(
+        timeoutIterations: Int = 100_000,
+        _ predicate: () -> Bool,
+        file: StaticString = #filePath,
+        line: UInt = #line
+    ) async {
+        for _ in 0 ..< timeoutIterations {
+            if predicate() { return }
+            await Task.yield()
+        }
+        XCTFail("poll condition never satisfied", file: file, line: line)
+    }
 }
