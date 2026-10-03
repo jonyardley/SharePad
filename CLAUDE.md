@@ -314,6 +314,10 @@ before touching capture.
   the share window is up, then shows on a hide or once a lost-share notice clears.
   To see it in a Debug build: `open --env SHAREPAD_FEATURE_RELEASE=1.0.0` plus an
   older `lastSeenVersion` in the defaults.
+- **A starting cable never takes the window from a receiving Wi-Fi feed**
+  (`AppState.activeFeed`, `specs/wireless-product.md` §10, W4). That includes a USB
+  restart on wake, so "the share went to Wi-Fi for a moment" is this rule until
+  W4b pauses Wi-Fi while the cable is active.
 - **Wireless TLS-PSK is TLS 1.2 only, and the suite must be pinned**
   (`specs/wireless-product.md` §6, open question 3). Network.framework's default
   PSK suite has no forward secrecy, so `LinkSecurity` pins ECDHE-PSK and a loopback

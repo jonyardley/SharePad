@@ -635,6 +635,8 @@ Two PRs. **W4a** is Mac only; **W4b** crosses into `SharePadWire` and the iPad a
   while the cable is starting; the cable takes over once it is running. A cable
   whose retries run out is `failed` and never takes the window. The window may
   resize on the switch when the canvas crop and the iPad screen differ in shape.
+  Picking the cable in the popover also waits for its first frame, so the picker
+  shows Wi-Fi for a moment; that beats a blank share window.
 - **A Wi-Fi pick lasts until the app quits.** Decision 3 below: the cable always
   wins after a relaunch, so the pick is not persisted.
 - **The lost-share banner names the source.** `shareLost` carries the feed that was
@@ -642,6 +644,10 @@ Two PRs. **W4a** is Mac only; **W4b** crosses into `SharePadWire` and the iPad a
 - **Trial time carries across a source switch.** When the window stays up and the
   feed changes, the new feed's budget is the smaller of its own and what the old
   one had left, so plugging in and out cannot reset the 5 minutes (decision 1).
+  The Mac cannot tell whether the cable and Wi-Fi are the same iPad, so a second
+  iPad taking over also inherits the shorter budget; a switch can only shorten
+  it. Switching while the window is hidden carries nothing, which caps one iPad at
+  two budgets, one per source.
 
 **W4b**
 
