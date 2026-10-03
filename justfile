@@ -79,6 +79,63 @@ pad-run device: gen
     xcrun devicectl device install app --device "{{ device }}" .build/pad/Build/Products/Debug-iphoneos/SharePadPad.app
     xcrun devicectl device process launch --device "{{ device }}" com.jonyardley.sharepad.ipad
 
+# archive the Release iPad app for TestFlight (specs/distribution.md §12). Needs
+# SHAREPAD_TEAM_ID. The build number is a UTC timestamp so every upload is higher
+# than the last; PAD_BUILD_NUMBER overrides it.
+pad-archive: gen
+    #!/usr/bin/env bash
+    set -euo pipefail
+    BUILD="${PAD_BUILD_NUMBER:-$(date -u +%Y%m%d.%H%M)}"
+    rm -rf .build/pad/SharePadPad.xcarchive
+    xcodebuild -project SharePad.xcodeproj -scheme SharePadPad -configuration Release -destination 'generic/platform=iOS' -derivedDataPath .build/pad -archivePath .build/pad/SharePadPad.xcarchive -allowProvisioningUpdates DEVELOPMENT_TEAM="${SHAREPAD_TEAM_ID:?set SHAREPAD_TEAM_ID}" CURRENT_PROJECT_VERSION="$BUILD" archive
+    just verify-pad
+    echo "archived build $BUILD"
+
+# upload the archive to App Store Connect, where it lands in TestFlight after processing.
+# Signs in with the Xcode account, or with an API key when ASC_KEY_PATH, ASC_KEY_ID
+# and ASC_ISSUER_ID are all set.
+pad-upload: pad-archive
+    #!/usr/bin/env bash
+    set -euo pipefail
+    OPTS=.build/pad/ExportOptions.plist
+    rm -f "$OPTS"
+    /usr/libexec/PlistBuddy \
+        -c "Add :method string app-store-connect" \
+        -c "Add :destination string upload" \
+        -c "Add :signingStyle string automatic" \
+        -c "Add :teamID string $SHAREPAD_TEAM_ID" \
+        -c "Add :manageAppVersionAndBuildNumber bool false" \
+        "$OPTS" >/dev/null
+    AUTH=()
+    if [ -n "${ASC_KEY_PATH:-}" ] && [ -n "${ASC_KEY_ID:-}" ] && [ -n "${ASC_ISSUER_ID:-}" ]; then
+        AUTH=(-authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+    fi
+    xcodebuild -exportArchive -archivePath .build/pad/SharePadPad.xcarchive -exportOptionsPlist "$OPTS" -exportPath .build/pad/export -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"}
+
+# assert the archived iPad app carries what App Store Connect rejects an upload without
+# (an opaque app icon, the privacy manifest, the usage strings) and is not a Debug build.
+verify-pad app=".build/pad/SharePadPad.xcarchive/Products/Applications/SharePadPad.app":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    APP="{{ app }}"
+    PLIST="$APP/Info.plist"
+    [ -d "$APP" ] || { echo "app not found at $APP — run just pad-archive first" >&2; exit 1; }
+    fail=0
+    note() { echo "  ✗ $1" >&2; fail=1; }
+    plutil -extract "CFBundleIcons~ipad.CFBundlePrimaryIcon.CFBundleIconName" raw "$PLIST" >/dev/null 2>&1 \
+        || note "no app icon in Info.plist: the asset catalog did not compile an AppIcon"
+    [ -f "$APP/Assets.car" ] || note "Assets.car missing"
+    [ -f "$APP/PrivacyInfo.xcprivacy" ] || note "PrivacyInfo.xcprivacy missing from the bundle"
+    for key in NSLocalNetworkUsageDescription NSCameraUsageDescription NSBonjourServices; do
+        plutil -extract "$key" raw "$PLIST" >/dev/null 2>&1 \
+            || plutil -extract "$key" json -o - "$PLIST" >/dev/null 2>&1 \
+            || note "$key missing from Info.plist"
+    done
+    ENT=$(codesign -d --entitlements - "$APP" 2>/dev/null || true)
+    [ -n "$ENT" ] || note "could not read entitlements from $APP"
+    case "$ENT" in *get-task-allow*\<true/\>*|*get-task-allow*true*) note "get-task-allow is on: this is a development-signed build" ;; esac
+    if [ "$fail" -eq 0 ]; then echo "verify-pad OK: $APP"; else echo "verify-pad FAILED" >&2; exit 1; fi
+
 # print the per-target coverage summary from the latest `just test` run
 coverage:
     #!/usr/bin/env bash

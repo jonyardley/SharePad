@@ -613,6 +613,14 @@ Meet: pairing by QR, canvas only in the share window, the pairing window absent
 from both pickers, Forget leaving the iPad on **Not paired**, and USB unchanged.
 Still open: a packet capture showing no readable stream.
 
+**W3b status (2026-10-03):** built; hardware check pending. Internal TestFlight
+only, since the Mac side is Debug only until W5 (`specs/distribution.md` §12).
+The iPad target gained its app icon, privacy manifest and own version, plus
+`just pad-archive`, `just pad-upload` and `just verify-pad`. The check runs on the
+iPad mini and an iPad Pro and also records how often ReplayKit asks to record
+across relaunches (§11, item 2). The private palette lookup (#169) waits for W5,
+since internal builds skip beta review.
+
 **W1 status (2026-10-02):** built, Debug builds only; unit tests cover the reducer,
 the local network probe and the wireless paths through `AppModel`. The verify-by
 line passed on hardware 2026-10-03 (see W2b status), except denying local network

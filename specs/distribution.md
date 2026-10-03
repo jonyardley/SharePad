@@ -173,3 +173,33 @@ These aren't "distribution" proper but belong to the same 1.0 push:
    runners even when the DMG is produced. Verify on the first real release; if it
    trips `set -e`, pin a version or tolerate its known exit code (without masking
    genuine failures).
+
+## 12. iPad app (TestFlight beta, W3b)
+
+The iPad companion (`specs/wireless-product.md` §4) goes out through App Store
+Connect, not this DMG pipeline. W3b is an **internal** TestFlight beta only: the
+Mac side of wireless is Debug only until W5, so a tester needs a Debug Mac build,
+which only the team has. Internal builds skip beta review.
+
+- **Signing:** automatic, `SHAREPAD_TEAM_ID` as for `just pad-run`. Xcode creates
+  the distribution certificate and profile on first export.
+- **Versions:** the iPad target carries its own `MARKETING_VERSION` (1.0.0) in
+  `project.yml`. `just pad-archive` sets `CURRENT_PROJECT_VERSION` to a UTC
+  timestamp (`20261003.1530`) so each upload is higher than the last;
+  `PAD_BUILD_NUMBER` overrides it.
+- **What an upload is refused without:** an opaque 1024 app icon
+  (`Sources/SharePadPad/Assets.xcassets`, made from the Mac artwork; a proper
+  full-bleed design is a W5 item) and `PrivacyInfo.xcprivacy` declaring
+  `UserDefaults` (CA92.1) and `systemUptime` (35F9.1). `just verify-pad` checks
+  both in the archive.
+- **Encryption:** `ITSAppUsesNonExemptEncryption` is false. The link uses
+  Network.framework's TLS, which is encryption provided by the OS.
+- **Commands:** `just pad-archive`, then `just pad-upload` (which archives first).
+  The upload signs in with the Xcode account, or with an App Store Connect API key
+  when `ASC_KEY_PATH`, `ASC_KEY_ID` and `ASC_ISSUER_ID` are set. Uploading from CI
+  waits on that key being a repo secret.
+- **One-off setup (Jon):** an App Store Connect app record for
+  `com.jonyardley.sharepad.ipad`, and the internal testers group.
+- **Not yet working in the beta:** scanning the pairing QR with the Camera app,
+  since the site's `apple-app-site-association` file is not live (W5). Scanning in
+  the app and typing the code both work.
