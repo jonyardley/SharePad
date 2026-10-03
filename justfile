@@ -1,5 +1,9 @@
 # SharePad task runner. Run `just` to list recipes.
 
+# Debug Mac builds sign with the Apple Development certificate when SHAREPAD_TEAM_ID is
+# set, so the Keychain keeps trusting rebuilds (#177); unset, they stay ad hoc.
+mac_debug_signing := if env_var_or_default("SHAREPAD_TEAM_ID", "") == "" { "" } else { "CODE_SIGN_IDENTITY='Apple Development' DEVELOPMENT_TEAM=" + env_var("SHAREPAD_TEAM_ID") }
+
 # list available recipes
 default:
     @just --list
@@ -10,7 +14,7 @@ gen:
 
 # build (Debug)
 build: gen
-    xcodebuild -project SharePad.xcodeproj -scheme SharePad -configuration Debug -destination 'platform=macOS' -derivedDataPath .build build
+    xcodebuild -project SharePad.xcodeproj -scheme SharePad -configuration Debug -destination 'platform=macOS' -derivedDataPath .build {{ mac_debug_signing }} build
 
 # build, then launch the menu-bar app
 run: build
@@ -40,7 +44,7 @@ preview-site: build-site
 
 # run unit tests (with code coverage; see `just coverage` for the report)
 test: gen
-    xcodebuild -project SharePad.xcodeproj -scheme SharePad -configuration Debug -destination 'platform=macOS' -derivedDataPath .build -enableCodeCoverage YES test
+    xcodebuild -project SharePad.xcodeproj -scheme SharePad -configuration Debug -destination 'platform=macOS' -derivedDataPath .build -enableCodeCoverage YES {{ mac_debug_signing }} test
 
 # run the SharePadWire package tests (wire format and the wireless rules)
 wire-test:

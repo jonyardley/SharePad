@@ -299,6 +299,14 @@ before touching capture.
 - **The pairing window must never be shareable.** `PairingPanel` sets
   `sharingType = .none` before the window is first ordered on screen, then sweeps
   `WindowSharing`; its QR is a live pairing code.
+- **Set `SHAREPAD_TEAM_ID` for Mac Debug builds too** (#177). The pairing store uses
+  the file-based keychain, whose access list is tied to the app's signature. Ad hoc
+  builds are a new app each time, so every rebuild shows the "wants to use your
+  confidential information" prompt. With the team id set, `just build`, `run` and
+  `test` sign with the Apple Development certificate and the prompt stops (after one
+  Always Allow). Unset, as in CI, they stay ad hoc. Builds from inside Xcode stay
+  ad hoc. Release signing is untouched: its requirement pins the bundle id and team,
+  so Sparkle updates keep matching.
 - **Local network denial has no API on macOS** (TN3179). The only signal is the
   listener's Bonjour registration waiting with `kDNSServiceErr_PolicyDenied`
   (`LocalNetworkProbe`); the receiver takes the latest listener state as the
