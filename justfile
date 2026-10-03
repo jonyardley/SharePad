@@ -113,7 +113,8 @@ pad-upload: pad-archive
     xcodebuild -exportArchive -archivePath .build/pad/SharePadPad.xcarchive -exportOptionsPlist "$OPTS" -exportPath .build/pad/export -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"}
 
 # assert the archived iPad app carries what App Store Connect rejects an upload without
-# (an opaque app icon, the privacy manifest, the usage strings) and is not a Debug build.
+# (an app icon, the privacy manifest, the usage strings). The archive is always
+# development-signed; the export re-signs it for distribution.
 verify-pad app=".build/pad/SharePadPad.xcarchive/Products/Applications/SharePadPad.app":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -131,9 +132,6 @@ verify-pad app=".build/pad/SharePadPad.xcarchive/Products/Applications/SharePadP
             || plutil -extract "$key" json -o - "$PLIST" >/dev/null 2>&1 \
             || note "$key missing from Info.plist"
     done
-    ENT=$(codesign -d --entitlements - "$APP" 2>/dev/null || true)
-    [ -n "$ENT" ] || note "could not read entitlements from $APP"
-    case "$ENT" in *get-task-allow*\<true/\>*|*get-task-allow*true*) note "get-task-allow is on: this is a development-signed build" ;; esac
     if [ "$fail" -eq 0 ]; then echo "verify-pad OK: $APP"; else echo "verify-pad FAILED" >&2; exit 1; fi
 
 # print the per-target coverage summary from the latest `just test` run
