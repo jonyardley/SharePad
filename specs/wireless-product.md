@@ -613,13 +613,15 @@ Meet: pairing by QR, canvas only in the share window, the pairing window absent
 from both pickers, Forget leaving the iPad on **Not paired**, and USB unchanged.
 Still open: a packet capture showing no readable stream.
 
-**W3b status (2026-10-03):** built; hardware check pending. Internal TestFlight
-only, since the Mac side is Debug only until W5 (`specs/distribution.md` §12).
-The iPad target gained its app icon, privacy manifest and own version, plus
-`just pad-archive`, `just pad-upload` and `just verify-pad`. The check runs on the
-iPad mini and an iPad Pro and also records how often ReplayKit asks to record
-across relaunches (§11, item 2). The private palette lookup (#169) waits for W5,
-since internal builds skip beta review.
+**W3b status (2026-10-03):** built. Internal TestFlight only, since the Mac side
+is Debug only until W5 (`specs/distribution.md` §12). The iPad target gained its
+app icon, privacy manifest and own version, plus `just pad-archive`,
+`just pad-upload` and `just verify-pad`. The private palette lookup (#169) waits
+for W5, since internal builds skip beta review. **Hardware check (2026-10-03),
+passed** with TestFlight build 20261003.1119 on the iPad mini and an iPad Pro:
+everything in W3a over the paired link, and an hour on battery without a drop.
+One finding: ReplayKit asks to record on every open (§11, item 2), which breaks
+"open the app and it streams".
 
 **W1 status (2026-10-02):** built, Debug builds only; unit tests cover the reducer,
 the local network probe and the wireless paths through `AppModel`. The verify-by
@@ -692,10 +694,13 @@ the 4 s keepalive.
    added permission lets the App Store build ship under Apple's usage rules.
    Contributions are taken under the same terms, so the permission covers them.
    Lands with W3.
-2. **ReplayKit consent prompt frequency.** In-app capture asks the user to allow
-   recording; how often it re-asks across launches decides whether "open the app
-   and it streams" holds. Measure in W3a's hardware check. The app holds capture
-   for 10 s after the link drops so a Wi-Fi blip does not restart it.
+2. **ReplayKit consent prompt frequency.** **Measured in W3b (2026-10-03): it
+   asks on every open**, on both the iPad mini and the iPad Pro, so "open the app
+   and it streams" does not hold with in-app capture. Within one open, the app
+   holds capture for 10 s after the link drops so a Wi-Fi blip does not restart
+   it. **Decision 1a (Jon, 2026-10-03):** spike rendering the app's
+   own canvas into pixel buffers for the existing encoder, in place of ReplayKit;
+   its spec follows in `specs/canvas-render-spike.md`.
 3. ~~**Forward secrecy mode** of Network.framework's PSK TLS (§6).~~ **Answered
    in W2a (2026-10-02).** Network.framework does external PSKs over **TLS 1.2
    only**: a TLS 1.3-only PSK handshake fails on loopback, matching Apple DTS
