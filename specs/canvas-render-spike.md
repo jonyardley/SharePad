@@ -165,4 +165,5 @@ The hour runs were not done.
 - `layer` was not tried, and whether ink showed mid-stroke was not recorded.
 
 Abandoned rather than tuned: the cost of tuning an unproven method per iPad
-model outweighed the gain. §11 item 2 of `specs/wireless-product.md` stays open.
+model outweighed the gain. §11 item 2 of `specs/wireless-product.md` then
+settled on shipping v1 with the prompt (Jon, 2026-10-03).
