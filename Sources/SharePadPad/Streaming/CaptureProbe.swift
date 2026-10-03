@@ -5,7 +5,6 @@
     import SharePadWire
     import UIKit
 
-    // Spike measurement for specs/canvas-render-spike.md §4. Writes CSVs to Documents.
     final class CaptureProbe: Sendable {
         private struct Counters {
             var captured = 0
@@ -88,15 +87,16 @@
         private let probe: CaptureProbe
         private var timer: Timer?
         private var stats: StreamSender.Stats?
-        private var lastEncoded = 0
         private var lastCPU: (cpu: Double, wall: Double)?
 
         init(probe: CaptureProbe) {
             self.probe = probe
             UIDevice.current.isBatteryMonitoringEnabled = true
-            timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
+            let timer = Timer(timeInterval: 1, repeats: true) { [weak self] _ in
                 MainActor.assumeIsolated { self?.sample() }
             }
+            RunLoop.main.add(timer, forMode: .common)
+            self.timer = timer
         }
 
         func linkStats(_ stats: StreamSender.Stats) {
@@ -105,21 +105,25 @@
 
         private func sample() {
             let captured = probe.takeCaptured()
-            let encodedTotal = stats?.encodedFrames ?? 0
-            let encoded = encodedTotal - lastEncoded
-            lastEncoded = encodedTotal
+            // StreamSender reports on its own window and only after an encoded frame,
+            // so a sample with no fresh report leaves the link columns empty.
+            let fresh = stats
+            stats = nil
+            func field(_ value: Double?, _ format: String) -> String {
+                value.map { String(format: format, $0) } ?? ""
+            }
             let now = ProcessInfo.processInfo.systemUptime
             let cpu = Self.processCPUSeconds()
             let cpuPercent = lastCPU.map { (cpu - $0.cpu) / (now - $0.wall) * 100 } ?? 0
             lastCPU = (cpu, now)
             probe.second(String(
-                format: "%.3f,%d,%d,%.2f,%.0f,%d,%.1f,%.2f,%d\n",
+                format: "%.3f,%d,%@,%@,%@,%@,%.1f,%.2f,%d\n",
                 now,
                 captured,
-                max(0, encoded),
-                stats?.encodeMilliseconds ?? 0,
-                stats?.kilobitsPerSecond ?? 0,
-                stats?.skippedFrames ?? 0,
+                field(fresh?.framesPerSecond, "%.1f"),
+                field(fresh?.encodeMilliseconds, "%.2f"),
+                field(fresh?.kilobitsPerSecond, "%.0f"),
+                field(fresh.map { Double($0.skippedFrames) }, "%.0f"),
                 cpuPercent,
                 UIDevice.current.batteryLevel,
                 ProcessInfo.processInfo.thermalState.rawValue

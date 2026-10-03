@@ -2,9 +2,7 @@
 
 import Foundation
 
-// Reduces one probe run (specs/canvas-render-spike.md §4) to the numbers the §5 pass
-// bar needs. Pass the -frames.csv; the -seconds.csv beside it is read too. The first
-// five seconds are dropped: the encoder's first session is slow to create.
+// The first five seconds are dropped: the encoder's first session is slow to create.
 
 let framesPath = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : ""
 let secondsPath = framesPath.replacingOccurrences(of: "-frames.csv", with: "-seconds.csv")
@@ -42,14 +40,17 @@ func line(_ name: String, _ values: [Double]) {
 let frames = rows(framesPath)
 let seconds = rows(secondsPath)
 print("frames \(frames.count), seconds \(seconds.count)")
-line("delivery_ms", column(frames, 1))
+let delivery = column(frames, 1)
+line("delivery_ms", delivery)
+// delivery_ms assumes ReplayKit stamps frames on the host clock; if not, this shows.
+if let median = delivery.dropFirst(delivery.count / 2).first, median < 0 || median > 1000 {
+    print("delivery_ms looks off the host clock; do not compare it")
+}
+
 line("render_ms", column(frames, 2))
 line("captured_fps", column(seconds, 1))
 line("encoded_fps", column(seconds, 2))
-line(
-    "encode_ms",
-    column(seconds.filter { ($0.count > 3 ? $0[3] : nil).map { $0 > 0 } ?? false }, 3)
-)
+line("encode_ms", column(seconds, 3))
 line("cpu_pct", column(seconds, 6))
 let battery = seconds.compactMap { $0.count > 7 ? $0[7] : nil }
 if let first = battery.first, let last = battery.last {

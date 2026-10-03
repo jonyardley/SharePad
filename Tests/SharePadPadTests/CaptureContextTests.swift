@@ -32,3 +32,35 @@ final class CaptureContextTests: XCTestCase {
         )
     }
 }
+
+final class CaptureLaunchTests: XCTestCase {
+    private func defaults(_ values: [String: Any]) throws -> UserDefaults {
+        let name = "CaptureLaunchTests.\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
+        values.forEach { defaults.set($1, forKey: $0) }
+        addTeardownBlock { UserDefaults.standard.removePersistentDomain(forName: name) }
+        return defaults
+    }
+
+    func testNoSourceMeansNoSpike() throws {
+        XCTAssertNil(try CaptureLaunch.current(defaults([:])))
+    }
+
+    func testAMistypedSourceIsRefusedRatherThanRunningReplayKit() throws {
+        XCTAssertNil(try CaptureLaunch.current(defaults(["captureSource": "hierachy"])))
+    }
+
+    func testReplayKitRunsTheProbeWithoutARenderer() throws {
+        let launch = try XCTUnwrap(CaptureLaunch.current(defaults(["captureSource": "replayKit"])))
+        XCTAssertNil(launch.method)
+        XCTAssertEqual(launch.scale, 1)
+    }
+
+    func testARendererSourceKeepsItsScale() throws {
+        let launch = try XCTUnwrap(CaptureLaunch.current(
+            defaults(["captureSource": "layer", "captureScale": 0.5])
+        ))
+        XCTAssertEqual(launch.method, .layer)
+        XCTAssertEqual(launch.scale, 0.5)
+    }
+}

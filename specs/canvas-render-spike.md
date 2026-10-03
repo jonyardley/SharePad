@@ -62,10 +62,13 @@ A Debug-only probe writes two CSVs to the app's Documents folder:
 
 - `*-frames.csv`, one row per captured frame: how long from the frame's capture
   time to its arrival in the app (`delivery_ms`), and for the renderer, the
-  main-thread render cost (`render_ms`).
-- `*-seconds.csv`, one row a second: captured and encoded frame rate, mean
-  sink-to-encoded time (`encode_ms`), bit rate, process CPU, battery level and
-  thermal state.
+  main-thread draw cost (`render_ms`: paper and canvas only, not the buffer,
+  sink or hand-off around it).
+- `*-seconds.csv`, one row a second: captured frame rate, process CPU, battery
+  level and thermal state; plus the sender's own last report (encoded frame
+  rate, mean sink-to-encoded time `encode_ms`, bit rate, skipped frames), left
+  empty when no fresh report arrived that second. Captured frames are counted
+  before the overlay gate, so ReplayKit's include frames the gate holds.
 
 `encode_ms` comes from a small addition to `StreamSender.Stats` in
 `SharePadWire`. Pipeline latency on the iPad is `delivery_ms + encode_ms`.
@@ -77,7 +80,16 @@ A Debug-only probe writes two CSVs to the app's Documents folder:
    flatters ReplayKit; battery is the fair comparator.
 2. **Battery reads in 5% steps** on iPadOS. An hour per path, same start
    charge, same brightness, is the minimum that says anything.
-3. Glass-to-glass latency on the Mac is not measured; the Mac app does not log
+3. **The renderer draws every display frame, changed or not**, while ReplayKit
+   delivers only when the screen changes. The minute's rest in each loop of the
+   drawing script therefore costs the renderer CPU and battery that a shipping
+   version would skip, so a GO on CPU and battery is conservative.
+4. **`drawHierarchy(afterScreenUpdates: false)` reads the last committed
+   frame**, so its content can be up to one display frame older than its
+   timestamp: renderer latency reads 8 to 17 ms better than it is.
+5. **`delivery_ms` assumes ReplayKit timestamps on the host clock.**
+   `analyse.swift` warns if the median says otherwise.
+6. Glass-to-glass latency on the Mac is not measured; the Mac app does not log
    it, and W5's office-network check covers it for the shipping path.
 
 ## 5. Pass bar

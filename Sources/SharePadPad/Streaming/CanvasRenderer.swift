@@ -4,8 +4,7 @@
     import SwiftUI
     import UIKit
 
-    // Spike for specs/canvas-render-spike.md: draws the canvas into pixel buffers in
-    // place of ReplayKit, so the app never asks to record. Debug launches only.
+    // Replaces ReplayKit so the app never asks to record (specs/canvas-render-spike.md).
     enum CanvasSnapshotMethod: String {
         case hierarchy
         case layer
@@ -16,12 +15,16 @@
         let method: CanvasSnapshotMethod?
         let scale: CGFloat
 
+        static let replayKit = "replayKit"
+
         static func current(_ defaults: UserDefaults = .standard) -> CaptureLaunch? {
             guard let source = defaults.string(forKey: "captureSource") else { return nil }
+            let method = CanvasSnapshotMethod(rawValue: source)
+            guard method != nil || source == replayKit else { return nil }
             let scale = defaults.double(forKey: "captureScale")
             return CaptureLaunch(
                 source: source,
-                method: CanvasSnapshotMethod(rawValue: source),
+                method: method,
                 scale: scale > 0 ? scale : 1
             )
         }
@@ -127,6 +130,7 @@
                     | CGBitmapInfo.byteOrder32Little.rawValue
             ) else { return false }
 
+            context.clear(CGRect(x: 0, y: 0, width: width, height: height))
             if let paper = paperImage(size: size, pixelScale: pixelScale) {
                 context.draw(paper, in: CGRect(x: 0, y: 0, width: width, height: height))
             }
