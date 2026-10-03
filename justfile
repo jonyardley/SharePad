@@ -85,7 +85,7 @@ pad-run device: gen
 
 # relaunch the Debug iPad app on a capture source with the probe on: hierarchy, layer or replayKit (specs/canvas-render-spike.md)
 pad-probe device source scale="1":
-    xcrun devicectl device process launch --terminate-existing --device "{{ device }}" com.jonyardley.sharepad.ipad -captureSource {{ source }} -captureScale {{ scale }}
+    xcrun devicectl device process launch --terminate-existing --device "{{ device }}" com.jonyardley.sharepad.ipad -- -captureSource {{ source }} -captureScale {{ scale }}
 
 # copy the probe CSVs off the iPad into spike/canvas-render/runs
 pad-probe-pull device:
