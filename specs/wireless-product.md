@@ -523,9 +523,9 @@ PR. Text wireframes for review in the diff:
 ┌──────────── What's new in SharePad ────────────┐
 │                                                │
 │   Draw without the cable                       │
-│   Your iPad can now share over Wi-Fi. Install  │
-│   the SharePad iPad app, pair once, then just  │
-│   open it and draw.                            │
+│   Your iPad can now share over Wi-Fi with the  │
+│   free SharePad app from the App Store. Pair   │
+│   once, then open it and draw.                 │
 │                                                │
 │   ▓▓▓▓▓▓▓▓   Scan with your iPad's camera      │
 │   ▓ QR   ▓   to get the iPad app and pair      │

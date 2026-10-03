@@ -80,8 +80,8 @@ struct WhatsNewView: View {
                 Text("Draw without the cable")
                     .font(.title2.bold())
                 Text("""
-                Your iPad can now share over Wi-Fi. Install the SharePad iPad app, \
-                pair once, then open it and draw.
+                Your iPad can now share over Wi-Fi with the free SharePad app from \
+                the App Store. Pair once, then open it and draw.
                 """)
                 .fixedSize(horizontal: false, vertical: true)
             }
