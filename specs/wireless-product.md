@@ -632,9 +632,10 @@ One finding: ReplayKit asks to record on every open (§11, item 2), which breaks
 **W5b status (2026-10-03):** built. The what's-new window shows the live pairing
 code, follows it through pairing to "Paired with <iPad>", and its **Pair an iPad…**
 hands the same code to the pairing window. 1.3.0 is marked as the wireless feature
-release. The iPad pairing screen carries the record-prompt line. **Before tagging
-1.3.0, lift the Debug-only wireless gate**: a Release build without wireless would
-show "Draw without the cable" for a feature it lacks. Hardware check (scanning the
+release, in Debug builds only: Release lists no feature release until the
+Debug-only wireless gate lifts (#192), so a Release without wireless never shows
+"Draw without the cable". The iPad pairing screen carries the record-prompt line.
+Hardware check (scanning the
 what's-new QR with the Camera app) not yet run.
 
 **W1 status (2026-10-02):** built, Debug builds only; unit tests cover the reducer,

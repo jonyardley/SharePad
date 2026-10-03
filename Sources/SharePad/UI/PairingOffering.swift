@@ -2,7 +2,7 @@ import Foundation
 
 @MainActor
 protocol PairingOffering: AnyObject {
-    var progress: PairingProgress { get }
+    func display(at now: Date) -> PairingCodeDisplay
     func requestNewOffer()
     func endOffer()
     // Takes over the live offer, so `endOffer` is not called on this path.
@@ -12,29 +12,27 @@ protocol PairingOffering: AnyObject {
 @MainActor
 final class ModelPairingOffer: PairingOffering {
     private let model: AppModel
+    private var requestedAt: Date?
 
     init(model: AppModel) {
         self.model = model
     }
 
-    var progress: PairingProgress {
-        model.wirelessStatus.pairing
+    func display(at now: Date) -> PairingCodeDisplay {
+        PairingCodeDisplay(model.wirelessStatus.pairing, at: now, requestedAt: requestedAt)
     }
 
     func requestNewOffer() {
+        requestedAt = .now
         model.pairIPad()
     }
 
     func endOffer() {
+        guard !PairingPanel.isShown else { return }
         model.closePairing()
     }
 
     func openPairingWindow() {
-        let display = PairingCodeDisplay(progress, at: .now)
-        let isLive = switch display {
-        case .live, .pairing: true
-        case .waiting, .paired, .expired: false
-        }
-        PairingPanel.present(model: model, mintingCode: !isLive)
+        PairingPanel.present(model: model, mintingCode: !display(at: .now).hasLiveCode)
     }
 }

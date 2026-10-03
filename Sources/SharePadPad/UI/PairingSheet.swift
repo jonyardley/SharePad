@@ -22,7 +22,7 @@ struct PairingSheet: View {
                 } header: {
                     Text("Pair with your Mac")
                 } footer: {
-                    Text(PairingScreenContent.recordPromptNote)
+                    Text(verbatim: PairingScreenContent.recordPromptNote)
                 }
                 if !screen.isPaired {
                     entry(working: screen.isWorking)

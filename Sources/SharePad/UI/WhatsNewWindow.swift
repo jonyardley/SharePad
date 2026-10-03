@@ -95,7 +95,7 @@ struct WhatsNewView: View {
                 .foregroundStyle(.secondary)
             HStack {
                 Spacer()
-                if pairing != nil {
+                if let pairing, !pairing.display(at: .now).isPaired {
                     Button("Not Now", action: onDismiss)
                         .keyboardShortcut(.cancelAction)
                     Button("Pair an iPad…", action: onPair)
@@ -117,7 +117,7 @@ private struct PairingCodeBlock: View {
     var body: some View {
         HStack(spacing: Theme.Spacing.section) {
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                code(PairingCodeDisplay(pairing.progress, at: context.date))
+                code(pairing.display(at: context.date))
             }
             .frame(width: Self.codeSide, height: Self.codeSide)
             Text("Scan with your iPad's camera to get the iPad app and pair in one go.")

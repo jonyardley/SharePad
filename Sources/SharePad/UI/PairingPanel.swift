@@ -8,6 +8,10 @@ enum PairingPanel {
     private static var window: NSWindow?
     private static let closer = Closer()
 
+    static var isShown: Bool {
+        window?.isVisible == true
+    }
+
     static func present(model: AppModel, mintingCode: Bool = true) {
         if mintingCode { model.pairIPad() }
         let win = window ?? makeWindow()
