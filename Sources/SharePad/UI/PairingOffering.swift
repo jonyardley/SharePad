@@ -1,29 +1,38 @@
 import Foundation
 
-struct LivePairingCode: Equatable {
-    let invitationURL: URL
-    let expiresAt: Date
-
-    enum Display: Equatable {
-        case waiting
-        case live(URL)
-        case expired
-
-        init(_ offer: LivePairingCode?, at now: Date) {
-            guard let offer else {
-                self = .waiting
-                return
-            }
-            self = now >= offer.expiresAt ? .expired : .live(offer.invitationURL)
-        }
-    }
-}
-
 @MainActor
 protocol PairingOffering: AnyObject {
-    var currentOffer: LivePairingCode? { get }
+    func display(at now: Date) -> PairingCodeDisplay
     func requestNewOffer()
     func endOffer()
     // Takes over the live offer, so `endOffer` is not called on this path.
     func openPairingWindow()
+}
+
+@MainActor
+final class ModelPairingOffer: PairingOffering {
+    private let model: AppModel
+    private var requestedAt: Date?
+
+    init(model: AppModel) {
+        self.model = model
+    }
+
+    func display(at now: Date) -> PairingCodeDisplay {
+        PairingCodeDisplay(model.wirelessStatus.pairing, at: now, requestedAt: requestedAt)
+    }
+
+    func requestNewOffer() {
+        requestedAt = .now
+        model.pairIPad()
+    }
+
+    func endOffer() {
+        guard !PairingPanel.isShown else { return }
+        model.closePairing()
+    }
+
+    func openPairingWindow() {
+        PairingPanel.present(model: model, mintingCode: !display(at: .now).hasLiveCode)
+    }
 }

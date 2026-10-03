@@ -34,9 +34,14 @@ enum WhatsNew {
         case leave
     }
 
-    // HACK(#170): empty until the wireless release has a version. Bug-fix releases
-    // never go here.
-    static let featureReleases: [String] = []
+    // Bug-fix releases never go here.
+    #if DEBUG
+        static let featureReleases = ["1.3.0"]
+    #else
+        // HACK(#192): empty while wireless is Debug only, so a Release without it never
+        // announces it.
+        static let featureReleases: [String] = []
+    #endif
 
     static func decide(
         lastSeen: String?,

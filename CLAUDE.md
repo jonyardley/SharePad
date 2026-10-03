@@ -326,7 +326,8 @@ before touching capture.
   not a missing `lastSeenVersion` (no install before W5a has one). It waits while
   the share window is up, then shows on a hide or once a lost-share notice clears.
   To see it in a Debug build: `open --env SHAREPAD_FEATURE_RELEASE=1.0.0` plus an
-  older `lastSeenVersion` in the defaults.
+  older `lastSeenVersion` in the defaults. 1.3.0 is listed as the wireless release
+  in Debug only; Release lists nothing until the wireless gate lifts (#192).
 - **A starting cable never takes the window from a receiving Wi-Fi feed**
   (`AppState.activeFeed`, `specs/wireless-product.md` §10, W4). That includes a USB
   restart on wake. W4b's `pause` now stops that flap: while the cable holds the

@@ -523,9 +523,9 @@ PR. Text wireframes for review in the diff:
 ┌──────────── What's new in SharePad ────────────┐
 │                                                │
 │   Draw without the cable                       │
-│   Your iPad can now share over Wi-Fi. Install  │
-│   the SharePad iPad app, pair once, then just  │
-│   open it and draw.                            │
+│   Your iPad can now share over Wi-Fi with the  │
+│   free SharePad app from the App Store. Pair   │
+│   once, then open it and draw.                 │
 │                                                │
 │   ▓▓▓▓▓▓▓▓   Scan with your iPad's camera      │
 │   ▓ QR   ▓   to get the iPad app and pair      │
@@ -628,6 +628,15 @@ passed** with TestFlight build 20261003.1119 on the iPad mini and an iPad Pro:
 everything in W3a over the paired link, and an hour on battery without a drop.
 One finding: ReplayKit asks to record on every open (§11, item 2), which breaks
 "open the app and it streams".
+
+**W5b status (2026-10-03):** built. The what's-new window shows the live pairing
+code, follows it through pairing to "Paired with <iPad>", and its **Pair an iPad…**
+hands the same code to the pairing window. 1.3.0 is marked as the wireless feature
+release, in Debug builds only: Release lists no feature release until the
+Debug-only wireless gate lifts (#192), so a Release without wireless never shows
+"Draw without the cable". The iPad pairing screen carries the record-prompt line.
+Hardware check (scanning the
+what's-new QR with the Camera app) not yet run.
 
 **W1 status (2026-10-02):** built, Debug builds only; unit tests cover the reducer,
 the local network probe and the wireless paths through `AppModel`. The verify-by

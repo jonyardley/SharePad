@@ -80,8 +80,8 @@ struct WhatsNewView: View {
                 Text("Draw without the cable")
                     .font(.title2.bold())
                 Text("""
-                Your iPad can now share over Wi-Fi. Install the SharePad iPad app, \
-                pair once, then open it and draw.
+                Your iPad can now share over Wi-Fi with the free SharePad app from \
+                the App Store. Pair once, then open it and draw.
                 """)
                 .fixedSize(horizontal: false, vertical: true)
             }
@@ -95,7 +95,7 @@ struct WhatsNewView: View {
                 .foregroundStyle(.secondary)
             HStack {
                 Spacer()
-                if pairing != nil {
+                if let pairing, !pairing.display(at: .now).isPaired {
                     Button("Not Now", action: onDismiss)
                         .keyboardShortcut(.cancelAction)
                     Button("Pair an iPad…", action: onPair)
@@ -117,7 +117,7 @@ private struct PairingCodeBlock: View {
     var body: some View {
         HStack(spacing: Theme.Spacing.section) {
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                code(LivePairingCode.Display(pairing.currentOffer, at: context.date))
+                code(pairing.display(at: context.date))
             }
             .frame(width: Self.codeSide, height: Self.codeSide)
             Text("Scan with your iPad's camera to get the iPad app and pair in one go.")
@@ -128,12 +128,21 @@ private struct PairingCodeBlock: View {
     private static let codeSide: CGFloat = 132
 
     @ViewBuilder
-    private func code(_ display: LivePairingCode.Display) -> some View {
+    private func code(_ display: PairingCodeDisplay) -> some View {
         switch display {
         case .waiting:
             ProgressView()
         case let .live(url):
             QRCodeView(url: url)
+        case let .pairing(iPad):
+            VStack(spacing: Theme.Spacing.row) {
+                ProgressView()
+                Text("Pairing with \(iPad)…")
+                    .multilineTextAlignment(.center)
+            }
+        case let .paired(iPad):
+            Label("Paired with \(iPad)", systemImage: "checkmark.circle.fill")
+                .multilineTextAlignment(.center)
         case .expired:
             Button("Show New Code") { pairing.requestNewOffer() }
         }
@@ -145,7 +154,9 @@ private struct QRCodeView: View {
     @State private var image: CGImage?
 
     var body: some View {
-        Group {
+        // An empty Group never appears, so its `.task` would never run.
+        ZStack {
+            Color.clear
             if let image {
                 Image(decorative: image, scale: 1)
                     .interpolation(.none)

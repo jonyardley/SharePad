@@ -114,17 +114,59 @@ final class WhatsNewTests: XCTestCase {
 
     // ── Pairing offer ──
 
-    func testPairingOfferDisplay() throws {
+    func testPairingCodeDisplayFollowsThePairingWindow() throws {
         let url = try XCTUnwrap(URL(string: "https://sharepad.co/pair#code"))
-        let offer = LivePairingCode(invitationURL: url, expiresAt: Date(timeIntervalSince1970: 300))
-        XCTAssertEqual(LivePairingCode.Display(nil, at: Date()), .waiting)
+        let invitation = PairingInvitation(
+            typedCode: "K7QM-4XRT",
+            link: url,
+            expiresAt: Date(timeIntervalSince1970: 300)
+        )
+        let before = Date(timeIntervalSince1970: 299)
+        let after = Date(timeIntervalSince1970: 300)
+        XCTAssertEqual(display(.closed, at: before), .expired)
         XCTAssertEqual(
-            LivePairingCode.Display(offer, at: Date(timeIntervalSince1970: 299)),
-            .live(url)
+            display(.closed, at: before, requestedAt: before.addingTimeInterval(-2)),
+            .waiting
         )
         XCTAssertEqual(
-            LivePairingCode.Display(offer, at: Date(timeIntervalSince1970: 300)),
+            display(.closed, at: before, requestedAt: before.addingTimeInterval(-3)),
             .expired
         )
+        XCTAssertEqual(display(.offering(invitation), at: before), .live(url))
+        XCTAssertEqual(display(.offering(invitation), at: after), .expired)
+        XCTAssertEqual(
+            display(.pairing(invitation, iPad: "Jon’s iPad"), at: after),
+            .pairing(iPad: "Jon’s iPad")
+        )
+        XCTAssertEqual(
+            display(.paired(iPad: "Jon’s iPad"), at: after),
+            .paired(iPad: "Jon’s iPad")
+        )
+        XCTAssertEqual(display(.expired, at: before), .expired)
+        XCTAssertEqual(display(.interrupted, at: before), .expired)
+    }
+
+    func testOnlyACodeStillInPlayIsHandedToThePairingWindow() throws {
+        let url = try XCTUnwrap(URL(string: "https://sharepad.co/pair#code"))
+        XCTAssertTrue(PairingCodeDisplay.live(url).hasLiveCode)
+        XCTAssertTrue(PairingCodeDisplay.pairing(iPad: "iPad").hasLiveCode)
+        XCTAssertFalse(PairingCodeDisplay.expired.hasLiveCode)
+        XCTAssertFalse(PairingCodeDisplay.paired(iPad: "iPad").hasLiveCode)
+        XCTAssertTrue(PairingCodeDisplay.paired(iPad: "iPad").isPaired)
+    }
+
+    private func display(
+        _ progress: PairingProgress,
+        at now: Date,
+        requestedAt: Date? = nil
+    ) -> PairingCodeDisplay {
+        PairingCodeDisplay(progress, at: now, requestedAt: requestedAt)
+    }
+
+    func testTheWirelessReleaseIsAFeatureRelease() {
+        XCTAssertTrue(WhatsNew.shouldShow(
+            lastSeen: "1.2.0", isFreshInstall: false, current: "1.3.0",
+            featureReleases: WhatsNew.featureReleases
+        ))
     }
 }

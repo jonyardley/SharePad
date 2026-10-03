@@ -101,3 +101,43 @@ struct WirelessSection: Equatable {
         return formatter
     }
 }
+
+enum PairingCodeDisplay: Equatable {
+    case waiting
+    case live(URL)
+    case pairing(iPad: String)
+    case paired(iPad: String)
+    case expired
+
+    static let mintGrace: TimeInterval = 3
+
+    // `.closed` is both "the new code is on its way" and "another window closed the
+    // offer"; only the first is worth a spinner.
+    init(_ progress: PairingProgress, at now: Date, requestedAt: Date?) {
+        switch progress {
+        case .closed:
+            let minting = requestedAt.map { now < $0 + Self.mintGrace } ?? false
+            self = minting ? .waiting : .expired
+        case let .offering(invitation):
+            self = now >= invitation.expiresAt ? .expired : .live(invitation.link)
+        case let .pairing(_, iPad):
+            self = .pairing(iPad: iPad)
+        case let .paired(iPad):
+            self = .paired(iPad: iPad)
+        case .expired, .interrupted:
+            self = .expired
+        }
+    }
+
+    var hasLiveCode: Bool {
+        switch self {
+        case .live, .pairing: true
+        case .waiting, .paired, .expired: false
+        }
+    }
+
+    var isPaired: Bool {
+        if case .paired = self { return true }
+        return false
+    }
+}
