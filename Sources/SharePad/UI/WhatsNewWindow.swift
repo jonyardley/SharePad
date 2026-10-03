@@ -154,7 +154,9 @@ private struct QRCodeView: View {
     @State private var image: CGImage?
 
     var body: some View {
-        Group {
+        // An empty Group never appears, so its `.task` would never run.
+        ZStack {
+            Color.clear
             if let image {
                 Image(decorative: image, scale: 1)
                     .interpolation(.none)
