@@ -50,8 +50,7 @@
         private var hasLoaded = false
         private var keyframes = KeyframeRequester()
         private var status = WirelessStatus()
-        private var lastSize: CGSize?
-        private var lastCrop: FeedCrop?
+        private var cropTracker = CropTracker()
         private var thumbnailActive = false
         private var lastThumbnailAt: Double?
         private var frameWaiter: (@Sendable (Bool) -> Void)?
@@ -106,6 +105,7 @@
                     connections.removeAll()
                     gates.removeAll()
                     link = ReceiverLink()
+                    cropTracker.shareEnded()
                     var cleared = WirelessStatus(localNetwork: status.localNetwork)
                     cleared.paired = status.paired
                     status = cleared
@@ -480,7 +480,7 @@
                     status.peer = nil
                     status.isReceiving = false
                     status.isReconnecting = false
-                    lastSize = nil
+                    cropTracker.shareEnded()
                     publish(status)
                 }
             }
@@ -546,8 +546,7 @@
 
     extension WirelessReceiver {
         private func applyCrop(_ crop: FeedCrop?) {
-            guard let crop, crop != lastCrop else { return }
-            lastCrop = crop
+            guard let crop, let change = cropTracker.receive(crop) else { return }
             log.notice("""
             crop video=\(Int(crop.video.width))x\(Int(crop.video.height)) \
             canvas=\(String(describing: crop.canvas), privacy: .public)
@@ -558,9 +557,8 @@
                     layer.crop = crop
                 }
             }
-            if crop.visibleSize != lastSize {
-                lastSize = crop.visibleSize
-                sizeContinuation.yield(crop.visibleSize)
+            if let size = change.size {
+                sizeContinuation.yield(size)
             }
         }
 

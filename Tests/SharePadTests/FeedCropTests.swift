@@ -74,6 +74,54 @@ final class FeedCropTests: XCTestCase {
         XCTAssertEqual(video.frame, layer.bounds)
     }
 
+    func testLayerClipsToTheShownCanvasWhenTheBoundsShapeDiffers() throws {
+        let crop = try XCTUnwrap(FeedCrop(
+            width: 1260,
+            height: 1920,
+            canvas: CanvasRect(x: 0, y: 143, width: 1260, height: 1559)
+        ))
+        let video = AVSampleBufferDisplayLayer()
+        let layer = CroppedVideoLayer(video: video)
+        layer.isGeometryFlipped = true
+        layer.frame = CGRect(x: 0, y: 0, width: 626, height: 900)
+        layer.crop = crop
+        let shown = crop.shownRect(in: layer.bounds)
+        XCTAssertEqual(shown.width, 626, accuracy: 0.001)
+        XCTAssertEqual(shown.height, 626 * 1559 / 1260, accuracy: 0.001)
+        XCTAssertEqual(shown.midY, 450, accuracy: 0.001)
+        let mask = try XCTUnwrap(layer.mask, "rows outside the canvas must be clipped")
+        XCTAssertEqual(mask.frame, shown)
+        layer.crop = nil
+        XCTAssertNil(layer.mask)
+    }
+
+    func testCropTrackerReportsTheSizeAgainAfterTheShareEnds() throws {
+        let crop = try XCTUnwrap(crop)
+        var tracker = CropTracker()
+        XCTAssertEqual(
+            tracker.receive(crop),
+            CropTracker.Change(crop: crop, size: crop.visibleSize)
+        )
+        XCTAssertNil(tracker.receive(crop))
+        tracker.shareEnded()
+        XCTAssertEqual(
+            tracker.receive(crop),
+            CropTracker.Change(crop: crop, size: crop.visibleSize)
+        )
+    }
+
+    func testCropTrackerSkipsTheSizeWhenOnlyTheVideoChanges() throws {
+        let first = try XCTUnwrap(crop)
+        let taller = try XCTUnwrap(FeedCrop(
+            width: 1488,
+            height: 2400,
+            canvas: CanvasRect(x: 0, y: 175, width: 1488, height: 1834)
+        ))
+        var tracker = CropTracker()
+        _ = tracker.receive(first)
+        XCTAssertEqual(tracker.receive(taller), CropTracker.Change(crop: taller, size: nil))
+    }
+
     func testFlipParityCountsAncestors() {
         let outer = CALayer()
         let inner = CALayer()

@@ -23,21 +23,53 @@ struct FeedCrop: Equatable, Sendable {
         canvas.size
     }
 
+    func shownRect(in bounds: CGRect) -> CGRect {
+        let scale = min(bounds.width / canvas.width, bounds.height / canvas.height)
+        let width = canvas.width * scale
+        let height = canvas.height * scale
+        return CGRect(
+            x: bounds.midX - width / 2,
+            y: bounds.midY - height / 2,
+            width: width,
+            height: height
+        )
+    }
+
     // `canvas` counts rows from the top of the frame; `yUp` says whether the layer
     // that receives the result counts its own y from the bottom.
     func videoFrame(in bounds: CGRect, yUp: Bool) -> CGRect {
-        let scale = min(bounds.width / canvas.width, bounds.height / canvas.height)
-        let shownWidth = canvas.width * scale
-        let shownHeight = canvas.height * scale
-        let shownX = bounds.midX - shownWidth / 2
-        let shownY = bounds.midY - shownHeight / 2
+        let shown = shownRect(in: bounds)
+        let scale = shown.width / canvas.width
         let rowsHidden = yUp ? video.height - canvas.maxY : canvas.minY
         return CGRect(
-            x: shownX - canvas.minX * scale,
-            y: shownY - rowsHidden * scale,
+            x: shown.minX - canvas.minX * scale,
+            y: shown.minY - rowsHidden * scale,
             width: video.width * scale,
             height: video.height * scale
         )
+    }
+}
+
+struct CropTracker {
+    struct Change: Equatable {
+        let crop: FeedCrop
+        let size: CGSize?
+    }
+
+    private var applied: FeedCrop?
+    private var reportedSize: CGSize?
+
+    mutating func receive(_ crop: FeedCrop) -> Change? {
+        guard crop != applied else { return nil }
+        applied = crop
+        guard crop.visibleSize != reportedSize else { return Change(crop: crop, size: nil) }
+        reportedSize = crop.visibleSize
+        return Change(crop: crop, size: crop.visibleSize)
+    }
+
+    mutating func shareEnded() {
+        applied = nil
+        reportedSize = nil
     }
 }
 
@@ -45,6 +77,7 @@ struct FeedCrop: Equatable, Sendable {
 // iPad never reaches the call (specs/wireless-product.md §4).
 final class CroppedVideoLayer: CALayer, @unchecked Sendable {
     let video: AVSampleBufferDisplayLayer
+    private let canvasMask = CALayer()
 
     var crop: FeedCrop? {
         didSet { layoutVideo() }
@@ -54,6 +87,7 @@ final class CroppedVideoLayer: CALayer, @unchecked Sendable {
         self.video = video
         super.init()
         masksToBounds = true
+        canvasMask.backgroundColor = CGColor(gray: 0, alpha: 1)
         video.videoGravity = .resizeAspect
         addSublayer(video)
     }
@@ -85,9 +119,12 @@ final class CroppedVideoLayer: CALayer, @unchecked Sendable {
         if let crop {
             video.videoGravity = .resize
             video.frame = crop.videoFrame(in: bounds, yUp: !Self.isFlipped(self))
+            canvasMask.frame = crop.shownRect(in: bounds)
+            mask = canvasMask
         } else {
             video.videoGravity = .resizeAspect
             video.frame = bounds
+            mask = nil
         }
         CATransaction.commit()
     }
