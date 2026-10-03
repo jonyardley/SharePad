@@ -23,7 +23,8 @@ class AppModelTestCase: XCTestCase {
         reporter: DiagnosticsReporting = .disabled,
         wireless: WirelessFeeding? = nil,
         appVersion: String? = nil,
-        featureReleases: [String] = []
+        featureReleases: [String] = [],
+        permission: AVAuthorizationStatus = .notDetermined
     ) -> AppModel {
         AppModel(
             preferences: preferences,
@@ -33,7 +34,8 @@ class AppModelTestCase: XCTestCase {
             sleep: { _ in }, // retries run without real delay
             reporter: reporter,
             appVersion: appVersion,
-            featureReleases: featureReleases
+            featureReleases: featureReleases,
+            permission: permission
         )
     }
 }

@@ -6,14 +6,16 @@ final class AppModelWirelessTests: AppModelTestCase {
     private let peer = WirelessPeer(id: UUID(), name: "Jon's iPad")
 
     private func makeWirelessModel(
+        capture: FakeCaptureController = FakeCaptureController(),
         window: FakeShareWindow = FakeShareWindow(),
         wireless: FakeWirelessFeed = FakeWirelessFeed()
     ) throws -> AppModel {
         try makeModel(
-            capture: FakeCaptureController(),
+            capture: capture,
             window: window,
             preferences: ephemeralPreferences(),
-            wireless: wireless
+            wireless: wireless,
+            permission: .authorized
         )
     }
 
@@ -88,7 +90,8 @@ final class AppModelWirelessTests: AppModelTestCase {
 
         XCTAssertFalse(model.isWindowVisible)
         XCTAssertEqual(window.hideCount, 1)
-        XCTAssertTrue(model.shareLostSignal)
+        XCTAssertEqual(model.shareLost, .wireless)
+        XCTAssertEqual(model.shareLostNotice?.symbol, "wifi.slash")
         XCTAssertFalse(model.isConnected)
     }
 
@@ -152,6 +155,35 @@ final class AppModelWirelessTests: AppModelTestCase {
         XCTAssertTrue(model.isWindowVisible)
         XCTAssertFalse(model.shareLostSignal)
         XCTAssertEqual(model.hostedFeed, .wireless)
+    }
+
+    func testACableThatNeverShowsAFrameLeavesTheWindowOnWireless() async throws {
+        let capture = FakeCaptureController()
+        capture.awaitFrameResult = false
+        let window = FakeShareWindow()
+        let model = try makeWirelessModel(capture: capture, window: window)
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+
+        await model.reconcile(devices: [device("a")])
+
+        XCTAssertEqual(model.hostedFeed, .wireless)
+        XCTAssertTrue(model.isWindowVisible)
+        XCTAssertFalse(window.feedLayers.contains { $0 === capture.hostedLayer })
+        XCTAssertEqual(window.hideCount, 0)
+    }
+
+    func testACableThatGoesLiveTakesOverWithoutHidingTheWindow() async throws {
+        let capture = FakeCaptureController()
+        let window = FakeShareWindow()
+        let model = try makeWirelessModel(capture: capture, window: window)
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+
+        await model.reconcile(devices: [device("a")])
+
+        XCTAssertEqual(model.state, .live(.usb))
+        XCTAssertTrue(window.feedLayers.last === capture.hostedLayer)
+        XCTAssertTrue(model.isWindowVisible)
+        XCTAssertEqual(window.hideCount, 0)
     }
 
     func testExpiredTrialMetersAWirelessShare() throws {

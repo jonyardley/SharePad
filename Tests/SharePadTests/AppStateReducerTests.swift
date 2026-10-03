@@ -102,6 +102,19 @@ final class WirelessStateReducerTests: XCTestCase {
         XCTAssertEqual(state(usb: failedCable, wireless: streaming), .live(.wireless))
     }
 
+    func testStartingCableLeavesTheWindowOnStreamingWireless() {
+        XCTAssertEqual(state(usb: connecting, wireless: streaming), .live(.wireless))
+    }
+
+    func testStartingCableBeatsWirelessWithNoFrameYet() {
+        XCTAssertEqual(state(usb: connecting, wireless: connecting), .starting(.usb))
+    }
+
+    func testStartingCableBeatsAPairedIPadThatIsNotStreaming() {
+        let idle = SourceInput(available: true, running: false, failed: false)
+        XCTAssertEqual(state(usb: connecting, wireless: idle), .starting(.usb))
+    }
+
     func testLocalNetworkDeniedWithNothingConnected() {
         XCTAssertEqual(state(localNetwork: .denied), .localNetworkDenied)
     }

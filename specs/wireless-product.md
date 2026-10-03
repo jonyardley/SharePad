@@ -43,7 +43,7 @@ companion app's own canvas only.
 | 3 | Licensing | **The Mac licence covers wireless.** The iPad app has no purchase, no licence check and no link to buy | One product, one price. App Store guideline 3.1.3(f) lets a free companion app skip in-app purchase only if it has no purchase calls to action |
 | 4 | Trial | Wireless counts against the existing Mac trial meter (`specs/licensing.md` §5). The paired iPad's id stands in for `sessionDeviceID` | The gate already lives in the share window, so it covers any source. No iPad-side gate to build |
 | 5 | Source owners | **One owner per source.** `CaptureController` keeps the `AVCaptureSession`; a new `WirelessReceiver` owns the listener, the connection and the decoder. Both sit behind one protocol. `AppModel` picks the active one | Extends Non-Negotiable 1 instead of breaking it: nothing outside a source touches its pipeline |
-| 6 | USB versus wireless | **Cable wins** when both are present, unless the user picks otherwise in the source picker (remembered, as today) | The cable is lower latency and needs no radio. Plugging in mid-call must not lose the share |
+| 6 | USB versus wireless | **Cable wins** when both are present, unless the user picks otherwise in the source picker. A Wi-Fi pick lasts until the app quits (W4, decided 2026-10-03). A feed already showing frames keeps the window until the cable shows frames too | The cable is lower latency and needs no radio. Plugging in mid-call must not lose the share |
 | 7 | Pairing | **QR code** shown on the Mac, scanned by the iPad, carrying a one-time 120-bit code; typing the same code is the fallback. The code only opens a pairing channel, inside which the Mac hands over a fresh 256-bit secret | Physical presence to pair, no weak short code to brute force, and the code is worthless once used (§6) |
 | 8 | Link security | **TLS 1.2 ECDHE-PSK with that secret** (Network.framework), one secret per pair | Only paired iPads can feed the share window; the drawing is encrypted on the network, with forward secrecy |
 | 9 | Keyframes | **Every 10 s as a safety net, plus on demand** from the Mac; burst-capped bitrate; a send-queue cap that drops and recovers instead of queuing | Fixes the 0.5 s keyframe bug; the remaining tail is a Wi-Fi stall, accepted for v1 (§8, [#160](https://github.com/jonyardley/SharePad/issues/160)) |
@@ -201,7 +201,8 @@ Every new branch ships with reducer tests, the way the USB states have them.
 
 The existing picker shows when there is more than one source. Wireless entries
 read "{iPad name} · Wi-Fi", cabled ones "{iPad name} · Cable". The last pick is
-remembered by id through the existing `DeviceSelection`. If the same iPad is both
+remembered by id through the existing `DeviceSelection`; a Wi-Fi pick is held in
+memory only, so a relaunch goes back to the cable. If the same iPad is both
 plugged in and streaming, both entries show; cable is the default.
 
 ### Status item
@@ -621,6 +622,45 @@ while the cable is active; a cable plugged in mid-share swaps straight to the US
 preview, which may still be starting; the source pick is held in memory, not
 remembered across launches; the 5 s hold keeps the last frame and says
 **Reconnecting…**, but the lost-share banner has no Wi-Fi variant yet.
+
+### W4: Lifecycle (decided 2026-10-03)
+
+Two PRs. **W4a** is Mac only; **W4b** crosses into `SharePadWire` and the iPad app.
+
+**W4a**
+
+- **The cable wins only once it shows frames.** `AppState.activeFeed` used to hand
+  the window to a cable that was merely plugged in, so it swapped to a USB preview
+  that was still starting. Now a Wi-Fi feed that is receiving keeps the window
+  while the cable is starting; the cable takes over once it is running. A cable
+  whose retries run out is `failed` and never takes the window. The window may
+  resize on the switch when the canvas crop and the iPad screen differ in shape.
+- **A Wi-Fi pick lasts until the app quits.** Decision 3 below: the cable always
+  wins after a relaunch, so the pick is not persisted.
+- **The lost-share banner names the source.** `shareLost` carries the feed that was
+  lost, and the popover shows a Wi-Fi icon and wording for a wireless loss.
+- **Trial time carries across a source switch.** When the window stays up and the
+  feed changes, the new feed's budget is the smaller of its own and what the old
+  one had left, so plugging in and out cannot reset the 5 minutes (decision 1).
+
+**W4b**
+
+- **`pause` while the cable or the trial overlay is up.** The Mac sends `pause` when
+  the wireless feed is not the hosted one, or the trial overlay covers it, and
+  `resume` when that ends. A paused feed stops counting as receiving, so a USB
+  restart cannot flip the window back to stale Wi-Fi. On pause the Wi-Fi layer is
+  flushed; on resume the iPad sends a keyframe (decision 2).
+- **A dead link is noticed in about 4 s.** TCP keepalive gets an interval and a
+  count; a Mac `ping` heartbeat is the fallback if the hardware check shows it is
+  not enough.
+
+**Decisions (Jon, 2026-10-03)**
+
+1. One trial budget across a source switch: carry the remaining time over.
+2. Pulling the cable while Wi-Fi is paused: flush the old picture, then a fresh
+   keyframe. A moment of black, never an old drawing.
+3. After a relaunch the cable always wins; the Wi-Fi pick is not remembered.
+4. The trial pause sends `pause` to the iPad, so its pill's wording is true.
 
 ## 11. Open questions
 

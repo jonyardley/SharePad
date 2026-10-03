@@ -31,16 +31,20 @@ class GateTestCase: XCTestCase {
         window: FakeShareWindow = FakeShareWindow(),
         now: @escaping () -> Date = Date.init,
         sleep: @escaping @Sendable (Duration) async -> Void = { try? await Task.sleep(for: $0) },
-        sessionLimit: TimeInterval = 5 * 60
+        sessionLimit: TimeInterval = 5 * 60,
+        wireless: WirelessFeeding? = nil,
+        permission: AVAuthorizationStatus = .notDetermined
     ) -> AppModel {
         AppModel(
             preferences: preferences,
             capture: capture,
+            wireless: wireless,
             window: window,
             sleep: sleep,
             validator: validator(),
             now: now,
-            sessionLimit: sessionLimit
+            sessionLimit: sessionLimit,
+            permission: permission
         )
     }
 }

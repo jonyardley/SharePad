@@ -23,7 +23,15 @@ final class AppModel {
 
     /// A one-shot, self-expiring event (not a steady AppState case): the iPad vanished
     /// while its share window was up, so the user — possibly mid-call — lost their share.
-    private(set) var shareLostSignal = false
+    private(set) var shareLost: FeedKind?
+
+    var shareLostSignal: Bool {
+        shareLost != nil
+    }
+
+    var shareLostNotice: ShareLostNotice? {
+        shareLost.map(ShareLostNotice.init)
+    }
 
     private(set) var autoShowOnConnect: Bool
     private(set) var keepOnTop: Bool
@@ -152,8 +160,10 @@ final class AppModel {
         now: @escaping () -> Date = Date.init,
         sessionLimit: TimeInterval = 5 * 60,
         appVersion: String? = AppModel.bundleVersion,
-        featureReleases: [String] = WhatsNew.featureReleases
+        featureReleases: [String] = WhatsNew.featureReleases,
+        permission: AVAuthorizationStatus = .notDetermined
     ) {
+        self.permission = permission
         self.preferences = preferences
         self.capture = capture
         self.wireless = wireless
@@ -249,20 +259,20 @@ final class AppModel {
     func dismissShareLost() {
         shareLostDismissTask?.cancel()
         shareLostDismissTask = nil
-        shareLostSignal = false
+        shareLost = nil
         presentWhatsNewIfDue()
     }
 
     /// Raise the lost-share signal and auto-expire it, so a stale popover banner doesn't
     /// linger after the user has moved on (or replugged). Reconnect/dismiss clear it early.
-    private func raiseShareLost() {
+    private func raiseShareLost(_ feed: FeedKind) {
         reporter.report(.shareLost)
-        shareLostSignal = true
+        shareLost = feed
         shareLostDismissTask?.cancel()
         shareLostDismissTask = Task { [self] in
             await sleep(Self.shareLostDuration)
             guard !Task.isCancelled else { return }
-            shareLostSignal = false
+            shareLost = nil
             shareLostDismissTask = nil
             presentWhatsNewIfDue()
         }
@@ -399,7 +409,7 @@ extension AppModel {
             videoSize = nil
             let usbWasShown = hideIfShowingUSB()
             await capture.stop()
-            if wasSharing, usbWasShown { raiseShareLost() }
+            if wasSharing, usbWasShown { raiseShareLost(.usb) }
         case let .keep(device):
             currentDeviceName = device.name
         case let .switchTo(device):
@@ -704,7 +714,7 @@ extension AppModel {
             window.hide()
             setWindowVisible(false, "wireless link ended")
             suspendTrialSession()
-            raiseShareLost()
+            raiseShareLost(.wireless)
         } else {
             autoShowWirelessIfDue()
         }
@@ -759,7 +769,14 @@ extension AppModel {
         window.setFeedLayer(source(for: feed).hostedLayer)
         if isWindowVisible {
             if let size = hostedVideoSize { window.updateSize(size) }
+            let previousKey = activeSessionDeviceID
             suspendTrialSession()
+            sessionBudgets = TrialBudget.carried(
+                sessionBudgets,
+                from: previousKey,
+                to: trialDeviceKey,
+                limit: sessionLimit
+            )
             armOrResumeTrialSession()
         }
         autoShowWirelessIfDue()

@@ -16,11 +16,12 @@ because "the share just dropped" is an event, not a state the app rests in.
   was up is a lost share, an idle unplug (window hidden) is silent.
 - **Two surfaces** (DESIGN.md design-system: menu bar strips colour → symbol swap):
   - **Popover banner** — `shareLostBanner` in `PopoverView`, the primary surface.
-  - **Status-item alert symbol** — `exclamationmark.triangle.fill` takes precedence
-    over idle/live, so a user with the popover closed (the common mid-call case)
-    still sees it. This is a deliberate *third, transient* status-item state on top
-    of the documented idle/live pair.
-- **One-shot + auto-expire.** `shareLostSignal` is raised by `raiseShareLost()` and
+  - **No status-item alert.** The `exclamationmark.triangle.fill` state was removed
+    in #115: unplugging is routine, so the item drops to idle and the popover banner
+    is the only notice.
+  - **Wi-Fi variant** (W4, `specs/wireless-product.md` §10): `shareLost` carries the
+    feed that was lost, and a wireless loss gets its own icon and wording.
+- **One-shot + auto-expire.** `shareLost` is raised by `raiseShareLost()` and
   cleared after `shareLostDuration` (10s) via `shareLostDismissTask`, so a stale
   banner/badge doesn't linger. Cleared early by a **reconnect** (`connectOnce`'s
   `.live` calls `dismissShareLost()`) or the banner's **Dismiss** button.

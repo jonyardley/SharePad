@@ -141,6 +141,31 @@ final class LicenseGateTests: GateTestCase {
         XCTAssertEqual(resumed.timeIntervalSinceReferenceDate, 1100, accuracy: 0.01)
     }
 
+    func testACableTakingOverAWirelessShareKeepsItsRemainingTime() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        var clock = Date(timeIntervalSinceReferenceDate: 1000)
+        let window = FakeShareWindow()
+        let model = makeModel(
+            preferences: prefs, window: window, now: { clock }, sessionLimit: 100,
+            wireless: FakeWirelessFeed(), permission: .authorized
+        )
+        model.applyWireless(WirelessStatus(
+            peer: WirelessPeer(id: UUID(), name: "iPad"),
+            isReceiving: true
+        ))
+        let armed = try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
+        XCTAssertEqual(armed.timeIntervalSinceReferenceDate, 1100, accuracy: 0.01)
+
+        clock = Date(timeIntervalSinceReferenceDate: 1030) // 30s over Wi-Fi
+        await model.reconcile(devices: [CaptureDevice(id: "a", name: "iPad")])
+
+        XCTAssertEqual(model.hostedFeed, .usb)
+        let carried = try XCTUnwrap(window.trialCountdownDeadlines.last ?? nil)
+        // 70s carried over → 1030+70=1100, NOT a fresh 1030+100=1130
+        XCTAssertEqual(carried.timeIntervalSinceReferenceDate, 1100, accuracy: 0.01)
+    }
+
     func testDifferentDeviceStartsFreshSession() async throws {
         let prefs = try ephemeralPreferences()
         prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
