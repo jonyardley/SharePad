@@ -203,9 +203,9 @@ final class Receiver {
                 path = active?.interfaceSummary ?? "no path"
                 print("[receiver] path: \(path)")
                 request(keyframes.reduce(.connected(at: uptime)))
-            case let .sendPause(id):
+            case let .sendPause(id, reason):
                 print("[receiver] a second sender is on standby")
-                connections[id]?.send(.pause)
+                connections[id]?.send(.pause(reason))
             case let .sendResume(id):
                 connections[id]?.send(.resume)
             case let .scheduleHoldCheck(after):

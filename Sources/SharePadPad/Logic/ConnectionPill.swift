@@ -4,7 +4,7 @@ enum LinkStatus: Equatable, Sendable {
     case idle
     case looking(String?)
     case live(String)
-    case paused(String)
+    case paused(String, PauseReason)
     case incompatible(String)
 
     init(_ phase: SenderLink.Phase, lastMac: String?) {
@@ -17,8 +17,8 @@ enum LinkStatus: Equatable, Sendable {
             self = .looking(mac)
         case let .live(mac):
             self = .live(mac)
-        case let .paused(mac):
-            self = .paused(mac)
+        case let .paused(mac, reason):
+            self = .paused(mac, reason)
         case let .incompatible(mac, _):
             self = .incompatible(mac)
         }
@@ -91,7 +91,9 @@ struct ConnectionPill: Equatable {
         switch link {
         case let .live(mac):
             self.init(text: "Live on \(mac)", tone: .live)
-        case let .paused(mac):
+        case let .paused(mac, .cable):
+            self.init(text: "Sharing over the cable to \(mac)", tone: .waiting)
+        case let .paused(mac, _):
             self.init(text: "Paused on \(mac)", tone: .waiting)
         case let .incompatible(mac):
             self.init(text: "Update SharePad here and on \(mac)", tone: .attention)

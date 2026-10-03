@@ -57,7 +57,7 @@
         private var frameWaiterID = 0
         private var isStopped = false
         private var framesShown = 0
-        private var hostActive = true
+        private var hostPause: PauseReason?
 
         @MainActor
         init(
@@ -106,7 +106,7 @@
                     connections.removeAll()
                     gates.removeAll()
                     link = ReceiverLink()
-                    if !hostActive { _ = link.reduce(.hostPaused) }
+                    if let hostPause { _ = link.reduce(.hostPaused(hostPause)) }
                     cropTracker.shareEnded()
                     var cleared = WirelessStatus(localNetwork: status.localNetwork)
                     cleared.paired = status.paired
@@ -468,8 +468,8 @@
                     close(id)
                 case .adopt:
                     adopted()
-                case let .sendPause(id):
-                    connections[id]?.send(.pause)
+                case let .sendPause(id, reason):
+                    connections[id]?.send(.pause(reason))
                 case let .sendResume(id):
                     connections[id]?.send(.resume)
                 case let .scheduleHoldCheck(after):
@@ -564,12 +564,12 @@
             }
         }
 
-        func setHostActive(_ active: Bool) {
+        func setHostPause(_ reason: PauseReason?) {
             queue.async { [self] in
-                guard active != hostActive else { return }
-                hostActive = active
-                apply(link.reduce(active ? .hostResumed : .hostPaused))
-                if !active { clearPicture() }
+                guard reason != hostPause else { return }
+                hostPause = reason
+                apply(link.reduce(reason.map { .hostPaused($0) } ?? .hostResumed))
+                if reason != nil { clearPicture() }
             }
         }
 
@@ -585,7 +585,7 @@
         }
 
         private func show(_ pixelBuffer: CVPixelBuffer) {
-            guard hostActive, status.peer != nil,
+            guard hostPause == nil, status.peer != nil,
                   let sample = Self.immediateSample(pixelBuffer) else { return }
             let renderer = displayRenderer
             if renderer.status == .failed {

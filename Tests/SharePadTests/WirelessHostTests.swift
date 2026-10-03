@@ -1,4 +1,5 @@
 @testable import SharePad
+import SharePadWire
 import XCTest
 
 final class WirelessHostTests: XCTestCase {
@@ -7,38 +8,42 @@ final class WirelessHostTests: XCTestCase {
     private let failed = SourceInput(available: true, running: false, failed: true)
 
     func testAHostedWirelessFeedIsActive() {
-        XCTAssertTrue(active(hosted: .wireless, usb: live))
+        XCTAssertNil(pause(hosted: .wireless, usb: live))
     }
 
     func testACableHostingTheWindowPausesWireless() {
-        XCTAssertFalse(active(hosted: .usb, usb: live))
-        XCTAssertFalse(active(hosted: .usb, usb: starting))
+        XCTAssertEqual(pause(hosted: .usb, usb: live), .cable)
+        XCTAssertEqual(pause(hosted: .usb, usb: starting), .cable)
     }
 
     func testNoCableLeavesWirelessActiveBeforeItIsHosted() {
-        XCTAssertTrue(active(hosted: .usb, usb: .absent))
+        XCTAssertNil(pause(hosted: .usb, usb: .absent))
     }
 
     func testAFailedCableLeavesWirelessActive() {
-        XCTAssertTrue(active(hosted: .usb, usb: failed))
+        XCTAssertNil(pause(hosted: .usb, usb: failed))
     }
 
     func testACableWithoutCameraAccessLeavesWirelessActive() {
-        XCTAssertTrue(active(hosted: .usb, camera: .denied, usb: live))
+        XCTAssertNil(pause(hosted: .usb, camera: .denied, usb: live))
     }
 
     func testTheTrialOverlayPausesWireless() {
-        XCTAssertFalse(active(hosted: .wireless, usb: .absent, overlay: true))
-        XCTAssertFalse(active(hosted: .usb, usb: .absent, overlay: true))
+        XCTAssertEqual(pause(hosted: .wireless, usb: .absent, overlay: true), .trial)
+        XCTAssertEqual(pause(hosted: .usb, usb: .absent, overlay: true), .trial)
     }
 
-    private func active(
+    func testTheCableOutranksTheTrialOverlay() {
+        XCTAssertEqual(pause(hosted: .usb, usb: live, overlay: true), .cable)
+    }
+
+    private func pause(
         hosted: FeedKind,
         camera: CameraAccess = .granted,
         usb: SourceInput,
         overlay: Bool = false
-    ) -> Bool {
-        AppState.isWirelessHostActive(
+    ) -> PauseReason? {
+        AppState.wirelessPause(
             hosted: hosted,
             camera: camera,
             usb: usb,

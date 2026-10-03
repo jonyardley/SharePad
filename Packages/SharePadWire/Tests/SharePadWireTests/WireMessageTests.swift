@@ -29,7 +29,9 @@ final class WireMessageTests: XCTestCase {
                 avcc: Data(repeating: 7, count: 300)
             )),
             .requestKeyframe,
-            .pause,
+            .pause(.cable),
+            .pause(.trial),
+            .pause(.unspecified),
             .resume,
             .ping(t1: 12.5),
             .pong(t1: 12.5, t2: 13.25),
@@ -37,6 +39,17 @@ final class WireMessageTests: XCTestCase {
         for message in messages {
             XCTAssertEqual(try roundTrip(message), message)
         }
+    }
+
+    func testAPauseWithNoReasonIsUnspecified() throws {
+        XCTAssertEqual(try WireMessage.decode(typeCode: 5, payload: Data()), .pause(.unspecified))
+    }
+
+    func testAPauseWithAnUnknownReasonIsUnspecified() throws {
+        XCTAssertEqual(
+            try WireMessage.decode(typeCode: 5, payload: Data([99])),
+            .pause(.unspecified)
+        )
     }
 
     func testHelloCarriesTheProtocolVersion() throws {

@@ -10,7 +10,7 @@ public struct SenderLink: Equatable, Sendable {
         case connecting(String)
         case handshaking(String)
         case live(String)
-        case paused(String)
+        case paused(String, PauseReason)
         case backingOff
         case incompatible(String, peerVersion: UInt16)
     }
@@ -21,7 +21,7 @@ public struct SenderLink: Equatable, Sendable {
         case found([String])
         case connectionReady
         case helloReceived(Hello)
-        case pauseReceived
+        case pauseReceived(PauseReason)
         case resumeReceived
         case connectionLost
         case connectTimedOut(attempt: Int)
@@ -63,8 +63,10 @@ public struct SenderLink: Equatable, Sendable {
             connectionReady()
         case let .helloReceived(hello):
             helloReceived(hello)
-        case .pauseReceived, .resumeReceived:
-            pauseOrResume(event)
+        case let .pauseReceived(reason):
+            pause(reason)
+        case .resumeReceived:
+            resume()
         case .connectionLost:
             connectionLost()
         case let .connectTimedOut(timedOut):
@@ -117,17 +119,23 @@ public struct SenderLink: Equatable, Sendable {
         return [.startStreaming]
     }
 
-    private mutating func pauseOrResume(_ event: Event) -> [Effect] {
-        switch (event, phase) {
-        case let (.pauseReceived, .live(peer)):
-            phase = .paused(peer)
+    private mutating func pause(_ reason: PauseReason) -> [Effect] {
+        switch phase {
+        case let .live(peer):
+            phase = .paused(peer, reason)
             return [.pauseStreaming]
-        case let (.resumeReceived, .paused(peer)):
-            phase = .live(peer)
-            return [.resumeStreaming]
+        case let .paused(peer, _):
+            phase = .paused(peer, reason)
+            return []
         default:
             return []
         }
+    }
+
+    private mutating func resume() -> [Effect] {
+        guard case let .paused(peer, _) = phase else { return [] }
+        phase = .live(peer)
+        return [.resumeStreaming]
     }
 
     private mutating func connectionLost() -> [Effect] {

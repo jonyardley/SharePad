@@ -22,7 +22,13 @@ final class ConnectionPillTests: XCTestCase {
     }
 
     func testPausedOnTheMac() {
-        XCTAssertEqual(pill(.paused("Studio")).text, "Paused on Studio")
+        XCTAssertEqual(pill(.paused("Studio", .trial)).text, "Paused on Studio")
+        XCTAssertEqual(pill(.paused("Studio", .unspecified)).text, "Paused on Studio")
+        XCTAssertEqual(
+            pill(.paused("Studio", .cable)).text,
+            "Sharing over the cable to Studio"
+        )
+        XCTAssertEqual(pill(.paused("Studio", .cable)).tone, .waiting)
     }
 
     func testLocalNetworkOffOffersSettings() {
@@ -72,7 +78,7 @@ final class ConnectionPillTests: XCTestCase {
 
     func testCopyAvoidsTransportJargon() {
         let all: [LinkStatus] = [
-            .idle, .looking(nil), .live("Mac"), .paused("Mac"), .incompatible("Mac"),
+            .idle, .looking(nil), .live("Mac"), .paused("Mac", .cable), .incompatible("Mac"),
         ]
         for status in all {
             for text in [pill(status).text, pill(status, denied: true).text] {
@@ -92,7 +98,7 @@ final class ConnectionPillTests: XCTestCase {
             LinkStatus(.incompatible("Office", peerVersion: 9), lastMac: nil),
             .incompatible("Office")
         )
-        XCTAssertTrue(LinkStatus.paused("Office").isUp)
+        XCTAssertTrue(LinkStatus.paused("Office", .cable).isUp)
         XCTAssertFalse(LinkStatus.looking("Office").isUp)
     }
 

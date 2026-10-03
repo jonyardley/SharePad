@@ -1,3 +1,5 @@
+import SharePadWire
+
 enum CameraAccess {
     case unknown
     case denied
@@ -101,15 +103,16 @@ extension AppState {
     }
 
     // hostedFeed starts as .usb, so a Wi-Fi only connect must stay active until it is
-    // hosted (specs/wireless-product.md §10, W4b).
-    static func isWirelessHostActive(
+    // hosted. The cable outranks the trial overlay: Wi-Fi would not host either way
+    // (specs/wireless-product.md §10, W4b).
+    static func wirelessPause(
         hosted: FeedKind,
         camera: CameraAccess,
         usb: SourceInput,
         trialOverlayShown: Bool
-    ) -> Bool {
-        guard !trialOverlayShown else { return false }
-        return hosted == .wireless || !usbCanHost(camera: camera, usb: usb)
+    ) -> PauseReason? {
+        if hosted != .wireless, usbCanHost(camera: camera, usb: usb) { return .cable }
+        return trialOverlayShown ? .trial : nil
     }
 
     private static func usbCanHost(camera: CameraAccess, usb: SourceInput) -> Bool {

@@ -2,6 +2,7 @@ import AppKit
 import AVFoundation
 import Observation
 import os
+import SharePadWire
 
 @MainActor
 @Observable
@@ -20,7 +21,7 @@ final class AppModel {
     private(set) var hostedFeed: FeedKind = .usb
     private var wirelessVideoSize: CGSize?
     private var autoShownPeerID: UUID?
-    @ObservationIgnored private var sentHostActive: Bool?
+    @ObservationIgnored private var sentHostPause: PauseReason??
 
     /// A one-shot, self-expiring event (not a steady AppState case): the iPad vanished
     /// while its share window was up, so the user — possibly mid-call — lost their share.
@@ -790,15 +791,15 @@ extension AppModel {
 extension AppModel {
     private func syncWirelessHost() {
         guard let wireless else { return }
-        let active = AppState.isWirelessHostActive(
+        let pause = AppState.wirelessPause(
             hosted: hostedFeed,
             camera: access,
             usb: usbInput,
             trialOverlayShown: isTrialOverlayShown
         )
-        guard active != sentHostActive else { return }
-        sentHostActive = active
-        wireless.setHostActive(active)
+        guard pause != sentHostPause else { return }
+        sentHostPause = pause
+        wireless.setHostPause(pause)
     }
 }
 

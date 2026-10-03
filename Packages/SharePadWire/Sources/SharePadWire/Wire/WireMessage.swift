@@ -82,12 +82,21 @@ public struct EncodedVideoFrame: Equatable, Sendable {
     }
 }
 
+// The reason rides as an optional trailing byte on `pause`, not a protocol bump:
+// version 1 peers ignore the byte, and a missing or unknown one reads as
+// `unspecified` (specs/wireless-product.md §10, W4b decision 5).
+public enum PauseReason: UInt8, Equatable, Sendable {
+    case unspecified = 0
+    case cable = 1
+    case trial = 2
+}
+
 public enum WireMessage: Equatable, Sendable {
     case hello(Hello)
     case config(StreamConfig)
     case frame(EncodedVideoFrame)
     case requestKeyframe
-    case pause
+    case pause(PauseReason)
     case resume
     case ping(t1: Double)
     case pong(t1: Double, t2: Double)
@@ -131,7 +140,9 @@ public enum WireMessage: Equatable, Sendable {
             body.u8(frame.isKeyframe ? 1 : 0)
             body.f64(frame.captureWallClock ?? 0)
             body.bytes(frame.avcc)
-        case .requestKeyframe, .pause, .resume:
+        case let .pause(reason):
+            body.u8(reason.rawValue)
+        case .requestKeyframe, .resume:
             break
         case let .ping(t1):
             body.f64(t1)
@@ -181,7 +192,7 @@ public enum WireMessage: Equatable, Sendable {
         case 4:
             return .requestKeyframe
         case 5:
-            return .pause
+            return .pause(PauseReason(rawValue: payload.first ?? 0) ?? .unspecified)
         case 6:
             return .resume
         case 7:

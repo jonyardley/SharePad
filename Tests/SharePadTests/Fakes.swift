@@ -1,5 +1,6 @@
 import AVFoundation
 @testable import SharePad
+import SharePadWire
 
 /// @unchecked Sendable mirrors the real CaptureController: recording state is read by
 /// tests only after the awaited call returns, so there is no concurrent access.
@@ -79,10 +80,14 @@ final class FakeWirelessFeed: WirelessFeeding, @unchecked Sendable {
     private(set) var pairingOpened = 0
     private(set) var pairingClosed = 0
     private(set) var forgotten: [UUID] = []
-    private(set) var hostActive: [Bool] = []
+    private(set) var hostPauses: [PauseReason?] = []
 
-    func setHostActive(_ active: Bool) {
-        hostActive.append(active)
+    var hostActive: [Bool] {
+        hostPauses.map { $0 == nil }
+    }
+
+    func setHostPause(_ reason: PauseReason?) {
+        hostPauses.append(reason)
     }
 
     func start() {}

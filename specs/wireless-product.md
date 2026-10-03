@@ -74,7 +74,8 @@ when the paired Mac is found and stops when the app leaves the foreground. There
 is no Start button: the zero-ritual promise is "open the app".
 
 The connection pill has five states: **Live on {Mac}**, **Looking for {Mac}…**,
-**Paused on your Mac** (cable took over, or the Mac trial paused sharing),
+**Paused on your Mac** (the Mac trial paused sharing; **Sharing over the cable to
+{Mac}** when the cable took over),
 **Local network is off** (with a Settings button), and **Not paired**.
 
 ### Keeping app chrome out of the share
@@ -675,9 +676,16 @@ Two PRs. **W4a** is Mac only; **W4b** crosses into `SharePadWire` and the iPad a
    keyframe. A moment of black, never an old drawing.
 3. After a relaunch the cable always wins; the Wi-Fi pick is not remembered.
 4. The trial pause sends `pause` to the iPad, so its pill's wording is true.
+5. `pause` carries why: cable or trial. The pill says "Sharing over the cable to
+   {Mac}" for the cable and keeps "Paused on {Mac}" for the trial. The reason is
+   an optional trailing byte, not a protocol bump, because every build so far
+   accepts only version 1 and would refuse a peer announcing 2. A missing or
+   unknown byte reads as unspecified, so either side can be the older build.
+   When the cable holds the window and the trial overlay is up, the reason is
+   cable.
 
 **W4b status (2026-10-03):** built, Debug only; hardware check deferred to Jon's
-end-to-end pass. `AppState.isWirelessHostActive` decides the pause: Wi-Fi stays
+end-to-end pass. `AppState.wirelessPause` decides the pause: Wi-Fi stays
 active while no usable cable could hold the window, so a Wi-Fi only connect is
 never paused and resumed on the way in. Deferred ([#181](https://github.com/jonyardley/SharePad/issues/181)): while the trial overlay pauses
 a Wi-Fi share the popover reads "Connecting to … over Wi-Fi…", since a paused

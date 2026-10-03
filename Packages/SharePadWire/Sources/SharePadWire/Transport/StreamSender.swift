@@ -192,8 +192,8 @@ public final class StreamSender: @unchecked Sendable {
             helloReceived(hello)
         case .requestKeyframe:
             _ = rules.reduce(.keyframeRequested)
-        case .pause:
-            send(.pauseReceived)
+        case let .pause(reason):
+            send(.pauseReceived(reason))
         case .resume:
             send(.resumeReceived)
         case let .ping(t1):

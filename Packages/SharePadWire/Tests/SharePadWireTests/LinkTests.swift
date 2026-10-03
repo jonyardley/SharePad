@@ -46,11 +46,19 @@ final class SenderLinkTests: XCTestCase {
     func testPauseAndResume() {
         var link = SenderLink()
         live(&link)
-        XCTAssertEqual(link.reduce(.pauseReceived), [.pauseStreaming])
-        XCTAssertEqual(link.phase, .paused("Studio"))
-        XCTAssertEqual(link.reduce(.pauseReceived), [])
+        XCTAssertEqual(link.reduce(.pauseReceived(.cable)), [.pauseStreaming])
+        XCTAssertEqual(link.phase, .paused("Studio", .cable))
+        XCTAssertEqual(link.reduce(.pauseReceived(.cable)), [])
         XCTAssertEqual(link.reduce(.resumeReceived), [.resumeStreaming])
         XCTAssertEqual(link.phase, .live("Studio"))
+    }
+
+    func testAPauseWhilePausedUpdatesOnlyTheReason() {
+        var link = SenderLink()
+        live(&link)
+        _ = link.reduce(.pauseReceived(.trial))
+        XCTAssertEqual(link.reduce(.pauseReceived(.cable)), [])
+        XCTAssertEqual(link.phase, .paused("Studio", .cable))
     }
 
     func testLosingALiveLinkBacksOffThenSearches() {
@@ -189,7 +197,7 @@ final class ReceiverLinkTests: XCTestCase {
     func testOnlyOneStreamAtATime() {
         var link = ReceiverLink()
         _ = link.reduce(.helloReceived(1, pad))
-        XCTAssertEqual(link.reduce(.helloReceived(2, otherPad)), [.sendPause(2)])
+        XCTAssertEqual(link.reduce(.helloReceived(2, otherPad)), [.sendPause(2, .unspecified)])
         XCTAssertEqual(link.standby.map(\.connection), [2])
     }
 
@@ -223,7 +231,7 @@ final class ReceiverLinkTests: XCTestCase {
         var link = ReceiverLink()
         _ = link.reduce(.helloReceived(1, pad))
         _ = link.reduce(.closed(1, at: 10))
-        XCTAssertEqual(link.reduce(.helloReceived(2, otherPad)), [.sendPause(2)])
+        XCTAssertEqual(link.reduce(.helloReceived(2, otherPad)), [.sendPause(2, .unspecified)])
         XCTAssertEqual(
             link.reduce(.holdElapsed(at: 15)),
             [.endShare, .sendResume(2), .adopt(2)]
@@ -253,7 +261,7 @@ final class ReceiverLinkTests: XCTestCase {
         _ = link.reduce(.helloReceived(2, otherPad))
         XCTAssertEqual(
             link.reduce(.helloReceived(3, otherPad)),
-            [.close(2, .replaced), .sendPause(3)]
+            [.close(2, .replaced), .sendPause(3, .unspecified)]
         )
         XCTAssertEqual(link.standby.map(\.connection), [3])
     }

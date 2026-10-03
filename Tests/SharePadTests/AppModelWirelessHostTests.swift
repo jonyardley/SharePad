@@ -1,4 +1,5 @@
 @testable import SharePad
+import SharePadWire
 import XCTest
 
 @MainActor
@@ -87,7 +88,7 @@ final class AppModelWirelessHostTests: AppModelTestCase {
 
         await model.reconcile(devices: [device("a")])
 
-        XCTAssertEqual(wireless.hostActive.last, false)
+        XCTAssertEqual(wireless.hostPauses.last, .cable)
     }
 
     func testRepeatsAreNotSent() throws {

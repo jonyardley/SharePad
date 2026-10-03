@@ -1,6 +1,7 @@
 import AVFoundation
 import CryptoKit
 @testable import SharePad
+import SharePadWire
 import XCTest
 
 @MainActor
@@ -91,7 +92,7 @@ final class WirelessTrialTests: GateTestCase {
         await poll { model.isTrialOverlayShown }
 
         XCTAssertEqual(model.hostedFeed, .wireless)
-        XCTAssertEqual(wireless.hostActive.last, false)
+        XCTAssertEqual(wireless.hostPauses.last, .trial)
     }
 
     func testHidingAPausedWirelessShareResumesTheIPad() async throws {
