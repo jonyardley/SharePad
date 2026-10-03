@@ -79,21 +79,25 @@ pad-run device: gen
     xcrun devicectl device install app --device "{{ device }}" .build/pad/Build/Products/Debug-iphoneos/SharePadPad.app
     xcrun devicectl device process launch --device "{{ device }}" com.jonyardley.sharepad.ipad
 
-# archive the Release iPad app for TestFlight (specs/distribution.md §12). Needs
-# SHAREPAD_TEAM_ID. The build number is a UTC timestamp so every upload is higher
-# than the last; PAD_BUILD_NUMBER overrides it.
+# Needs SHAREPAD_TEAM_ID. The build number is a UTC timestamp so every upload is
+# higher than the last; PAD_BUILD_NUMBER overrides it. An App Store Connect API key
+# (ASC_KEY_PATH, ASC_KEY_ID, ASC_ISSUER_ID) replaces the Xcode account sign-in.
+# archive the Release iPad app for TestFlight (specs/distribution.md §12)
 pad-archive: gen
     #!/usr/bin/env bash
     set -euo pipefail
     BUILD="${PAD_BUILD_NUMBER:-$(date -u +%Y%m%d.%H%M)}"
+    AUTH=()
+    if [ -n "${ASC_KEY_PATH:-}" ] && [ -n "${ASC_KEY_ID:-}" ] && [ -n "${ASC_ISSUER_ID:-}" ]; then
+        AUTH=(-authenticationKeyPath "$ASC_KEY_PATH" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+    fi
     rm -rf .build/pad/SharePadPad.xcarchive
-    xcodebuild -project SharePad.xcodeproj -scheme SharePadPad -configuration Release -destination 'generic/platform=iOS' -derivedDataPath .build/pad -archivePath .build/pad/SharePadPad.xcarchive -allowProvisioningUpdates DEVELOPMENT_TEAM="${SHAREPAD_TEAM_ID:?set SHAREPAD_TEAM_ID}" CURRENT_PROJECT_VERSION="$BUILD" archive
+    xcodebuild -project SharePad.xcodeproj -scheme SharePadPad -configuration Release -destination 'generic/platform=iOS' -derivedDataPath .build/pad -archivePath .build/pad/SharePadPad.xcarchive -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"} DEVELOPMENT_TEAM="${SHAREPAD_TEAM_ID:?set SHAREPAD_TEAM_ID}" CURRENT_PROJECT_VERSION="$BUILD" archive
     just verify-pad
     echo "archived build $BUILD"
 
-# upload the archive to App Store Connect, where it lands in TestFlight after processing.
-# Signs in with the Xcode account, or with an API key when ASC_KEY_PATH, ASC_KEY_ID
-# and ASC_ISSUER_ID are all set.
+# Signs in the same way as pad-archive. The build lands in TestFlight after processing.
+# archive the iPad app and upload it to App Store Connect
 pad-upload: pad-archive
     #!/usr/bin/env bash
     set -euo pipefail
@@ -112,22 +116,22 @@ pad-upload: pad-archive
     fi
     xcodebuild -exportArchive -archivePath .build/pad/SharePadPad.xcarchive -exportOptionsPlist "$OPTS" -exportPath .build/pad/export -allowProvisioningUpdates ${AUTH[@]+"${AUTH[@]}"}
 
-# assert the archived iPad app carries what App Store Connect rejects an upload without
-# (an app icon, the privacy manifest, the usage strings). The archive is always
-# development-signed; the export re-signs it for distribution.
+# The archive is always development-signed; the export re-signs it for distribution,
+# so signing is not checked here.
+# assert the archived iPad app has the icon, privacy manifest and Info.plist keys an upload needs
 verify-pad app=".build/pad/SharePadPad.xcarchive/Products/Applications/SharePadPad.app":
     #!/usr/bin/env bash
     set -euo pipefail
     APP="{{ app }}"
     PLIST="$APP/Info.plist"
-    [ -d "$APP" ] || { echo "app not found at $APP — run just pad-archive first" >&2; exit 1; }
+    [ -d "$APP" ] || { echo "app not found at $APP; run just pad-archive first" >&2; exit 1; }
     fail=0
     note() { echo "  ✗ $1" >&2; fail=1; }
     plutil -extract "CFBundleIcons~ipad.CFBundlePrimaryIcon.CFBundleIconName" raw "$PLIST" >/dev/null 2>&1 \
         || note "no app icon in Info.plist: the asset catalog did not compile an AppIcon"
     [ -f "$APP/Assets.car" ] || note "Assets.car missing"
     [ -f "$APP/PrivacyInfo.xcprivacy" ] || note "PrivacyInfo.xcprivacy missing from the bundle"
-    for key in NSLocalNetworkUsageDescription NSCameraUsageDescription NSBonjourServices; do
+    for key in NSLocalNetworkUsageDescription NSCameraUsageDescription NSBonjourServices ITSAppUsesNonExemptEncryption; do
         plutil -extract "$key" raw "$PLIST" >/dev/null 2>&1 \
             || plutil -extract "$key" json -o - "$PLIST" >/dev/null 2>&1 \
             || note "$key missing from Info.plist"

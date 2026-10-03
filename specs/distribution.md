@@ -186,17 +186,17 @@ which only the team has. Internal builds skip beta review.
 - **Versions:** the iPad target carries its own `MARKETING_VERSION` (1.0.0) in
   `project.yml`. `just pad-archive` sets `CURRENT_PROJECT_VERSION` to a UTC
   timestamp (`20261003.1530`) so each upload is higher than the last;
-  `PAD_BUILD_NUMBER` overrides it.
+  `PAD_BUILD_NUMBER` overrides it (two uploads in the same minute would clash).
 - **What an upload is refused without:** an opaque 1024 app icon
   (`Sources/SharePadPad/Assets.xcassets`, made from the Mac artwork; a proper
   full-bleed design is a W5 item) and `PrivacyInfo.xcprivacy` declaring
   `UserDefaults` (CA92.1) and `systemUptime` (35F9.1). `just verify-pad` checks
-  both in the archive.
+  both in the archive, plus the usage strings and the encryption key.
 - **Encryption:** `ITSAppUsesNonExemptEncryption` is false. The link uses
   Network.framework's TLS, which is encryption provided by the OS.
 - **Commands:** `just pad-archive`, then `just pad-upload` (which archives first).
-  The upload signs in with the Xcode account, or with an App Store Connect API key
-  when `ASC_KEY_PATH`, `ASC_KEY_ID` and `ASC_ISSUER_ID` are set. Uploading from CI
+  Both sign in with the Xcode account, or with an App Store Connect API key when
+  `ASC_KEY_PATH`, `ASC_KEY_ID` and `ASC_ISSUER_ID` are set. Uploading from CI
   waits on that key being a repo secret.
 - **One-off setup (Jon):** an App Store Connect app record for
   `com.jonyardley.sharepad.ipad`, and the internal testers group.

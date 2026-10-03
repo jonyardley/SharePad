@@ -76,6 +76,7 @@ just pad-test      # run the iPad app's unit tests on the iOS Simulator
 just pad-run NAME  # install + launch the Debug iPad app on a device (needs SHAREPAD_TEAM_ID)
 just pad-archive   # Release iPad archive for TestFlight, then verify-pad (needs SHAREPAD_TEAM_ID)
 just pad-upload    # archive + upload to App Store Connect / TestFlight (specs/distribution.md §12)
+just verify-pad    # the archived iPad app has its icon, privacy manifest and Info.plist keys
 just fmt           # swiftformat .   (must pass before commit)
 just lint          # swiftlint + swiftformat --lint (must pass before push)
 just scan          # gitleaks secret scan over full history (same check CI runs)
