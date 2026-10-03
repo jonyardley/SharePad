@@ -20,6 +20,7 @@ final class AppModel {
     private(set) var hostedFeed: FeedKind = .usb
     private var wirelessVideoSize: CGSize?
     private var autoShownPeerID: UUID?
+    @ObservationIgnored private var sentHostActive: Bool?
 
     /// A one-shot, self-expiring event (not a steady AppState case): the iPad vanished
     /// while its share window was up, so the user — possibly mid-call — lost their share.
@@ -568,6 +569,7 @@ extension AppModel {
         window.setTrialCountdown(endsAt: nil)
         isTrialOverlayShown = true
         window.setTrialOverlay(true)
+        syncWirelessHost()
     }
 
     // Stops the countdown and overlay display but keeps the remaining budget and the
@@ -584,6 +586,7 @@ extension AppModel {
         if isTrialOverlayShown {
             isTrialOverlayShown = false
             window.setTrialOverlay(false)
+            syncWirelessHost()
         }
     }
 
@@ -759,6 +762,7 @@ extension AppModel {
     }
 
     func syncHostedFeed() {
+        defer { syncWirelessHost() }
         guard let feed = AppState.activeFeed(
             camera: access,
             usb: usbInput,
@@ -780,6 +784,21 @@ extension AppModel {
             armOrResumeTrialSession()
         }
         autoShowWirelessIfDue()
+    }
+}
+
+extension AppModel {
+    private func syncWirelessHost() {
+        guard let wireless else { return }
+        let active = AppState.isWirelessHostActive(
+            hosted: hostedFeed,
+            camera: access,
+            usb: usbInput,
+            trialOverlayShown: isTrialOverlayShown
+        )
+        guard active != sentHostActive else { return }
+        sentHostActive = active
+        wireless.setHostActive(active)
     }
 }
 

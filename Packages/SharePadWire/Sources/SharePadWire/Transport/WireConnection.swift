@@ -14,6 +14,8 @@ public enum WireParameters {
         options.noDelay = true
         options.enableKeepalive = true
         options.keepaliveIdle = 2
+        options.keepaliveInterval = 1
+        options.keepaliveCount = 2
 
         let parameters = NWParameters(tls: security.tlsOptions(), tcp: options)
         parameters.includePeerToPeer = true

@@ -31,6 +31,8 @@ public struct ReceiverLink: Equatable, Sendable {
         case helloReceived(ConnectionID, Hello)
         case closed(ConnectionID, at: TimeInterval)
         case holdElapsed(at: TimeInterval)
+        case hostPaused
+        case hostResumed
     }
 
     public enum Effect: Equatable, Sendable {
@@ -45,6 +47,7 @@ public struct ReceiverLink: Equatable, Sendable {
 
     public private(set) var phase: Phase = .waiting
     public private(set) var standby: [Peer] = []
+    public private(set) var isHostPaused = false
 
     public init() {}
 
@@ -58,6 +61,10 @@ public struct ReceiverLink: Equatable, Sendable {
             closed(id, at: now)
         case let .holdElapsed(now):
             holdElapsed(at: now)
+        case .hostPaused:
+            setHostPaused(true)
+        case .hostResumed:
+            setHostPaused(false)
         }
     }
 
@@ -68,21 +75,31 @@ public struct ReceiverLink: Equatable, Sendable {
         }
         switch phase {
         case .waiting:
-            phase = .live(peer)
-            return [.adopt(peer.connection)]
+            return adopt(peer)
         case let .live(current) where current.connection == peer.connection:
             return []
         case let .live(current) where current.hello.deviceID == peer.hello.deviceID:
             // A Wi-Fi drop can leave the old socket half-open after the iPad has
             // already reconnected; the newer connection is the real one.
-            phase = .live(peer)
-            return [.close(current.connection, .replaced), .adopt(peer.connection)]
+            return [.close(current.connection, .replaced)] + adopt(peer)
         case let .holding(held, _) where held.hello.deviceID == peer.hello.deviceID:
-            phase = .live(peer)
-            return [.adopt(peer.connection)]
+            return adopt(peer)
         case .live, .holding:
             return park(peer)
         }
+    }
+
+    private mutating func adopt(_ peer: Peer) -> [Effect] {
+        phase = .live(peer)
+        let pause: [Effect] = isHostPaused ? [.sendPause(peer.connection)] : []
+        return pause + [.adopt(peer.connection)]
+    }
+
+    private mutating func setHostPaused(_ paused: Bool) -> [Effect] {
+        guard paused != isHostPaused else { return [] }
+        isHostPaused = paused
+        guard case let .live(current) = phase else { return [] }
+        return [paused ? .sendPause(current.connection) : .sendResume(current.connection)]
     }
 
     private mutating func park(_ peer: Peer) -> [Effect] {
@@ -115,6 +132,7 @@ public struct ReceiverLink: Equatable, Sendable {
         }
         let next = standby.removeFirst()
         phase = .live(next)
-        return [.endShare, .sendResume(next.connection), .adopt(next.connection)]
+        let resume: [Effect] = isHostPaused ? [] : [.sendResume(next.connection)]
+        return [.endShare] + resume + [.adopt(next.connection)]
     }
 }

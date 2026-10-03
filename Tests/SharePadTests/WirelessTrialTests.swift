@@ -73,4 +73,44 @@ final class WirelessTrialTests: GateTestCase {
         XCTAssertTrue(model.isTrialOverlayShown)
         XCTAssertNil(model.sessionEndsAt)
     }
+
+    func testTheTrialOverlayPausesAWirelessShare() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let wireless = FakeWirelessFeed()
+        let model = makeModel(
+            preferences: prefs, sleep: { _ in }, sessionLimit: 100,
+            wireless: wireless, permission: .authorized
+        )
+        model.applyWireless(WirelessStatus(
+            peer: WirelessPeer(id: UUID(), name: "iPad"),
+            isReceiving: true
+        ))
+        XCTAssertEqual(wireless.hostActive.last, true)
+
+        await poll { model.isTrialOverlayShown }
+
+        XCTAssertEqual(model.hostedFeed, .wireless)
+        XCTAssertEqual(wireless.hostActive.last, false)
+    }
+
+    func testHidingAPausedWirelessShareResumesTheIPad() async throws {
+        let prefs = try ephemeralPreferences()
+        prefs.firstLaunchDate = Date(timeIntervalSinceNow: -8 * day)
+        let wireless = FakeWirelessFeed()
+        let model = makeModel(
+            preferences: prefs, sleep: { _ in }, sessionLimit: 100,
+            wireless: wireless, permission: .authorized
+        )
+        model.applyWireless(WirelessStatus(
+            peer: WirelessPeer(id: UUID(), name: "iPad"),
+            isReceiving: true
+        ))
+        await poll { model.isTrialOverlayShown }
+
+        model.toggleWindow()
+
+        XCTAssertFalse(model.isTrialOverlayShown)
+        XCTAssertEqual(wireless.hostActive.last, true)
+    }
 }

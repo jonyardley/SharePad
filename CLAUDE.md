@@ -316,8 +316,10 @@ before touching capture.
   older `lastSeenVersion` in the defaults.
 - **A starting cable never takes the window from a receiving Wi-Fi feed**
   (`AppState.activeFeed`, `specs/wireless-product.md` §10, W4). That includes a USB
-  restart on wake, so "the share went to Wi-Fi for a moment" is this rule until
-  W4b pauses Wi-Fi while the cable is active.
+  restart on wake. W4b's `pause` now stops that flap: while the cable holds the
+  window the Wi-Fi feed is paused and stops counting as receiving
+  (`AppState.isWirelessHostActive`), and its picture is cleared, so unplugging shows
+  a moment of black before a fresh keyframe, never an old drawing.
 - **Wireless TLS-PSK is TLS 1.2 only, and the suite must be pinned**
   (`specs/wireless-product.md` §6, open question 3). Network.framework's default
   PSK suite has no forward secrecy, so `LinkSecurity` pins ECDHE-PSK and a loopback

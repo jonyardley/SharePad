@@ -65,6 +65,11 @@ final class FakeWirelessFeed: WirelessFeeding, @unchecked Sendable {
     private(set) var pairingOpened = 0
     private(set) var pairingClosed = 0
     private(set) var forgotten: [UUID] = []
+    private(set) var hostActive: [Bool] = []
+
+    func setHostActive(_ active: Bool) {
+        hostActive.append(active)
+    }
 
     func start() {}
 

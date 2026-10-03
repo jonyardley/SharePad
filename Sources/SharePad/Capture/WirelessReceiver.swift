@@ -57,6 +57,7 @@
         private var frameWaiterID = 0
         private var isStopped = false
         private var framesShown = 0
+        private var hostActive = true
 
         @MainActor
         init(
@@ -105,6 +106,7 @@
                     connections.removeAll()
                     gates.removeAll()
                     link = ReceiverLink()
+                    if !hostActive { _ = link.reduce(.hostPaused) }
                     cropTracker.shareEnded()
                     var cleared = WirelessStatus(localNetwork: status.localNetwork)
                     cleared.paired = status.paired
@@ -562,8 +564,29 @@
             }
         }
 
+        func setHostActive(_ active: Bool) {
+            queue.async { [self] in
+                guard active != hostActive else { return }
+                hostActive = active
+                apply(link.reduce(active ? .hostResumed : .hostPaused))
+                if !active { clearPicture() }
+            }
+        }
+
+        // Decision 2 (§10, W4b): a paused feed shows black, never its last drawing,
+        // so the share cannot fall back to a stale picture when the cable goes.
+        private func clearPicture() {
+            displayRenderer.flush(removingDisplayedImage: true, completionHandler: nil)
+            thumbnailRenderer.flush(removingDisplayedImage: true, completionHandler: nil)
+            lastThumbnailAt = nil
+            guard status.isReceiving else { return }
+            status.isReceiving = false
+            publish(status)
+        }
+
         private func show(_ pixelBuffer: CVPixelBuffer) {
-            guard status.peer != nil, let sample = Self.immediateSample(pixelBuffer) else { return }
+            guard hostActive, status.peer != nil,
+                  let sample = Self.immediateSample(pixelBuffer) else { return }
             let renderer = displayRenderer
             if renderer.status == .failed {
                 renderer.flush()
