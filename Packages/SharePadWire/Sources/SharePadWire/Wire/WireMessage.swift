@@ -82,9 +82,8 @@ public struct EncodedVideoFrame: Equatable, Sendable {
     }
 }
 
-// The reason rides as an optional trailing byte on `pause`, not a protocol bump:
-// version 1 peers ignore the byte, and a missing or unknown one reads as
-// `unspecified` (specs/wireless-product.md §10, W4b decision 5).
+// An optional trailing byte on `pause`, not a version bump: version 1 peers ignore it
+// (specs/wireless-product.md §10, W4b decision 5).
 public enum PauseReason: UInt8, Equatable, Sendable {
     case unspecified = 0
     case cable = 1

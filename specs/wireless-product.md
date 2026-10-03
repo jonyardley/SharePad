@@ -74,8 +74,8 @@ when the paired Mac is found and stops when the app leaves the foreground. There
 is no Start button: the zero-ritual promise is "open the app".
 
 The connection pill has five states: **Live on {Mac}**, **Looking for {Mac}…**,
-**Paused on your Mac** (the Mac trial paused sharing; **Sharing over the cable to
-{Mac}** when the cable took over),
+**Paused on your Mac** (the Mac trial paused sharing, or another iPad is sharing;
+**Sharing over the cable to {Mac}** when the cable took over),
 **Local network is off** (with a Settings button), and **Not paired**.
 
 ### Keeping app chrome out of the share
