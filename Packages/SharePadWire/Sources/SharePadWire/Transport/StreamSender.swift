@@ -8,15 +8,6 @@ import os
 // on it, so Network.framework's callbacks (send completions included) land there
 // too; only the encoder's output hops in explicitly.
 public final class StreamSender: @unchecked Sendable {
-    public struct Stats: Sendable {
-        public var framesPerSecond: Double = 0
-        public var kilobitsPerSecond: Double = 0
-        public var encodedFrames = 0
-        public var skippedFrames = 0
-        public var keyframes = 0
-        public var interface = ""
-    }
-
     private let onPhase: @Sendable (SenderLink.Phase) -> Void
     private let onStats: @Sendable (Stats) -> Void
     private let onLocalNetworkDenied: @Sendable (Bool) -> Void
@@ -44,6 +35,7 @@ public final class StreamSender: @unchecked Sendable {
     private var captureTimes: [Double: Double] = [:]
     private var meter = RateMeter()
     private var stats = Stats()
+    private var encodeTimes = MeanMeter()
 
     public init(
         deviceID: UUID,
@@ -253,6 +245,7 @@ public final class StreamSender: @unchecked Sendable {
         }
 
         let wallClock = captureTimes.removeValue(forKey: frame.presentationTime.seconds)
+        if let wallClock { encodeTimes.record(Date().timeIntervalSince1970 - wallClock) }
         sequence &+= 1
         nextHandoffID &+= 1
         let id = nextHandoffID
@@ -272,6 +265,7 @@ public final class StreamSender: @unchecked Sendable {
             stats.framesPerSecond = meter.eventsPerSecond
             stats.kilobitsPerSecond = meter.bytesPerSecond * 8 / 1000
             stats.interface = connection.interfaceSummary
+            stats.encodeMilliseconds = encodeTimes.takeMean() * 1000
             let snapshot = stats
             let onStats = onStats
             DispatchQueue.main.async { onStats(snapshot) }

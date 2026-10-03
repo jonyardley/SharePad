@@ -57,6 +57,9 @@ final class PadModel {
     @ObservationIgnored private let recorder: ScreenRecording
     @ObservationIgnored private let captureContext = CaptureContext()
     @ObservationIgnored private var pendingSave: Task<Void, Never>?
+    #if DEBUG
+        @ObservationIgnored private let spike: CaptureSpike?
+    #endif
     @ObservationIgnored private let log = Logger(subsystem: "co.sharepad.ipad", category: "model")
     @ObservationIgnored private lazy var link: StreamLink = PairedLink(
         identity: pairings.identity,
@@ -65,7 +68,8 @@ final class PadModel {
         callbacks: LinkCallbacks(
             onStatus: { [weak self] status in self?.linkChanged(status) },
             onLocalNetworkDenied: { [weak self] denied in self?.localNetworkDenied = denied },
-            onPairedEvent: { [weak self] event in self?.pairings.linkEvent(event) }
+            onPairedEvent: { [weak self] event in self?.pairings.linkEvent(event) },
+            onStats: { [weak self] stats in self?.linkStats(stats) }
         )
     )
 
@@ -77,10 +81,15 @@ final class PadModel {
     ) {
         self.preferences = preferences
         self.drawingStore = drawingStore
-        self.recorder = recorder
         pairings = MacPairings(store: store, deviceName: UIDevice.current.name)
         paper = preferences.paper
         canvas = CanvasController(drawing: drawingStore.load())
+        #if DEBUG
+            spike = CaptureSpike.fromLaunch(canvas: canvas, paper: preferences.paper)
+            self.recorder = spike?.renderer ?? recorder
+        #else
+            self.recorder = recorder
+        #endif
         canvas.apply(tone: paper.tone)
         canvas.onDrawingChange = { [weak self] _ in self?.scheduleSave() }
         canvas.onUndoChange = { [weak self] canUndo, canRedo in
@@ -120,6 +129,9 @@ final class PadModel {
     func setPaper(_ paper: Paper) {
         self.paper = paper
         preferences.paper = paper
+        #if DEBUG
+            spike?.renderer?.paper = paper
+        #endif
         canvas.apply(tone: paper.tone)
     }
 
@@ -215,7 +227,13 @@ final class PadModel {
     private func frameSink() -> @Sendable (CapturedFrame) -> Void {
         let context = captureContext
         let link = link
+        #if DEBUG
+            let probe = spike?.probe
+        #endif
         return { frame in
+            #if DEBUG
+                probe?.captured(frame)
+            #endif
             let decision = context.decide(for: frame, at: ProcessInfo.processInfo.systemUptime)
             if let crop = decision.crop { link.setCanvas(crop) }
             guard decision.allowed else { return }
@@ -272,5 +290,13 @@ final class PadModel {
         } catch {
             log.error("could not save the drawing: \(error.localizedDescription)")
         }
+    }
+}
+
+private extension PadModel {
+    func linkStats(_ stats: StreamSender.Stats) {
+        #if DEBUG
+            spike?.sampler.linkStats(stats)
+        #endif
     }
 }

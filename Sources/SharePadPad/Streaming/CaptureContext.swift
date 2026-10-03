@@ -32,6 +32,12 @@ final class CaptureContext: Sendable {
     }
 
     func decide(for frame: CapturedFrame, at now: TimeInterval) -> Decision {
+        if frame.isCanvasOnly {
+            return Decision(allowed: true, crop: .whole(
+                width: Int32(CVPixelBufferGetWidth(frame.pixelBuffer)),
+                height: Int32(CVPixelBufferGetHeight(frame.pixelBuffer))
+            ))
+        }
         let (gate, layout) = state.withLock { ($0.gate, $0.layout) }
         guard let layout else { return Decision(allowed: false, crop: nil) }
         let crop = CanvasCrop.pixelRect(

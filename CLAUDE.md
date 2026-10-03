@@ -77,6 +77,8 @@ just pad-run NAME  # install + launch the Debug iPad app on a device (needs SHAR
 just pad-archive   # Release iPad archive for TestFlight, then verify-pad (needs SHAREPAD_TEAM_ID)
 just pad-upload    # archive + upload to App Store Connect / TestFlight (specs/distribution.md §12)
 just verify-pad    # the archived iPad app has its icon, privacy manifest and Info.plist keys
+just pad-probe NAME SOURCE  # Debug iPad app on a capture source (hierarchy, layer, replayKit) with the probe CSVs on
+just pad-probe-pull NAME    # copy the probe CSVs to spike/canvas-render/runs (specs/canvas-render-spike.md)
 just fmt           # swiftformat .   (must pass before commit)
 just lint          # swiftlint + swiftformat --lint (must pass before push)
 just scan          # gitleaks secret scan over full history (same check CI runs)

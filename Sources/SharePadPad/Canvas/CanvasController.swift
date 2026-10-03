@@ -24,6 +24,7 @@ final class CanvasController: NSObject {
     var onUndoChange: ((_ canUndo: Bool, _ canRedo: Bool) -> Void)?
     var onLayoutChange: ((CanvasLayout) -> Void)?
     var onToolsUnlocated: ((Bool) -> Void)?
+    var onFrameTick: (() -> Void)?
 
     private let canvasView = PKCanvasView()
     private let toolPicker = PKToolPicker()
@@ -106,6 +107,7 @@ final class CanvasController: NSObject {
     // its position, so it is re-measured every display frame.
     @objc private func tick() {
         reportLayout()
+        onFrameTick?()
     }
 
     private func reportLayout() {
@@ -137,6 +139,29 @@ final class CanvasController: NSObject {
         onUndoChange?(manager?.canUndo ?? false, manager?.canRedo ?? false)
     }
 }
+
+#if DEBUG
+    extension CanvasController {
+        var canvasSize: CGSize {
+            canvasView.bounds.size
+        }
+
+        var displayScale: CGFloat {
+            hostView.traitCollection.displayScale
+        }
+
+        func drawCanvas(in context: CGContext, method: CanvasSnapshotMethod) {
+            switch method {
+            case .hierarchy:
+                UIGraphicsPushContext(context)
+                canvasView.drawHierarchy(in: canvasView.bounds, afterScreenUpdates: false)
+                UIGraphicsPopContext()
+            case .layer:
+                canvasView.layer.render(in: context)
+            }
+        }
+    }
+#endif
 
 extension CanvasController: PKCanvasViewDelegate {
     func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {

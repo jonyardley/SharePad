@@ -79,6 +79,15 @@ pad-run device: gen
     xcrun devicectl device install app --device "{{ device }}" .build/pad/Build/Products/Debug-iphoneos/SharePadPad.app
     xcrun devicectl device process launch --device "{{ device }}" com.jonyardley.sharepad.ipad
 
+# relaunch the Debug iPad app on a capture source with the probe on: hierarchy, layer or replayKit (specs/canvas-render-spike.md)
+pad-probe device source scale="1":
+    xcrun devicectl device process launch --terminate-existing --device "{{ device }}" com.jonyardley.sharepad.ipad -captureSource {{ source }} -captureScale {{ scale }}
+
+# copy the probe CSVs off the iPad into spike/canvas-render/runs
+pad-probe-pull device:
+    mkdir -p spike/canvas-render/runs
+    xcrun devicectl device copy from --device "{{ device }}" --domain-type appDataContainer --domain-identifier com.jonyardley.sharepad.ipad --source Documents --destination spike/canvas-render/runs
+
 # Needs SHAREPAD_TEAM_ID. The build number is a UTC timestamp so every upload is
 # higher than the last; PAD_BUILD_NUMBER overrides it. An App Store Connect API key
 # (ASC_KEY_PATH, ASC_KEY_ID, ASC_ISSUER_ID) replaces the Xcode account sign-in.

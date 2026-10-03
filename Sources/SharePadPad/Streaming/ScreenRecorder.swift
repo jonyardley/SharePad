@@ -7,6 +7,7 @@ struct CapturedFrame: @unchecked Sendable {
     let pixelBuffer: CVPixelBuffer
     let presentationTime: CMTime
     let orientation: CGImagePropertyOrientation
+    var isCanvasOnly = false
 }
 
 protocol ScreenRecording: AnyObject {

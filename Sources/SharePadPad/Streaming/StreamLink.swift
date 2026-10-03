@@ -7,6 +7,7 @@ struct LinkCallbacks: Sendable {
     var onStatus: @MainActor @Sendable (LinkStatus) -> Void
     var onLocalNetworkDenied: @MainActor @Sendable (Bool) -> Void
     var onPairedEvent: @MainActor @Sendable (StreamSender.PairedEvent) -> Void
+    var onStats: @MainActor @Sendable (StreamSender.Stats) -> Void = { _ in }
 }
 
 protocol StreamLink: AnyObject, Sendable {
@@ -32,6 +33,9 @@ final class PairedLink: StreamLink {
                 MainActor.assumeIsolated {
                     callbacks.onStatus(lastSeen.status(for: phase))
                 }
+            },
+            onStats: { stats in
+                MainActor.assumeIsolated { callbacks.onStats(stats) }
             },
             onLocalNetworkDenied: { denied in
                 MainActor.assumeIsolated { callbacks.onLocalNetworkDenied(denied) }

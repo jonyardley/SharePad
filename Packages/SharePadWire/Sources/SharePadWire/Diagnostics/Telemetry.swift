@@ -105,3 +105,20 @@ public struct RateMeter: Sendable {
         return true
     }
 }
+
+public struct MeanMeter: Sendable {
+    private var total: Double = 0
+    private var count = 0
+
+    public init() {}
+
+    public mutating func record(_ value: Double) {
+        total += value
+        count += 1
+    }
+
+    public mutating func takeMean() -> Double {
+        defer { (total, count) = (0, 0) }
+        return count > 0 ? total / Double(count) : 0
+    }
+}
