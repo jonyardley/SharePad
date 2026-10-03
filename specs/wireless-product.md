@@ -671,7 +671,7 @@ Two PRs. **W4a** is Mac only; **W4b** crosses into `SharePadWire` and the iPad a
 **W4b status (2026-10-03):** built, Debug only; hardware check deferred to Jon's
 end-to-end pass. `AppState.isWirelessHostActive` decides the pause: Wi-Fi stays
 active while no usable cable could hold the window, so a Wi-Fi only connect is
-never paused and resumed on the way in. Deferred: while the trial overlay pauses
+never paused and resumed on the way in. Deferred ([#181](https://github.com/jonyardley/SharePad/issues/181)): while the trial overlay pauses
 a Wi-Fi share the popover reads "Connecting to … over Wi-Fi…", since a paused
 feed is not receiving; the Mac `ping` heartbeat waits on the hardware check of
 the 4 s keepalive.

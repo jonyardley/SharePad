@@ -51,14 +51,32 @@ final class AppModelWirelessHostTests: AppModelTestCase {
 
     func testAPausedWirelessFeedDoesNotTakeTheWindowFromARestartingCable() async throws {
         let wireless = FakeWirelessFeed()
-        let model = try makeWirelessModel(wireless: wireless)
+        let capture = FakeCaptureController()
+        let model = try makeModel(
+            capture: capture,
+            window: FakeShareWindow(),
+            preferences: ephemeralPreferences(),
+            wireless: wireless,
+            permission: .authorized
+        )
         model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
         await model.reconcile(devices: [device("a")])
         model.applyWireless(WirelessStatus(peer: peer, isReceiving: false))
+        capture.holdsResume = true
 
-        await model.restart()
+        let restarting = Task { await model.restart() }
+        for _ in 0 ..< 100_000 where !capture.isResumeHeld {
+            await Task.yield()
+        }
+        XCTAssertTrue(capture.isResumeHeld)
+        XCTAssertFalse(model.isLive)
         model.applyWireless(WirelessStatus(peer: peer, isReceiving: false))
 
+        XCTAssertEqual(model.hostedFeed, .usb)
+        XCTAssertEqual(wireless.hostActive.last, false)
+
+        capture.releaseResume()
+        await restarting.value
         XCTAssertEqual(model.hostedFeed, .usb)
         XCTAssertEqual(wireless.hostActive.last, false)
     }

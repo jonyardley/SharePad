@@ -100,8 +100,8 @@ extension AppState {
         return usbUsable ? .usb : nil
     }
 
-    // The iPad streams over Wi-Fi only while that feed can be shown: not while the
-    // cable holds the window or the trial overlay covers it (§10, W4b).
+    // hostedFeed starts as .usb, so a Wi-Fi only connect must stay active until it is
+    // hosted (specs/wireless-product.md §10, W4b).
     static func isWirelessHostActive(
         hosted: FeedKind,
         camera: CameraAccess,

@@ -35,8 +35,22 @@ final class FakeCaptureController: CaptureControlling, @unchecked Sendable {
         return startResult
     }
 
+    var holdsResume = false
+    private var heldResume: CheckedContinuation<Void, Never>?
+    var isResumeHeld: Bool {
+        heldResume != nil
+    }
+
+    func releaseResume() {
+        heldResume?.resume()
+        heldResume = nil
+    }
+
     func resume() async -> Bool {
         resumeCount += 1
+        if holdsResume {
+            await withCheckedContinuation { heldResume = $0 }
+        }
         return resumeResult
     }
 
