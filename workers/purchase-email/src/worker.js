@@ -219,7 +219,8 @@ export function purchaseEmailHtml(downloadUrl, email, key, recoverUrl) {
               </p>
               <p style="font-size:13px;line-height:1.6;color:#4A4F78;margin:24px 0 0;">
                 Updates are included for the life of the app, and the code is open source
-                (GPLv3). Need a hand? Just reply to this email.
+                (GPLv3). Need a hand? Just reply to this email, or write to
+                <a href="mailto:hello@sharepad.co" style="color:#3E4CB3;">hello@sharepad.co</a>.
               </p>
             </td>
           </tr>
@@ -263,7 +264,7 @@ Lose your key? Get it again at ${recoverUrl} with the email above.
 No account, no sign-in.
 
 Updates are included for the life of the app, and the code is open source
-(GPLv3). Need a hand? Just reply to this email.
+(GPLv3). Need a hand? Just reply to this email, or write to hello@sharepad.co.
 
 sharepad.co`;
 }
