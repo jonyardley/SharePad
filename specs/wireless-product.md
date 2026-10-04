@@ -3,8 +3,8 @@
 > Status: **draft, Tier 3. W0 and W2a done** (`Packages/SharePadWire`, spike rebuilt on
 > it; measured on home Wi-Fi 2026-10-02). The latency tail is accepted for v1 as a
 > known gap ([#160](https://github.com/jonyardley/SharePad/issues/160)). **W1 and W2b
-> built, Debug builds only**; their hardware check on an iPad mini passed
-> 2026-10-03, bar two items (§10).
+> built**; their hardware check on an iPad mini passed 2026-10-03, bar two items
+> (§10). Wireless ships in every Mac build from 1.3.0 (#192).
 > Follows the GO verdict in
 > [`specs/wireless.md`](wireless.md#spike-result) (2026-10-01). Touches the
 > capture pipeline, the state reducer, permissions and the share-window model, so
@@ -216,9 +216,9 @@ source.
 
 - Mac: add `NSLocalNetworkUsageDescription` and `NSBonjourServices`
   (`_sharepad._tcp`). The app is not sandboxed, so no network entitlement.
-  `SharePad.entitlements` stays camera only. Until pairing ships, both keys are
-  added to Debug products only, by a post-build script in `project.yml`;
-  `just verify-app` fails a Release product that carries either.
+  `SharePad.entitlements` stays camera only. Both keys are in the target's `info:`
+  in `project.yml` (#192; Debug only until 1.3.0), and `just verify-app` fails a
+  product missing either.
 - iPad: `NSLocalNetworkUsageDescription`, `NSBonjourServices`,
   `NSCameraUsageDescription` (QR scan only). No microphone key: ReplayKit is
   started with the microphone off.
@@ -613,14 +613,15 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 listener plan, paired-service ranking, the forget notice, the pairing panel and
 paired-list presenters and the iPad pairing state. Both apps now speak only the
 TLS-PSK link; the unauthenticated link survives only in `spike/wireless`. Wireless
-stays Debug-only on the Mac until W5 (`specs/wireless-pairing-ui.md`, decision 1).
+stayed Debug-only on the Mac until W5 (`specs/wireless-pairing-ui.md`, decision 1),
+and ships in every build from 1.3.0 (#192).
 **Hardware check (2026-10-03), passed** on an iPad mini in Zoom desktop and browser
 Meet: pairing by QR, canvas only in the share window, the pairing window absent
 from both pickers, Forget leaving the iPad on **Not paired**, and USB unchanged.
 Still open: a packet capture showing no readable stream.
 
 **W3b status (2026-10-03):** built. Internal TestFlight only, since the Mac side
-is Debug only until W5 (`specs/distribution.md` §12). The iPad target gained its
+was Debug only until W5 (`specs/distribution.md` §12). The iPad target gained its
 app icon, privacy manifest and own version, plus `just pad-archive`,
 `just pad-upload` and `just verify-pad`. The private palette lookup (#169) waits
 for W5, since internal builds skip beta review. **Hardware check (2026-10-03),
@@ -632,13 +633,12 @@ One finding: ReplayKit asks to record on every open (§11, item 2), which breaks
 **W5b status (2026-10-03):** built. The what's-new window shows the live pairing
 code, follows it through pairing to "Paired with <iPad>", and its **Pair an iPad…**
 hands the same code to the pairing window. 1.3.0 is marked as the wireless feature
-release, in Debug builds only: Release lists no feature release until the
-Debug-only wireless gate lifts (#192), so a Release without wireless never shows
-"Draw without the cable". The iPad pairing screen carries the record-prompt line.
+release in every build, now the Debug-only wireless gate has lifted (#192). The
+iPad pairing screen carries the record-prompt line.
 Hardware check (scanning the
 what's-new QR with the Camera app) not yet run.
 
-**W1 status (2026-10-02):** built, Debug builds only; unit tests cover the reducer,
+**W1 status (2026-10-02):** built, Debug builds only until 1.3.0 (#192); unit tests cover the reducer,
 the local network probe and the wireless paths through `AppModel`. The verify-by
 line passed on hardware 2026-10-03 (see W2b status), except denying local network
 on macOS 15, which waits for a Mac whose Local Network answer can be spent (W5
@@ -700,7 +700,7 @@ Two PRs. **W4a** is Mac only; **W4b** crosses into `SharePadWire` and the iPad a
    When the cable holds the window and the trial overlay is up, the reason is
    cable.
 
-**W4b status (2026-10-03):** built, Debug only; hardware check deferred to Jon's
+**W4b status (2026-10-03):** built, Debug only until 1.3.0 (#192); hardware check deferred to Jon's
 end-to-end pass. `AppState.wirelessPause` decides the pause: Wi-Fi stays
 active while no usable cable could hold the window, so a Wi-Fi only connect is
 never paused and resumed on the way in. Deferred ([#181](https://github.com/jonyardley/SharePad/issues/181)): while the trial overlay pauses

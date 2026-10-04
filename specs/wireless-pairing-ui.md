@@ -65,11 +65,12 @@ can stream.
 
 ## Key decisions
 
-1. **Wireless stays Debug-only on the Mac.** §5 says the Info.plist keys are
+1. **Wireless stayed Debug-only on the Mac until W5.** §5 says the Info.plist keys are
    Debug-only until pairing ships, and pairing now exists, but there is no iPad
    app to pair with until W5 (App Store). A Mac release with **Pair an iPad…**
    and nothing to pair would be a dead end. The flip lands with W5 (the W2b
-   hardware check passed 2026-10-03).
+   hardware check passed 2026-10-03). **Lifted (2026-10-04, #192):** the Mac
+   carries wireless in every build from 1.3.0, released alongside the iPad app.
 2. **The Mac learns of a broken pairing in two ways, both attributable.** A
    failed TLS handshake carries no identity on the listener (§6 known gaps), so
    the Mac cannot count those. It counts what it can attribute: an

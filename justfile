@@ -159,9 +159,10 @@ coverage:
     [ -n "$RESULT" ] || { echo "no .xcresult found — run 'just test' first" >&2; exit 1; }
     xcrun xccov view --report --only-targets "$RESULT"
 
-# assert the built app keeps its load-bearing invariants — camera-only (no mic) and
-# un-sandboxed (Non-Negotiable 5 / DESIGN.md §6). A regression here otherwise only
-# surfaces live, as a surprise mic prompt or an empty device list.
+# assert the built app keeps its load-bearing invariants: camera-only (no mic),
+# un-sandboxed (Non-Negotiable 5 / DESIGN.md §6), and the local network keys the
+# wireless listener needs. A regression here otherwise only surfaces live, as a
+# surprise mic prompt, an empty device list or an iPad that never finds the Mac.
 verify-app app=".build/Build/Products/Debug/SharePad.app":
     #!/usr/bin/env bash
     set -euo pipefail
@@ -180,20 +181,11 @@ verify-app app=".build/Build/Products/Debug/SharePad.app":
     case "$ENT" in *com.apple.security.app-sandbox*) note "app-sandbox entitlement present — must stay un-sandboxed" ;; esac
     case "$ENT" in *com.apple.security.device.audio-input*) note "audio-input entitlement present — must stay mic-free" ;; esac
     case "$ENT" in *com.apple.security.device.camera*) : ;; *) note "camera entitlement missing" ;; esac
-    # Wireless is Debug only until pairing ships (specs/wireless-product.md §10).
-    case "$APP" in *Release*)
-        for key in NSLocalNetworkUsageDescription NSBonjourServices; do
-            if plutil -extract "$key" raw "$PLIST" >/dev/null 2>&1 || plutil -extract "$key" json -o - "$PLIST" >/dev/null 2>&1; then
-                note "$key present in a Release build: wireless must stay Debug only"
-            fi
-        done ;;
-    *Debug*)
-        for key in NSLocalNetworkUsageDescription NSBonjourServices; do
-            plutil -extract "$key" raw "$PLIST" >/dev/null 2>&1 \
-                || plutil -extract "$key" json -o - "$PLIST" >/dev/null 2>&1 \
-                || note "$key missing from a Debug build: the wireless listener can't ask for local network access"
-        done ;;
-    esac
+    for key in NSLocalNetworkUsageDescription NSBonjourServices; do
+        plutil -extract "$key" raw "$PLIST" >/dev/null 2>&1 \
+            || plutil -extract "$key" json -o - "$PLIST" >/dev/null 2>&1 \
+            || note "$key missing from Info.plist: the wireless listener can't ask for local network access"
+    done
     if [ "$fail" -eq 0 ]; then echo "verify-app OK: $APP"; else echo "verify-app FAILED" >&2; exit 1; fi
 
 # post-notarization smoke check (CI runs it before publishing): the signed+stapled

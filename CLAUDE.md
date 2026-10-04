@@ -286,13 +286,12 @@ before touching capture.
 - **iPad frames leave only with a known canvas rectangle.** `CaptureContext` drops
   any frame without a layout or while a sheet or popover covers the canvas. New
   chrome that draws over the canvas must register an `Overlay` with the model.
-- **Wireless is Debug only on the Mac until the iPad app ships in W5**
-  (`specs/wireless-pairing-ui.md`, decision 1). `WirelessReceiver` is wrapped in
-  `#if DEBUG`, and its Info.plist keys (`NSLocalNetworkUsageDescription`,
-  `NSBonjourServices`) are added by a Debug-only post-build script in
-  `project.yml`, because `info:` applies to every configuration. `just verify-app`
-  on a Release product fails if either key appears. The `SharePadWire` package is
-  still linked into Release (xcodegen has no per-configuration package link).
+- **Wireless ships in every Mac build from 1.3.0** (#192; the Debug-only gate of
+  `specs/wireless-pairing-ui.md` decision 1 lifted with the iPad app's release).
+  `NSLocalNetworkUsageDescription` and `NSBonjourServices` are in the target's
+  `info:` in `project.yml`, and `just verify-app` fails any product missing either:
+  without them the listener can't ask for local network access and no iPad finds
+  the Mac. Any v* tag cut from main ships wireless to every user.
 - **The Mac listener's keys are fixed when it is made.** `ListenerPlan` decides
   whether to listen (a code on offer, or something paired with **Allow wireless
   iPads** on) and with which keys; any change replaces the `NWListener`.
@@ -327,7 +326,7 @@ before touching capture.
   the share window is up, then shows on a hide or once a lost-share notice clears.
   To see it in a Debug build: `open --env SHAREPAD_FEATURE_RELEASE=1.0.0` plus an
   older `lastSeenVersion` in the defaults. 1.3.0 is listed as the wireless release
-  in Debug only; Release lists nothing until the wireless gate lifts (#192).
+  in every build.
 - **A starting cable never takes the window from a receiving Wi-Fi feed**
   (`AppState.activeFeed`, `specs/wireless-product.md` §10, W4). That includes a USB
   restart on wake. W4b's `pause` now stops that flap: while the cable holds the

@@ -28,10 +28,10 @@ displayed as full shared content (not a webcam tile).
 
 - **Not** a virtual camera (see [§2](#2-approach--rejected-alternatives)).
 - **No** iPad audio routing into the call.
-- **USB only in Release.** Wireless sharing through an iPad companion app is
-  specced in `specs/wireless-product.md` (2026-10-01). The Mac receiver, with
-  pairing and the TLS-PSK link (W2b, `specs/wireless-pairing-ui.md`), exists in
-  **Debug builds only** until the iPad app ships (2026-10-02).
+- ~~**USB only in Release.**~~ **Superseded (2026-10-04, #192):** wireless sharing
+  through the SharePad for iPad app (`specs/wireless-product.md`) ships in every
+  Mac build from 1.3.0, with pairing and the TLS-PSK link
+  (`specs/wireless-pairing-ui.md`).
 - **No** annotation, recording, cropping, or multi-device mosaic.
 - ~~**No** distribution / App Store / notarization — personal local build.~~
   **Superseded (2026-06-05):** 1.0 ships as a notarized **direct download**
@@ -164,7 +164,7 @@ From the design Q&A (2026-06-03):
 - **`FeedSource`** (2026-10-02): the protocol both sources sit behind: the layer
   the share window hosts, the popover thumbnail layer, frame sizes, stop,
   `awaitFrame`, thumbnail gating. `CaptureControlling` refines it for USB;
-  `WirelessFeeding` for the Debug-only `WirelessReceiver`, which alone owns the
+  `WirelessFeeding` for `WirelessReceiver`, which alone owns the
   listener, the link and the decoder (`specs/wireless-product.md` §5).
 - **`DeviceMonitor`** — performs the CMIO opt-in once, runs the
   `AVCaptureDevice.DiscoverySession`, KVO-observes its `devices`, and emits
@@ -329,7 +329,7 @@ ipad-share/
     Capture/
       FeedSource.swift         # protocol both sources sit behind
       CaptureController.swift  # owns AVCaptureSession (protocol-fronted)
-      WirelessReceiver.swift   # Debug only: listener, gate, pairing, link, decoder
+      WirelessReceiver.swift   # listener, gate, pairing, link, decoder
       DeviceMonitor.swift      # CMIO opt-in + DiscoverySession KVO
       CMIO.swift               # the opt-in helper (§6.1)
     Windows/

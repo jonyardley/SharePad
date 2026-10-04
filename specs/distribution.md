@@ -177,9 +177,10 @@ These aren't "distribution" proper but belong to the same 1.0 push:
 ## 12. iPad app (TestFlight beta, W3b)
 
 The iPad companion (`specs/wireless-product.md` §4) goes out through App Store
-Connect, not this DMG pipeline. W3b is an **internal** TestFlight beta only: the
-Mac side of wireless is Debug only until W5, so a tester needs a Debug Mac build,
-which only the team has. Internal builds skip beta review.
+Connect, not this DMG pipeline. W3b was an **internal** TestFlight beta only: the
+Mac side of wireless was Debug only until W5, so a tester needed a Debug Mac build,
+which only the team had. Internal builds skip beta review. From 1.3.0 the Mac
+release carries wireless (#192).
 
 - **Signing:** automatic, `SHAREPAD_TEAM_ID` as for `just pad-run`. Xcode creates
   the distribution certificate and profile on first export.

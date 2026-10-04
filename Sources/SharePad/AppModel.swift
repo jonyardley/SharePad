@@ -131,7 +131,7 @@ final class AppModel {
         self.init(
             preferences: preferences,
             capture: controller,
-            wireless: Self.debugWirelessSource(),
+            wireless: WirelessReceiver(),
             window: window,
             reporter: DiagnosticsReporter.shared,
             sessionLimit: Self.debugSessionLimitOverride ?? 5 * 60,
@@ -606,16 +606,6 @@ extension AppModel {
         subsystem: "com.jonyardley.sharepad",
         category: "wireless"
     )
-
-    // Debug only until the iPad app ships in W5: a release offering "Pair an iPad…"
-    // with nothing to pair would be a dead end (specs/wireless-pairing-ui.md, decision 1).
-    fileprivate static func debugWirelessSource() -> WirelessFeeding? {
-        #if DEBUG
-            WirelessReceiver()
-        #else
-            nil
-        #endif
-    }
 
     var isSharing: Bool {
         state.isLive

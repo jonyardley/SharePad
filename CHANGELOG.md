@@ -5,6 +5,24 @@ update dialog** (Sparkle shows it to people when they update), so write each ent
 for users, not developers. Add a new `## <version>` section at the top before you
 tag a release.
 
+## 1.3.0
+- Draw without the cable: install the free SharePad for iPad app, then click the
+  SharePad icon in your menu bar and choose "Pair an iPad…". Scan the code with
+  your iPad once, and from then on your drawing appears in the SharePad window
+  over Wi-Fi whenever the app is open.
+- The cable still works exactly as before. If your iPad is on the cable and Wi-Fi
+  at once, SharePad uses the cable and your iPad shows that it has.
+- If a Wi-Fi share drops mid-call, the popover tells you, just as it does for the
+  cable.
+- A tidier popover: settings, About, Check for Updates and Quit now live in a
+  gear menu, and Show Window is one clear button.
+- New, and off unless you turn it on: "Send Crash Reports" in the gear menu sends
+  anonymous crash and error reports. Nothing from your iPad, your licence or
+  anything that identifies your Mac.
+- Entering a licence now tells you whether the key is incomplete or doesn't match
+  the email you typed, so you know what to fix.
+- Clearer wording throughout the app.
+
 ## 1.2.0
 - After your trial, SharePad shows a live countdown in the window and the popover,
   so you know exactly when sharing will pause.
