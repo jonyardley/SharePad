@@ -196,8 +196,17 @@ which only the team has. Internal builds skip beta review.
   Network.framework's TLS, which is encryption provided by the OS.
 - **Commands:** `just pad-archive`, then `just pad-upload` (which archives first).
   Both sign in with the Xcode account, or with an App Store Connect API key when
-  `ASC_KEY_PATH`, `ASC_KEY_ID` and `ASC_ISSUER_ID` are set. Uploading from CI
-  waits on that key being a repo secret.
+  `ASC_KEY_PATH`, `ASC_KEY_ID` and `ASC_ISSUER_ID` are set.
+- **From CI:** the **TestFlight (iPad)** workflow (`.github/workflows/testflight.yml`,
+  run by hand from Actions) runs `just pad-upload` on a macOS runner. The archive is
+  development-signed, so the runner needs that identity's private key: Xcode cannot
+  mint one per run on a fresh machine (Apple forums 695759), which is why Intrada
+  stores its certificate in fastlane match. Here the Apple Development certificate is
+  imported from `PAD_DEV_CERT_P12_BASE64` and `PAD_DEV_CERT_PASSWORD`, as `release.yml`
+  does for Developer ID. The export cloud-signs for distribution through the
+  notarisation key (`AC_API_KEY_*`), which needs the **Admin** role: a weaker key
+  fails at the export with a cloud signing permission error. The certificate expires
+  yearly; renew it and re-set both secrets.
 - **One-off setup (Jon):** an App Store Connect app record for
   `com.jonyardley.sharepad.ipad`, and the internal testers group.
 - **Not yet working in the beta:** scanning the pairing QR with the Camera app,
