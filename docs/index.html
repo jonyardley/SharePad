@@ -337,7 +337,7 @@
   .final-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; }
   .final-card .btn-primary { background: #fff; color: var(--indigo); box-shadow: 0 14px 30px rgba(20,26,80,0.4); }
   .final-card .btn-primary:hover { filter: brightness(0.98); }
-  .final-card .sub { font-size: 0.86rem; color: rgba(255,255,255,0.82); margin-top: 18px; }
+  .final-card .sub { font-size: 0.86rem; color: rgba(255,255,255,0.82); margin-top: 18px; max-width: none; text-wrap: balance; }
 
   /* Footer */
   footer { padding: 50px 0 70px; border-top: 1px solid var(--line); }
@@ -523,9 +523,9 @@
     </a>
     <div class="nav-links">
       <a class="muted" href="https://github.com/jonyardley/SharePad">GitHub</a>
-      <a class="btn btn-primary" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.6 8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg>
-        Download free
+      <a class="btn btn-primary" id="nav-download" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+        Try free for 7 days
       </a>
     </div>
   </div>
@@ -546,15 +546,15 @@
       </p>
       <div class="hero-cta reveal d4">
         <a class="btn btn-primary" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.6 8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg>
-          Download — free for 7 days
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+          Try free for 7 days
         </a>
         <a class="btn btn-ghost" href="https://buy.sharepad.co/hero">
-          Buy a licence — £2.99
+          Buy for £2.99
         </a>
         <span class="req-line">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <span>Free for 7 days, then <b>£2.99</b> once · no subscription · macOS 14+</span>
+          <span>Then <b>£2.99</b> once · no subscription · macOS 14 or later</span>
         </span>
       </div>
     </div>
@@ -757,14 +757,14 @@
       <p>Plug in, pick the window, and draw.</p>
       <div class="final-actions">
         <a class="btn btn-primary" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l8.8 8.6 8.8-8.6a5.5 5.5 0 0 0 0-7.8z"/></svg>
-          Download — free for 7 days
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+          Try free for 7 days
         </a>
         <a class="btn btn-ghost" href="https://buy.sharepad.co/final" style="color:#fff;background:rgba(255,255,255,0.14)">
-          Buy a licence — £2.99
+          Buy for £2.99
         </a>
       </div>
-      <p class="sub">Free for 7 days, then £2.99 · one-time · updates for life · no subscription</p>
+      <p class="sub">Then £2.99 once · no subscription · macOS 14 or later</p>
     </div>
   </div>
 </section>

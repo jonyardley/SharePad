@@ -96,6 +96,10 @@
   }
   .btn:hover { transform: translateY(-2px); text-decoration: none; box-shadow: 0 16px 32px rgba(62,76,179,0.48); }
   .btn svg { width: 17px; height: 17px; }
+  .nav-links { display: flex; align-items: center; gap: 26px; }
+  .nav-links a.muted { color: var(--ink-soft); font-weight: 500; }
+  .nav-links a.muted:hover { color: var(--indigo); text-decoration: none; }
+  @media (max-width: 880px) { .nav-links .muted { display: none; } }
 
   article { padding: 56px 0 40px; }
   .eyebrow { font-size: 0.82rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--periwinkle); margin-bottom: 14px; }
@@ -169,10 +173,13 @@
       <img src="assets/icon-256.png" alt="SharePad icon" />
       SharePad
     </a>
-    <a class="btn" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
-      Download free
-    </a>
+    <div class="nav-links">
+      <a class="muted" href="https://github.com/jonyardley/SharePad">GitHub</a>
+      <a class="btn" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+        Try free for 7 days
+      </a>
+    </div>
   </div>
 </nav>
 
@@ -210,8 +217,11 @@
     <div class="cta-band">
       <h2>Try it on your next call</h2>
       <p>Plug in, pick the window, and draw. Free for 7 days, then a one-time {{price}} licence.</p>
-      <a class="btn" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">Download SharePad for macOS</a>
-      <p class="sub">macOS 14+ · no subscription · updates for life</p>
+      <a class="btn" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14"/></svg>
+        Try free for 7 days
+      </a>
+      <p class="sub">macOS 14 or later · no subscription · updates for life</p>
     </div>
 
     <h2>Fixing a black shared window</h2>
