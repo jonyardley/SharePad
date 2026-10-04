@@ -144,7 +144,7 @@ verify-pad app=".build/pad/SharePadPad.xcarchive/Products/Applications/SharePadP
         || note "no app icon in Info.plist: the asset catalog did not compile an AppIcon"
     [ -f "$APP/Assets.car" ] || note "Assets.car missing"
     [ -f "$APP/PrivacyInfo.xcprivacy" ] || note "PrivacyInfo.xcprivacy missing from the bundle"
-    for key in NSLocalNetworkUsageDescription NSCameraUsageDescription NSBonjourServices ITSAppUsesNonExemptEncryption; do
+    for key in NSLocalNetworkUsageDescription NSCameraUsageDescription NSPhotoLibraryAddUsageDescription NSBonjourServices ITSAppUsesNonExemptEncryption; do
         plutil -extract "$key" raw "$PLIST" >/dev/null 2>&1 \
             || plutil -extract "$key" json -o - "$PLIST" >/dev/null 2>&1 \
             || note "$key missing from Info.plist"

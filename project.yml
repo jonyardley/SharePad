@@ -148,6 +148,7 @@ targets:
         ITSAppUsesNonExemptEncryption: false
         NSLocalNetworkUsageDescription: SharePad finds your Mac on this Wi-Fi so your drawing can appear on it.
         NSCameraUsageDescription: SharePad uses the camera only to scan the pairing code your Mac shows.
+        NSPhotoLibraryAddUsageDescription: SharePad saves your drawing to Photos when you ask it to.
         NSBonjourServices:
           - _sharepad._tcp
         UILaunchScreen: {}

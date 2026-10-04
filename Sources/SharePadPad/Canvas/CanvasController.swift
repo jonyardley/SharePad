@@ -71,6 +71,10 @@ final class CanvasController: NSObject {
         canvasView.drawing.transformed(using: Self.toBoard.inverted())
     }
 
+    var hasStrokes: Bool {
+        !canvasView.drawing.strokes.isEmpty
+    }
+
     var viewport: Viewport {
         Viewport(offset: canvasView.contentOffset, zoom: canvasView.zoomScale)
     }

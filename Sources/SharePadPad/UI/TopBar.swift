@@ -21,6 +21,9 @@ struct TopBar: View {
                 PaperPicker(paper: model.paper) { model.setPaper($0) }
             }
             Button("Fit Drawing", systemImage: "viewfinder") { model.fitDrawing() }
+            Button("Share", systemImage: "square.and.arrow.up") { model.isExportShown = true }
+                .disabled(!model.hasDrawing)
+                .popover(isPresented: $model.isExportShown) { ExportPopover(model: model) }
             Button("Clear") { model.clear() }
             Button("Settings", systemImage: "gearshape") { model.isSettingsShown = true }
         }

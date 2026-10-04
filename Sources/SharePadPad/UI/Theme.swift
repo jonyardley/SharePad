@@ -22,6 +22,10 @@ enum Theme {
         }
     }
 
+    enum Export {
+        static let shareSize = CGSize(width: 375, height: 520)
+    }
+
     enum Pairing {
         static let scannerHeight: CGFloat = 320
     }

@@ -18,6 +18,9 @@ final class PadModel {
     private(set) var toolsUnlocated = false
     private(set) var rules = StreamingRules()
     private(set) var viewport = Board.home
+    private(set) var hasDrawing = false
+    private(set) var exportFile: URL?
+    private(set) var exportFailed = false
 
     var isPaperMenuShown = false {
         didSet { overlayChanged(.paperMenu, shown: isPaperMenuShown, was: oldValue) }
@@ -25,6 +28,10 @@ final class PadModel {
 
     var isSettingsShown = false {
         didSet { overlayChanged(.settings, shown: isSettingsShown, was: oldValue) }
+    }
+
+    var isExportShown = false {
+        didSet { exportShownChanged(was: oldValue) }
     }
 
     var isPairingShown = false {
@@ -96,7 +103,8 @@ final class PadModel {
             self.recorder = recorder
         #endif
         canvas.apply(tone: paper.tone)
-        canvas.onDrawingChange = { [weak self] in self?.scheduleSave() }
+        hasDrawing = canvas.hasStrokes
+        canvas.onDrawingChange = { [weak self] in self?.drawingChanged() }
         canvas.onViewportChange = { [weak self] viewport in self?.viewportChanged(viewport) }
         canvas.onUndoChange = { [weak self] canUndo, canRedo in
             self?.canUndo = canUndo
@@ -286,6 +294,11 @@ final class PadModel {
 private extension PadModel {
     // ── Drawing ──
 
+    func drawingChanged() {
+        hasDrawing = canvas.hasStrokes
+        scheduleSave()
+    }
+
     func scheduleSave() {
         pendingSave?.cancel()
         pendingSave = Task { [weak self] in
@@ -322,5 +335,27 @@ private extension PadModel {
         #if DEBUG
             spike?.sampler.linkStats(stats)
         #endif
+    }
+}
+
+extension PadModel {
+    // ── Export ──
+
+    func export(as format: ExportFormat) {
+        do {
+            exportFile = try DrawingExporter.write(canvas.drawing, paper: paper, as: format)
+            exportFailed = exportFile == nil
+        } catch {
+            log.error("export failed: \(error.localizedDescription, privacy: .public)")
+            exportFailed = true
+        }
+    }
+
+    private func exportShownChanged(was: Bool) {
+        if !isExportShown {
+            exportFile = nil
+            exportFailed = false
+        }
+        overlayChanged(.export, shown: isExportShown, was: was)
     }
 }
