@@ -79,7 +79,7 @@ From the design Q&A (2026-06-03):
   like a normal window — movable by background, resizable with **locked aspect**.
   Close/show via popover. (Alternative: a standard title bar — but it gets
   captured into the share. Flagged.)
-- **Keep-on-top toggle:** ships **off** by default; available in the popover as an
+- **Keep-on-top toggle:** ships **off** by default; available in the popover's gear menu as an
   escape hatch for browser-based Meet/Teams.
 - **Launch at login:** **on** by default (it's a background utility).
 - **Remembered window frame**, mirroring **off**, audio **out of scope**.
@@ -94,9 +94,11 @@ From the design Q&A (2026-06-03):
    and **live** (`ipad.landscape.badge.play`, capturing) — a badged-symbol swap, not
    a tint, since the menu bar renders items monochrome.
 2. **Popover** (click the status item) — live thumbnail of the feed, device name,
-   device picker (only shown if >1 source), and toggles: *Keep window on top*,
-   *Launch at login*, *Quit*. Plus a *Show/Hide window* affordance and, on error,
-   an inline message with a **Open System Settings** button. The window also
+   device picker (only shown if >1 source), a prominent *Show/Hide window* button,
+   the Wireless section and, on a trial, the licence rows. A gear menu in the header
+   holds the set-once toggles (*Show window on connect*, *Keep window on top*,
+   *Launch at login*, *Send crash reports*), About, Check for Updates and Quit. On
+   error, an inline message with a **Open System Settings** button. The window also
    toggles via a system-wide hotkey **⌃⌥⌘H** (works mid-call, while the meeting app
    is frontmost). See `specs/window-hotkey.md`.
 3. **Share window** — borderless, aspect-locked view of the iPad. This is the
@@ -104,15 +106,15 @@ From the design Q&A (2026-06-03):
 
 ```
  ┌─ Popover ────────────────────┐
- │  ┌────────────────────────┐  │
+ │  SharePad                ⚙︎  │  ← gear: toggles, About,
+ │  ┌────────────────────────┐  │    Updates, Quit
  │  │   live iPad thumbnail   │  │
  │  └────────────────────────┘  │
  │  iPad Pro (11-inch)          │
- │  [ Show window ]             │
- │  ☐ Keep window on top        │
- │  ☑ Launch at login           │
+ │  [█████ Show window ██████]  │
  │  ─────────────────────────   │
- │  Quit                        │
+ │  Wireless                    │
+ │  Studio iPad             …   │  ← Pair again, Forget
  └──────────────────────────────┘
 ```
 

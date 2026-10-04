@@ -120,7 +120,9 @@ struct PopoverView: View {
     private var quitShortcut: some View {
         Button("") { NSApplication.shared.terminate(nil) }
             .keyboardShortcut("q")
-            .hidden()
+            .opacity(0)
+            .frame(width: 0, height: 0)
+            .accessibilityHidden(true)
     }
 
     private var settingsMenu: some View {
@@ -142,7 +144,7 @@ struct PopoverView: View {
                 get: { model.diagnosticsEnabled },
                 set: { model.setDiagnosticsEnabled($0) }
             ))
-            Text("Crashes, hangs and errors only. Never what's on your iPad, or your licence.")
+            Text("Crashes and errors only. Nothing from your iPad.")
             Divider()
             Button("About SharePad") { AboutPanel.present() }
             Button("Check for Updates…") { updater.checkForUpdates() }

@@ -250,7 +250,7 @@ before touching capture.
 - **Normal window + browser meeting apps.** The chosen "normal window" (not pinned)
   shares fine in **Zoom desktop** even when occluded, but **browser Meet/Teams only
   transmit a *visible* window** — a buried window shares blank. The popover's
-  *Keep window on top* toggle is the escape hatch. Remember this when "the share is
+  *Keep window on top* toggle (gear menu) is the escape hatch. Remember this when "the share is
   black" gets reported.
 - **The popover thumbnail renders off the data output, not a second preview layer**
   (#10). The window owns the one `AVCaptureVideoPreviewLayer`; the popover gets a

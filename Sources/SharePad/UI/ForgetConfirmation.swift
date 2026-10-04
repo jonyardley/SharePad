@@ -13,7 +13,7 @@ enum ForgetConfirmation {
         forget.hasDestructiveAction = true
         alert.addButton(withTitle: "Cancel")
         alert.window.sharingType = .none
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate()
         return alert.runModal() == .alertFirstButtonReturn
     }
 }
