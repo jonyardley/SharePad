@@ -352,7 +352,7 @@ extension PadModel {
     }
 
     private func exportShownChanged(was: Bool) {
-        if !isExportShown {
+        if isExportShown {
             exportFile = nil
             exportFailed = false
         }

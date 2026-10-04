@@ -16,8 +16,8 @@ enum ExportFormat: String, CaseIterable, Sendable {
 struct DrawingExport: Equatable {
     static let margin: CGFloat = 48
     static let preferredScale: CGFloat = 2
-    static let maximumPixels: CGFloat = 6144
-    // Acrobat and Preview refuse pages beyond 200 inches (14400 points) a side.
+    static let maximumPixels: CGFloat = 4096
+    // ISO 32000-1 Annex C caps a page at 14400 units a side.
     static let maximumPage: CGFloat = 14400
 
     let area: CGRect
@@ -37,10 +37,19 @@ struct DrawingExport: Equatable {
         CGSize(width: (area.width * scale).rounded(), height: (area.height * scale).rounded())
     }
 
+    // Below 1x the paper is drawn zoomed out, so PaperGrid widens its gap as on
+    // screen instead of shrinking the lines to a grey wash.
+    var paperZoom: CGFloat {
+        min(1, scale)
+    }
+
     var paperViewport: Viewport {
         Viewport(
-            offset: CGPoint(x: area.minX + Board.origin.x, y: area.minY + Board.origin.y),
-            zoom: 1
+            offset: CGPoint(
+                x: (area.minX + Board.origin.x) * paperZoom,
+                y: (area.minY + Board.origin.y) * paperZoom
+            ),
+            zoom: paperZoom
         )
     }
 
@@ -50,7 +59,7 @@ struct DrawingExport: Equatable {
         in timeZone: TimeZone = .current
     ) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "en_GB_POSIX")
+        formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = timeZone
         formatter.dateFormat = "yyyy-MM-dd 'at' HH.mm"
         return "SharePad \(formatter.string(from: date)).\(format.rawValue)"

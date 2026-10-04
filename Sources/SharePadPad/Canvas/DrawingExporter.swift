@@ -45,9 +45,12 @@ enum DrawingExporter {
     private static func paperImage(_ paper: Paper, export: DrawingExport) throws -> UIImage {
         let renderer = ImageRenderer(
             content: PaperBackground(paper: paper, viewport: export.paperViewport)
-                .frame(width: export.area.width, height: export.area.height)
+                .frame(
+                    width: export.area.width * export.paperZoom,
+                    height: export.area.height * export.paperZoom
+                )
         )
-        renderer.scale = export.scale
+        renderer.scale = export.scale / export.paperZoom
         guard let image = renderer.uiImage else { throw DrawingExportError.paperDidNotRender }
         return image
     }

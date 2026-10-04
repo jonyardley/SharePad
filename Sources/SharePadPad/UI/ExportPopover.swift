@@ -5,6 +5,15 @@ struct ExportPopover: View {
     let model: PadModel
 
     var body: some View {
+        // An embedded activity controller can close the popover itself, which
+        // SwiftUI does not report through the binding; the overlay must still clear.
+        ZStack {
+            content
+        }
+        .onDisappear { model.isExportShown = false }
+    }
+
+    @ViewBuilder private var content: some View {
         if let file = model.exportFile {
             ActivityView(file: file) { model.isExportShown = false }
                 .frame(width: Theme.Export.shareSize.width, height: Theme.Export.shareSize.height)

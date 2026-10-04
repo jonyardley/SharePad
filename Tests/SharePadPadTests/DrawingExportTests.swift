@@ -73,6 +73,22 @@ final class DrawingExportTests: XCTestCase {
         XCTAssertEqual((export.area.minX + first).truncatingRemainder(dividingBy: 32), 0)
     }
 
+    func testZoomedOutPaperThinsItsGrid() throws {
+        let export = try XCTUnwrap(DrawingExport(drawingBounds: CGRect(
+            x: 0, y: 0, width: 20000, height: 1000
+        )))
+        XCTAssertLessThan(export.paperZoom, 1)
+        let size = CGSize(
+            width: export.area.width * export.paperZoom,
+            height: export.area.height * export.paperZoom
+        )
+        let grid = PaperGrid(
+            spacing: 32, minimumGap: 24, viewport: export.paperViewport, size: size
+        )
+        let gaps = zip(grid.columns.dropFirst(), grid.columns).map { $0 - $1 }
+        XCTAssertGreaterThanOrEqual(try XCTUnwrap(gaps.min()), 24 - 0.001)
+    }
+
     func testTheFileNameCarriesTheDateAndFormat() throws {
         let date = Date(timeIntervalSince1970: 1_791_120_720)
         let utc = try XCTUnwrap(TimeZone(identifier: "UTC"))
