@@ -45,6 +45,11 @@ drift. The **Stripe** price is separate and must be changed in the dashboard too
 The product is a **one-time payment with automatic updates for life** (via Sparkle),
 which the copy advertises throughout. Legal pages: `privacy.html`, `terms.html`.
 
+The iPad app's App Store link is `appStoreUrl` in the same `site/site.config.json`
+(used by `index.html` and `pair.html`, also generated from `site/`); change it there
+and run `just build-site`. The badge artwork is Apple's official
+`assets/app-store-badge.svg`, from Apple's marketing tools; don't edit it.
+
 ## Local preview
 
 ```bash
