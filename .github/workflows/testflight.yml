@@ -3,9 +3,6 @@ name: TestFlight (iPad)
 # Archive the iPad app and upload it to TestFlight. Manual only.
 # See specs/distribution.md §12.
 on:
-  # HACK(#183): first-run test from the branch; removed before ready.
-  push:
-    branches: [ci/testflight]
   workflow_dispatch:
     inputs:
       build_number:
@@ -93,7 +90,6 @@ jobs:
           security list-keychains -d user -s "$KEYCHAIN"
           security default-keychain -d user -s "$KEYCHAIN"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-          security find-identity -v -p codesigning "$KEYCHAIN"
           just pad-upload
 
       # The M4 keeps its disk between runs, so nothing signing-related may outlive the job.
