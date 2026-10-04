@@ -97,10 +97,13 @@ final class CanvasController: NSObject {
         canvasView.becomeFirstResponder()
     }
 
+    // Zooming in the same pass as the drawing change leaves PencilKit showing a stale
+    // tile of the old ink when cleared below 100%, so the view resets a turn later.
     func clear() {
-        let previous = canvasView.drawing
-        guard !previous.strokes.isEmpty else { return }
-        replaceDrawing(with: PKDrawing())
+        if !canvasView.drawing.strokes.isEmpty {
+            replaceDrawing(with: PKDrawing())
+        }
+        DispatchQueue.main.async { [weak self] in self?.resetView() }
     }
 
     func apply(tone: PaperTone) {

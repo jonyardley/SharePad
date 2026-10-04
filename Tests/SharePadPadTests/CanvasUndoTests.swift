@@ -17,7 +17,6 @@ final class CanvasUndoTests: XCTestCase {
         let canvas = makeCanvas(drawing: PKDrawing(strokes: [Self.stroke]))
         let undoManager = try XCTUnwrap(canvas.hostView.undoManager)
         canvas.clear()
-        canvas.resetView()
         XCTAssertFalse(canvas.hasStrokes)
 
         RunLoop.main.run(until: Date().addingTimeInterval(0.1))

@@ -145,7 +145,6 @@ final class PadModel {
 
     func clear() {
         canvas.clear()
-        canvas.resetView()
     }
 
     func fitDrawing() {
