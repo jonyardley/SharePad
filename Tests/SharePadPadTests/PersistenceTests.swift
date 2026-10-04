@@ -32,6 +32,14 @@ final class PadPreferencesTests: XCTestCase {
         XCTAssertEqual(PadPreferences(defaults: defaults).paper, Paper())
     }
 
+    func testBoardPositionRoundTrips() {
+        let preferences = PadPreferences(defaults: defaults)
+        XCTAssertNil(preferences.boardPosition)
+        let position = BoardPosition(centre: CGPoint(x: -300, y: 1200), zoom: 0.5)
+        preferences.boardPosition = position
+        XCTAssertEqual(PadPreferences(defaults: defaults).boardPosition, position)
+    }
+
     func testLastMacRoundTrips() {
         let preferences = PadPreferences(defaults: defaults)
         XCTAssertNil(preferences.lastMac)

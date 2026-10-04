@@ -17,6 +17,7 @@ final class PadModel {
     private(set) var canRedo = false
     private(set) var toolsUnlocated = false
     private(set) var rules = StreamingRules()
+    private(set) var viewport = Board.home
 
     var isPaperMenuShown = false {
         didSet { overlayChanged(.paperMenu, shown: isPaperMenuShown, was: oldValue) }
@@ -57,6 +58,7 @@ final class PadModel {
     @ObservationIgnored private let recorder: ScreenRecording
     @ObservationIgnored private let captureContext = CaptureContext()
     @ObservationIgnored private var pendingSave: Task<Void, Never>?
+    @ObservationIgnored private var pendingPositionSave: Task<Void, Never>?
     #if DEBUG
         @ObservationIgnored private let spike: CaptureSpike?
     #endif
@@ -83,7 +85,10 @@ final class PadModel {
         self.drawingStore = drawingStore
         pairings = MacPairings(store: store, deviceName: UIDevice.current.name)
         paper = preferences.paper
-        canvas = CanvasController(drawing: drawingStore.load())
+        canvas = CanvasController(
+            drawing: drawingStore.load(),
+            position: preferences.boardPosition
+        )
         #if DEBUG
             spike = CaptureSpike.fromLaunch(canvas: canvas, paper: preferences.paper)
             self.recorder = spike?.renderer ?? recorder
@@ -92,6 +97,7 @@ final class PadModel {
         #endif
         canvas.apply(tone: paper.tone)
         canvas.onDrawingChange = { [weak self] _ in self?.scheduleSave() }
+        canvas.onViewportChange = { [weak self] viewport in self?.viewportChanged(viewport) }
         canvas.onUndoChange = { [weak self] canUndo, canRedo in
             self?.canUndo = canUndo
             self?.canRedo = canRedo
@@ -145,6 +151,11 @@ final class PadModel {
 
     func clear() {
         canvas.clear()
+        canvas.resetView()
+    }
+
+    func fitDrawing() {
+        canvas.fitDrawing()
     }
 
     func pillAction(_ action: ConnectionPill.Action) {
@@ -270,10 +281,12 @@ final class PadModel {
             }
         }
     }
+}
 
+private extension PadModel {
     // ── Drawing ──
 
-    private func scheduleSave() {
+    func scheduleSave() {
         pendingSave?.cancel()
         pendingSave = Task { [weak self] in
             try? await Task.sleep(for: Self.saveDelay)
@@ -282,18 +295,29 @@ final class PadModel {
         }
     }
 
-    private func saveNow() {
+    func saveNow() {
         pendingSave?.cancel()
         pendingSave = nil
+        pendingPositionSave?.cancel()
+        pendingPositionSave = nil
+        preferences.boardPosition = canvas.position
         do {
             try drawingStore.save(canvas.drawing)
         } catch {
             log.error("could not save the drawing: \(error.localizedDescription)")
         }
     }
-}
 
-private extension PadModel {
+    func viewportChanged(_ viewport: Viewport) {
+        self.viewport = viewport
+        pendingPositionSave?.cancel()
+        pendingPositionSave = Task { [weak self] in
+            try? await Task.sleep(for: Self.saveDelay)
+            guard !Task.isCancelled, let self else { return }
+            preferences.boardPosition = canvas.position
+        }
+    }
+
     func linkStats(_ stats: StreamSender.Stats) {
         #if DEBUG
             spike?.sampler.linkStats(stats)

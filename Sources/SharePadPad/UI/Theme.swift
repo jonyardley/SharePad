@@ -9,6 +9,7 @@ enum Theme {
 
     enum Paper {
         static let gridSpacing: CGFloat = 32
+        static let minimumGap: CGFloat = 16
         static let dotDiameter: CGFloat = 3
         static let lineWidth: CGFloat = 0.5
 

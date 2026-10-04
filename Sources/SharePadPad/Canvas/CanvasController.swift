@@ -25,33 +25,65 @@ final class CanvasController: NSObject {
     var onLayoutChange: ((CanvasLayout) -> Void)?
     var onToolsUnlocated: ((Bool) -> Void)?
     var onFrameTick: (() -> Void)?
+    var onViewportChange: ((Viewport) -> Void)?
 
     private let canvasView = PKCanvasView()
     private let toolPicker = PKToolPicker()
     private var displayLink: CADisplayLink?
     private var lastLayout: CanvasLayout?
     private var lastToolsUnknown: Bool?
+    private var pendingRestore: ((CGSize) -> Viewport)?
 
-    init(drawing: PKDrawing) {
+    init(drawing: PKDrawing, position: BoardPosition?) {
+        pendingRestore = { size in
+            position.map { Board.viewport(for: $0, in: size) } ?? Board.home
+        }
         super.init()
-        canvasView.drawing = drawing
+        canvasView.drawing = drawing.transformed(using: Self.toBoard)
         canvasView.backgroundColor = .clear
         canvasView.isOpaque = false
         canvasView.drawingPolicy = .default
-        canvasView.isScrollEnabled = false
+        canvasView.isScrollEnabled = true
+        canvasView.minimumZoomScale = Board.zoomRange.lowerBound
+        canvasView.maximumZoomScale = Board.zoomRange.upperBound
+        canvasView.showsHorizontalScrollIndicator = false
+        canvasView.showsVerticalScrollIndicator = false
+        canvasView.contentSize = Board.size
+        canvasView.contentOffset = Board.home.offset
         canvasView.contentInsetAdjustmentBehavior = .never
         canvasView.delegate = self
         canvasView.frame = hostView.bounds
         canvasView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         hostView.addSubview(canvasView)
-        hostView.onLayout = { [weak self] in self?.reportLayout() }
+        hostView.onLayout = { [weak self] in
+            self?.restorePosition()
+            self?.reportLayout()
+        }
         hostView.onWindow = { [weak self] in self?.movedToWindow() }
         toolPicker.addObserver(canvasView)
         toolPicker.addObserver(self)
     }
 
+    private static let toBoard = CGAffineTransform(translationX: Board.origin.x, y: Board.origin.y)
+
     var drawing: PKDrawing {
-        canvasView.drawing
+        canvasView.drawing.transformed(using: Self.toBoard.inverted())
+    }
+
+    var viewport: Viewport {
+        Viewport(offset: canvasView.contentOffset, zoom: canvasView.zoomScale)
+    }
+
+    var position: BoardPosition {
+        Board.position(of: viewport, in: canvasView.bounds.size)
+    }
+
+    func fitDrawing() {
+        show(Board.fit(drawing.bounds, in: canvasView.bounds.size), animated: true)
+    }
+
+    func resetView() {
+        show(Board.home, animated: true)
     }
 
     func showToolPicker() {
@@ -79,6 +111,28 @@ final class CanvasController: NSObject {
         let style: UIUserInterfaceStyle = tone == .dark ? .dark : .light
         canvasView.overrideUserInterfaceStyle = style
         toolPicker.colorUserInterfaceStyle = style
+    }
+
+    private func restorePosition() {
+        guard let restore = pendingRestore, canvasView.bounds.size != .zero else { return }
+        pendingRestore = nil
+        show(restore(canvasView.bounds.size), animated: false)
+    }
+
+    private func show(_ viewport: Viewport, animated: Bool) {
+        let apply = { [canvasView] in
+            canvasView.zoomScale = viewport.zoom
+            canvasView.contentSize = Board.size.applying(
+                CGAffineTransform(scaleX: viewport.zoom, y: viewport.zoom)
+            )
+            canvasView.contentOffset = viewport.offset
+        }
+        if animated {
+            UIView.animate(withDuration: 0.3, animations: apply)
+        } else {
+            apply()
+        }
+        onViewportChange?(self.viewport)
     }
 
     private func replaceDrawing(with drawing: PKDrawing) {
@@ -164,9 +218,21 @@ final class CanvasController: NSObject {
 #endif
 
 extension CanvasController: PKCanvasViewDelegate {
-    func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
-        onDrawingChange?(canvasView.drawing)
+    func canvasViewDrawingDidChange(_: PKCanvasView) {
+        onDrawingChange?(drawing)
         reportUndo()
+    }
+
+    func scrollViewDidScroll(_: UIScrollView) {
+        onViewportChange?(viewport)
+    }
+
+    // Content size is in zoomed points, as in Apple's PencilKitDraw sample
+    // (DrawingViewController.updateContentSizeForDrawing).
+    func scrollViewDidZoom(_ scrollView: UIScrollView) {
+        let zoom = scrollView.zoomScale
+        scrollView.contentSize = Board.size.applying(CGAffineTransform(scaleX: zoom, y: zoom))
+        onViewportChange?(viewport)
     }
 }
 

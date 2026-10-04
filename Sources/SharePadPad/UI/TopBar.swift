@@ -20,6 +20,7 @@ struct TopBar: View {
             .popover(isPresented: $model.isPaperMenuShown) {
                 PaperPicker(paper: model.paper) { model.setPaper($0) }
             }
+            Button("Fit Drawing", systemImage: "viewfinder") { model.fitDrawing() }
             Button("Clear") { model.clear() }
             Button("Settings", systemImage: "gearshape") { model.isSettingsShown = true }
         }
