@@ -32,14 +32,15 @@ struct SettingsSheet: View {
                     }
                 }
                 Section {
-                    Text(verbatim: "SharePad for Mac: sharepad.co")
+                    LinkRow(title: "Get SharePad for Mac", address: "https://sharepad.co")
+                    LinkRow(title: "Privacy", address: "https://sharepad.co/privacy.html")
+                    LabeledContent("Version", value: model.appVersion)
+                } header: {
+                    Text("About")
+                } footer: {
                     Text(
                         "Your drawing goes only to your Mac, over your Wi-Fi. Nothing is collected."
                     )
-                    .foregroundStyle(.secondary)
-                }
-                Section {
-                    LabeledContent("Version", value: model.appVersion)
                 }
             }
             .navigationTitle("Settings")
@@ -49,6 +50,25 @@ struct SettingsSheet: View {
                     Button("Done") { dismiss() }
                 }
             }
+        }
+    }
+}
+
+private struct LinkRow: View {
+    let title: LocalizedStringKey
+    let address: String
+
+    var body: some View {
+        if let url = URL(string: address) {
+            Link(destination: url) {
+                HStack {
+                    Text(title)
+                    Spacer()
+                    Image(systemName: "arrow.up.right")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .foregroundStyle(.primary)
         }
     }
 }

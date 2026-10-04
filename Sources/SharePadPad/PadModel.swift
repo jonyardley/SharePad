@@ -13,8 +13,6 @@ final class PadModel {
     private(set) var paper: Paper
     private(set) var linkStatus = LinkStatus.idle
     private(set) var localNetworkDenied = false
-    private(set) var canUndo = false
-    private(set) var canRedo = false
     private(set) var toolsUnlocated = false
     private(set) var rules = StreamingRules()
     private(set) var viewport = Board.home
@@ -106,10 +104,6 @@ final class PadModel {
         hasDrawing = canvas.hasStrokes
         canvas.onDrawingChange = { [weak self] in self?.drawingChanged() }
         canvas.onViewportChange = { [weak self] viewport in self?.viewportChanged(viewport) }
-        canvas.onUndoChange = { [weak self] canUndo, canRedo in
-            self?.canUndo = canUndo
-            self?.canRedo = canRedo
-        }
         let context = captureContext
         canvas.onLayoutChange = { layout in
             context.setLayout(layout, at: ProcessInfo.processInfo.systemUptime)
@@ -147,14 +141,6 @@ final class PadModel {
             spike?.renderer?.paper = paper
         #endif
         canvas.apply(tone: paper.tone)
-    }
-
-    func undo() {
-        canvas.undo()
-    }
-
-    func redo() {
-        canvas.redo()
     }
 
     func clear() {

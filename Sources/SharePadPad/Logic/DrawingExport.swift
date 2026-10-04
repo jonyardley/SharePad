@@ -7,8 +7,22 @@ enum ExportFormat: String, CaseIterable, Sendable {
 
     var title: String {
         switch self {
-        case .png: "Image (PNG)"
+        case .png: "Image"
         case .pdf: "PDF"
+        }
+    }
+
+    var detail: String {
+        switch self {
+        case .png: "PNG of the whole drawing"
+        case .pdf: "One page, sharp at any size"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .png: "photo"
+        case .pdf: "doc.richtext"
         }
     }
 }

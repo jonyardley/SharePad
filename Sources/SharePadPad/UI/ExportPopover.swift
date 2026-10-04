@@ -18,19 +18,46 @@ struct ExportPopover: View {
             ActivityView(file: file) { model.isExportShown = false }
                 .frame(width: Theme.Export.shareSize.width, height: Theme.Export.shareSize.height)
         } else {
-            VStack(alignment: .leading, spacing: Theme.Spacing.row) {
+            VStack(alignment: .leading, spacing: 0) {
                 ForEach(ExportFormat.allCases, id: \.self) { format in
-                    Button(format.title) { model.export(as: format) }
+                    if format != ExportFormat.allCases.first {
+                        Divider()
+                    }
+                    Button { model.export(as: format) } label: { FormatRow(format: format) }
+                        .buttonStyle(.plain)
                 }
                 if model.exportFailed {
+                    Divider()
                     Text("The drawing couldn’t be saved. Try again.")
                         .font(.callout)
                         .foregroundStyle(.secondary)
+                        .padding(Theme.Spacing.bar)
                 }
             }
-            .padding(Theme.Spacing.bar)
-            .frame(minWidth: 220, alignment: .leading)
+            .frame(minWidth: 260, alignment: .leading)
         }
+    }
+}
+
+private struct FormatRow: View {
+    let format: ExportFormat
+
+    var body: some View {
+        HStack(spacing: Theme.Spacing.row) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(format.title)
+                Text(format.detail)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            Image(systemName: format.systemImage)
+                .font(.title3)
+        }
+        .foregroundStyle(.primary)
+        .padding(.horizontal, Theme.Spacing.bar)
+        .padding(.vertical, Theme.Spacing.row)
+        .contentShape(Rectangle())
     }
 }
 

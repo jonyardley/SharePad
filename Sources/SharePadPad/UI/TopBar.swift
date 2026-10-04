@@ -4,13 +4,9 @@ struct TopBar: View {
     @Bindable var model: PadModel
 
     var body: some View {
-        HStack(spacing: Theme.Spacing.bar) {
+        HStack(spacing: Theme.Spacing.tight) {
             ConnectionPillView(pill: model.pill) { model.pillAction($0) }
             Spacer()
-            Button("Undo", systemImage: "arrow.uturn.backward") { model.undo() }
-                .disabled(!model.canUndo)
-            Button("Redo", systemImage: "arrow.uturn.forward") { model.redo() }
-                .disabled(!model.canRedo)
             Button {
                 model.isPaperMenuShown = true
             } label: {
@@ -24,13 +20,34 @@ struct TopBar: View {
             Button("Share", systemImage: "square.and.arrow.up") { model.isExportShown = true }
                 .disabled(!model.hasDrawing)
                 .popover(isPresented: $model.isExportShown) { ExportPopover(model: model) }
-            Button("Clear") { model.clear() }
+            Button("Clear", systemImage: "trash", role: .destructive) { model.clear() }
             Button("Settings", systemImage: "gearshape") { model.isSettingsShown = true }
         }
         .labelStyle(.iconOnly)
+        .buttonStyle(BarButtonStyle())
         .padding(.horizontal, Theme.Spacing.bar)
         .padding(.vertical, Theme.Spacing.row)
         .background(.bar)
+    }
+}
+
+private struct BarButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        BarButton(configuration: configuration)
+    }
+
+    private struct BarButton: View {
+        let configuration: ButtonStyleConfiguration
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .foregroundStyle(configuration
+                    .role == .destructive ? AnyShapeStyle(.red) : AnyShapeStyle(.tint))
+                .frame(minWidth: Theme.Size.control, minHeight: Theme.Size.control)
+                .contentShape(Rectangle())
+                .opacity(isEnabled ? (configuration.isPressed ? 0.4 : 1) : 0.35)
+        }
     }
 }
 

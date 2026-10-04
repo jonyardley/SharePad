@@ -21,7 +21,6 @@ final class CanvasController: NSObject {
     let hostView = CanvasHostView()
 
     var onDrawingChange: (() -> Void)?
-    var onUndoChange: ((_ canUndo: Bool, _ canRedo: Bool) -> Void)?
     var onLayoutChange: ((CanvasLayout) -> Void)?
     var onToolsUnlocated: ((Bool) -> Void)?
     var onFrameTick: (() -> Void)?
@@ -100,12 +99,10 @@ final class CanvasController: NSObject {
 
     func undo() {
         canvasView.undoManager?.undo()
-        reportUndo()
     }
 
     func redo() {
         canvasView.undoManager?.redo()
-        reportUndo()
     }
 
     func clear() {
@@ -149,7 +146,6 @@ final class CanvasController: NSObject {
             MainActor.assumeIsolated { controller.replaceDrawing(with: previous) }
         }
         canvasView.drawing = drawing
-        reportUndo()
     }
 
     private func movedToWindow() {
@@ -195,11 +191,6 @@ final class CanvasController: NSObject {
             onLayoutChange?(layout)
         }
     }
-
-    private func reportUndo() {
-        let manager = canvasView.undoManager
-        onUndoChange?(manager?.canUndo ?? false, manager?.canRedo ?? false)
-    }
 }
 
 #if DEBUG
@@ -232,7 +223,6 @@ final class CanvasController: NSObject {
 extension CanvasController: PKCanvasViewDelegate {
     func canvasViewDrawingDidChange(_: PKCanvasView) {
         onDrawingChange?()
-        reportUndo()
     }
 
     func scrollViewDidScroll(_: UIScrollView) {
