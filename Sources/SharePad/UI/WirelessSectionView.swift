@@ -28,12 +28,7 @@ struct WirelessSectionView: View {
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
-                    if row.offersPairAgain {
-                        Button("Pair again…") { PairingPanel.present(model: model) }
-                            .buttonStyle(.link)
-                    }
-                    Button("Forget") { model.forgetIPad(id: row.id) }
-                        .buttonStyle(.link)
+                    rowMenu(row)
                 }
             }
             Button("Pair an iPad…") { PairingPanel.present(model: model) }
@@ -44,5 +39,25 @@ struct WirelessSectionView: View {
                 ))
             }
         }
+    }
+
+    private func rowMenu(_ row: WirelessSection.Row) -> some View {
+        Menu {
+            if row.offersPairAgain {
+                Button("Pair Again…") { PairingPanel.present(model: model) }
+                Divider()
+            }
+            Button("Forget \(row.name)…", role: .destructive) {
+                if ForgetConfirmation.confirm(name: row.name) {
+                    model.forgetIPad(id: row.id)
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Options for \(row.name)")
     }
 }

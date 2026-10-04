@@ -7,6 +7,10 @@ enum Theme {
         static let bar: CGFloat = 16
     }
 
+    enum Size {
+        static let control: CGFloat = 44
+    }
+
     enum Paper {
         static let gridSpacing: CGFloat = 32
         static let minimumGap: CGFloat = 24
