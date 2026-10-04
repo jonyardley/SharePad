@@ -58,6 +58,7 @@
 
         private struct PaperKey: Equatable {
             let paper: Paper
+            let viewport: Viewport
             let size: CGSize
             let scale: CGFloat
         }
@@ -141,10 +142,16 @@
         }
 
         private func paperImage(size: CGSize, pixelScale: CGFloat) -> CGImage? {
-            let key = PaperKey(paper: paper, size: size, scale: pixelScale)
+            let key = PaperKey(
+                paper: paper,
+                viewport: canvas.viewport,
+                size: size,
+                scale: pixelScale
+            )
             if let paperImage, paperImage.key == key { return paperImage.image }
             let renderer = ImageRenderer(
-                content: PaperBackground(paper: paper).frame(width: size.width, height: size.height)
+                content: PaperBackground(paper: paper, viewport: key.viewport)
+                    .frame(width: size.width, height: size.height)
             )
             renderer.scale = pixelScale
             guard let image = renderer.cgImage else { return nil }

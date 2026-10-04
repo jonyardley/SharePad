@@ -20,7 +20,7 @@ final class CanvasHostView: UIView {
 final class CanvasController: NSObject {
     let hostView = CanvasHostView()
 
-    var onDrawingChange: ((PKDrawing) -> Void)?
+    var onDrawingChange: (() -> Void)?
     var onUndoChange: ((_ canUndo: Bool, _ canRedo: Bool) -> Void)?
     var onLayoutChange: ((CanvasLayout) -> Void)?
     var onToolsUnlocated: ((Bool) -> Void)?
@@ -33,6 +33,7 @@ final class CanvasController: NSObject {
     private var lastLayout: CanvasLayout?
     private var lastToolsUnknown: Bool?
     private var pendingRestore: ((CGSize) -> Viewport)?
+    private var laidOutSize: CGSize?
 
     init(drawing: PKDrawing, position: BoardPosition?) {
         pendingRestore = { size in
@@ -74,16 +75,18 @@ final class CanvasController: NSObject {
         Viewport(offset: canvasView.contentOffset, zoom: canvasView.zoomScale)
     }
 
-    var position: BoardPosition {
-        Board.position(of: viewport, in: canvasView.bounds.size)
+    var position: BoardPosition? {
+        guard pendingRestore == nil, canvasView.bounds.size != .zero else { return nil }
+        return Board.position(of: viewport, in: canvasView.bounds.size)
     }
 
     func fitDrawing() {
-        show(Board.fit(drawing.bounds, in: canvasView.bounds.size), animated: true)
+        let bounds = canvasView.drawing.bounds.offsetBy(dx: -Board.origin.x, dy: -Board.origin.y)
+        show(Board.fit(bounds, in: canvasView.bounds.size))
     }
 
     func resetView() {
-        show(Board.home, animated: true)
+        show(Board.home)
     }
 
     func showToolPicker() {
@@ -114,24 +117,25 @@ final class CanvasController: NSObject {
     }
 
     private func restorePosition() {
-        guard let restore = pendingRestore, canvasView.bounds.size != .zero else { return }
-        pendingRestore = nil
-        show(restore(canvasView.bounds.size), animated: false)
+        let size = canvasView.bounds.size
+        guard size != .zero, size != laidOutSize else { return }
+        defer { laidOutSize = size }
+        if let restore = pendingRestore {
+            pendingRestore = nil
+            show(restore(size))
+        } else if let previous = laidOutSize {
+            show(Board.viewport(for: Board.position(of: viewport, in: previous), in: size))
+        }
     }
 
-    private func show(_ viewport: Viewport, animated: Bool) {
-        let apply = { [canvasView] in
-            canvasView.zoomScale = viewport.zoom
-            canvasView.contentSize = Board.size.applying(
-                CGAffineTransform(scaleX: viewport.zoom, y: viewport.zoom)
-            )
-            canvasView.contentOffset = viewport.offset
-        }
-        if animated {
-            UIView.animate(withDuration: 0.3, animations: apply)
-        } else {
-            apply()
-        }
+    // Not animated: the SwiftUI paper only hears the end state, so an animated
+    // jump would slide the ink across a paper that has already moved.
+    private func show(_ viewport: Viewport) {
+        canvasView.zoomScale = viewport.zoom
+        canvasView.contentSize = Board.size.applying(
+            CGAffineTransform(scaleX: viewport.zoom, y: viewport.zoom)
+        )
+        canvasView.contentOffset = viewport.offset
         onViewportChange?(self.viewport)
     }
 
@@ -208,9 +212,13 @@ final class CanvasController: NSObject {
             switch method {
             case .hierarchy:
                 UIGraphicsPushContext(context)
-                canvasView.drawHierarchy(in: canvasView.bounds, afterScreenUpdates: false)
+                canvasView.drawHierarchy(
+                    in: CGRect(origin: .zero, size: canvasView.bounds.size),
+                    afterScreenUpdates: false
+                )
                 UIGraphicsPopContext()
             case .layer:
+                context.translateBy(x: -canvasView.bounds.minX, y: -canvasView.bounds.minY)
                 canvasView.layer.render(in: context)
             }
         }
@@ -219,7 +227,7 @@ final class CanvasController: NSObject {
 
 extension CanvasController: PKCanvasViewDelegate {
     func canvasViewDrawingDidChange(_: PKCanvasView) {
-        onDrawingChange?(drawing)
+        onDrawingChange?()
         reportUndo()
     }
 

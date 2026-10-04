@@ -56,7 +56,7 @@ final class PaperGridTests: XCTestCase {
     private let size = CGSize(width: 100, height: 70)
 
     func testHomeMatchesTheOldFixedPaper() {
-        let grid = PaperGrid(spacing: 32, minimumGap: 16, viewport: Board.home, size: size)
+        let grid = PaperGrid(spacing: 32, minimumGap: 24, viewport: Board.home, size: size)
         XCTAssertEqual(grid.columns, [32, 64, 96])
         XCTAssertEqual(grid.rows, [32, 64])
     }
@@ -66,7 +66,7 @@ final class PaperGridTests: XCTestCase {
             offset: CGPoint(x: Board.origin.x + 10, y: Board.origin.y - 5),
             zoom: 1
         )
-        let grid = PaperGrid(spacing: 32, minimumGap: 16, viewport: viewport, size: size)
+        let grid = PaperGrid(spacing: 32, minimumGap: 24, viewport: viewport, size: size)
         XCTAssertEqual(grid.columns, [22, 54, 86])
         XCTAssertEqual(grid.rows, [5, 37, 69])
     }
@@ -76,7 +76,7 @@ final class PaperGridTests: XCTestCase {
             offset: CGPoint(x: Board.origin.x * 2, y: Board.origin.y * 2),
             zoom: 2
         )
-        let grid = PaperGrid(spacing: 32, minimumGap: 16, viewport: viewport, size: size)
+        let grid = PaperGrid(spacing: 32, minimumGap: 24, viewport: viewport, size: size)
         XCTAssertEqual(grid.columns, [64])
     }
 
@@ -85,7 +85,13 @@ final class PaperGridTests: XCTestCase {
             offset: CGPoint(x: Board.origin.x / 4, y: Board.origin.y / 4),
             zoom: 0.25
         )
-        let grid = PaperGrid(spacing: 32, minimumGap: 16, viewport: viewport, size: size)
-        XCTAssertEqual(grid.columns, [16, 32, 48, 64, 80, 96])
+        let grid = PaperGrid(spacing: 32, minimumGap: 24, viewport: viewport, size: size)
+        XCTAssertEqual(grid.columns, [32, 64, 96])
+    }
+
+    func testZeroZoomDrawsNoPaper() {
+        let viewport = Viewport(offset: .zero, zoom: 0)
+        let grid = PaperGrid(spacing: 32, minimumGap: 24, viewport: viewport, size: size)
+        XCTAssertTrue(grid.columns.isEmpty)
     }
 }

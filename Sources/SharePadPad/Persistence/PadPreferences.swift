@@ -63,13 +63,14 @@ struct PadPreferences {
 
     var boardPosition: BoardPosition? {
         get {
-            guard defaults.object(forKey: Key.boardZoom) != nil else { return nil }
+            let zoom = defaults.double(forKey: Key.boardZoom)
+            guard zoom.isFinite, zoom > 0 else { return nil }
             return BoardPosition(
                 centre: CGPoint(
                     x: defaults.double(forKey: Key.boardX),
                     y: defaults.double(forKey: Key.boardY)
                 ),
-                zoom: defaults.double(forKey: Key.boardZoom)
+                zoom: zoom
             )
         }
         nonmutating set {

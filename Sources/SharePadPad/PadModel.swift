@@ -96,7 +96,7 @@ final class PadModel {
             self.recorder = recorder
         #endif
         canvas.apply(tone: paper.tone)
-        canvas.onDrawingChange = { [weak self] _ in self?.scheduleSave() }
+        canvas.onDrawingChange = { [weak self] in self?.scheduleSave() }
         canvas.onViewportChange = { [weak self] viewport in self?.viewportChanged(viewport) }
         canvas.onUndoChange = { [weak self] canUndo, canRedo in
             self?.canUndo = canUndo
@@ -300,7 +300,7 @@ private extension PadModel {
         pendingSave = nil
         pendingPositionSave?.cancel()
         pendingPositionSave = nil
-        preferences.boardPosition = canvas.position
+        if let position = canvas.position { preferences.boardPosition = position }
         do {
             try drawingStore.save(canvas.drawing)
         } catch {
@@ -313,8 +313,8 @@ private extension PadModel {
         pendingPositionSave?.cancel()
         pendingPositionSave = Task { [weak self] in
             try? await Task.sleep(for: Self.saveDelay)
-            guard !Task.isCancelled, let self else { return }
-            preferences.boardPosition = canvas.position
+            guard !Task.isCancelled, let self, let position = canvas.position else { return }
+            preferences.boardPosition = position
         }
     }
 

@@ -7,6 +7,11 @@ struct PaperGrid: Equatable {
     // Zoomed out, the gap doubles until it is at least `minimumGap`, so the
     // paper thins out instead of turning into a grey wash.
     init(spacing: CGFloat, minimumGap: CGFloat, viewport: Viewport, size: CGSize) {
+        guard viewport.zoom.isFinite, viewport.zoom > 0, spacing > 0 else {
+            columns = []
+            rows = []
+            return
+        }
         var gap = spacing
         while gap * viewport.zoom < minimumGap {
             gap *= 2

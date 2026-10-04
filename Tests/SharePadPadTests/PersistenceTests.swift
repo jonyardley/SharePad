@@ -40,6 +40,11 @@ final class PadPreferencesTests: XCTestCase {
         XCTAssertEqual(PadPreferences(defaults: defaults).boardPosition, position)
     }
 
+    func testUnusableSavedZoomIsIgnored() {
+        defaults.set(0.0, forKey: "boardZoom")
+        XCTAssertNil(PadPreferences(defaults: defaults).boardPosition)
+    }
+
     func testLastMacRoundTrips() {
         let preferences = PadPreferences(defaults: defaults)
         XCTAssertNil(preferences.lastMac)
