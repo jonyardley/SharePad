@@ -64,7 +64,6 @@ jobs:
           echo "$CERT_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
           security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$CERT_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
-          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
           rm -f "$RUNNER_TEMP/cert.p12"
 
       - name: Write App Store Connect API key
@@ -83,6 +82,12 @@ jobs:
         run: |
           set -euo pipefail
           [ -n "$PAD_BUILD_NUMBER" ] || unset PAD_BUILD_NUMBER
+          # The M4's login keychain holds its own Apple Development identity, which
+          # Xcode prefers and the job cannot unlock (errSecInternalComponent), so
+          # only the job's keychain is searched while signing.
+          saved=$(security list-keychains -d user | tr -d '"')
+          trap 'security list-keychains -d user -s $saved' EXIT
+          security list-keychains -d user -s "$RUNNER_TEMP/build.keychain-db"
           just pad-upload
 
       # The M4 keeps its disk between runs, so nothing signing-related may outlive the job.
