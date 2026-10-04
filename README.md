@@ -26,7 +26,7 @@ plug-in → window → share-in-Meet flow, with `docs/assets/demo.jpg` as the po
 (instant first paint, a no-JS fallback, and the social-card image in the `og:image`
 / `twitter:image` tags). To refresh it, replace `demo.mp4` (keep it small, around
 500KB, H.264/yuv420p so it plays everywhere). The same MP4 is the asset for social
-posts — Bluesky, Mastodon and Reddit all accept video, so no GIF is needed.
+posts: Bluesky, Mastodon and Reddit all accept video, so no GIF is needed.
 
 ## The buy & download flow
 
