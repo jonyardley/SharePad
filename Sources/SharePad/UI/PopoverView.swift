@@ -26,9 +26,14 @@ struct PopoverView: View {
 
             stateAction
 
-            Button(model.isWindowVisible ? "Hide Window" : "Show Window") {
+            Button {
                 model.toggleWindow()
+            } label: {
+                Text(model.isWindowVisible ? "Hide Window" : "Show Window")
+                    .frame(maxWidth: .infinity)
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
             .disabled(!model.isConnected)
 
             if model.isWindowHotkeyActive {
@@ -37,25 +42,6 @@ struct PopoverView: View {
                     .foregroundStyle(.secondary)
             }
 
-            Divider()
-
-            if model.isWirelessAvailable {
-                WirelessSectionView(model: model)
-                Divider()
-            }
-
-            Toggle("Show window on connect", isOn: Binding(
-                get: { model.autoShowOnConnect },
-                set: { model.setAutoShow($0) }
-            ))
-            Toggle("Keep window on top", isOn: Binding(
-                get: { model.keepOnTop },
-                set: { model.setKeepOnTop($0) }
-            ))
-            Toggle("Launch at login", isOn: Binding(
-                get: { model.launchAtLogin },
-                set: { model.setLaunchAtLogin($0) }
-            ))
             if model.launchAtLoginFailed {
                 Text("""
                 Couldn't change Launch at login. \
@@ -65,27 +51,16 @@ struct PopoverView: View {
                 .foregroundStyle(.secondary)
             }
 
-            Toggle("Send crash reports", isOn: Binding(
-                get: { model.diagnosticsEnabled },
-                set: { model.setDiagnosticsEnabled($0) }
-            ))
-            Text("Crashes, hangs and errors only. Never what's on your iPad, or your licence.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Divider()
+            if model.isWirelessAvailable {
+                Divider()
+                WirelessSectionView(model: model)
+            }
 
             licenseSection
-
-            Button("Check for Updates…") { updater.checkForUpdates() }
-
-            Button("Quit SharePad") {
-                NSApplication.shared.terminate(nil)
-            }
-            .keyboardShortcut("q")
         }
         .padding()
         .frame(width: 260)
+        .background(quitShortcut)
         .onAppear { model.popoverDidAppear() }
         .onDisappear { model.popoverDidDisappear() }
     }
@@ -119,6 +94,7 @@ struct PopoverView: View {
 
     private func licenseRow(status: String) -> some View {
         VStack(alignment: .leading, spacing: Theme.Spacing.row) {
+            Divider()
             Text(status)
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -128,7 +104,6 @@ struct PopoverView: View {
                 }
                 Button("Enter Licence…") { LicenseWindow.present(model: model) }
             }
-            Divider()
         }
     }
 
@@ -137,15 +112,50 @@ struct PopoverView: View {
             Text("SharePad")
                 .font(.headline)
             Spacer()
-            Button {
-                AboutPanel.present()
-            } label: {
-                Image(systemName: "info.circle")
-            }
-            .buttonStyle(.borderless)
-            .foregroundStyle(.secondary)
-            .help("About SharePad")
+            settingsMenu
         }
+    }
+
+    // Keeps ⌘Q working in the popover without opening the gear menu first.
+    private var quitShortcut: some View {
+        Button("") { NSApplication.shared.terminate(nil) }
+            .keyboardShortcut("q")
+            .hidden()
+    }
+
+    private var settingsMenu: some View {
+        Menu {
+            Toggle("Show Window on Connect", isOn: Binding(
+                get: { model.autoShowOnConnect },
+                set: { model.setAutoShow($0) }
+            ))
+            Toggle("Keep Window on Top", isOn: Binding(
+                get: { model.keepOnTop },
+                set: { model.setKeepOnTop($0) }
+            ))
+            Toggle("Launch at Login", isOn: Binding(
+                get: { model.launchAtLogin },
+                set: { model.setLaunchAtLogin($0) }
+            ))
+            Divider()
+            Toggle("Send Crash Reports", isOn: Binding(
+                get: { model.diagnosticsEnabled },
+                set: { model.setDiagnosticsEnabled($0) }
+            ))
+            Text("Crashes, hangs and errors only. Never what's on your iPad, or your licence.")
+            Divider()
+            Button("About SharePad") { AboutPanel.present() }
+            Button("Check for Updates…") { updater.checkForUpdates() }
+            Divider()
+            Button("Quit SharePad") { NSApplication.shared.terminate(nil) }
+                .keyboardShortcut("q")
+        } label: {
+            Image(systemName: "gearshape")
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .fixedSize()
+        .help("Settings")
     }
 
     @ViewBuilder private var shareLostBanner: some View {
