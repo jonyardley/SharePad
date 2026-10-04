@@ -23,16 +23,24 @@ env:
 jobs:
   testflight:
     name: Archive & upload to TestFlight
-    runs-on: macos-26
+    # Jon's M4, not a rented runner: those carry Xcode 26 at most, and an Xcode 26
+    # build crashes on iPadOS 27 at the first pinch (#183). Setup in
+    # specs/distribution.md §12.
+    runs-on: [self-hosted, macOS, ARM64, sharepad-m4]
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
 
-      - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_26.6.app
-
-      - name: Install tools
-        run: brew install xcodegen just
+      - name: Require Xcode 27 or newer
+        run: |
+          set -euo pipefail
+          have=$(xcodebuild -version | head -1)
+          major=$(echo "$have" | sed -E 's/^Xcode ([0-9]+).*/\1/')
+          if [ "$major" -lt 27 ]; then
+            echo "::error::runner is on $have; an upload needs Xcode 27 or newer, since an Xcode 26 build crashes on iPadOS 27 (#183)" >&2
+            exit 1
+          fi
+          echo "$have"
 
       # The archive is development-signed and needs that identity's private key on
       # the runner; Xcode cannot mint one per run (Apple forums 695759). The export
@@ -45,6 +53,7 @@ jobs:
         run: |
           set -euo pipefail
           KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
+          security delete-keychain "$KEYCHAIN" 2>/dev/null || true
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
@@ -71,6 +80,13 @@ jobs:
           set -euo pipefail
           [ -n "$PAD_BUILD_NUMBER" ] || unset PAD_BUILD_NUMBER
           just pad-upload
+
+      # The M4 keeps its disk between runs, so nothing signing-related may outlive the job.
+      - name: Remove signing keychain and API key
+        if: always()
+        run: |
+          security delete-keychain "$RUNNER_TEMP/build.keychain-db" 2>/dev/null || true
+          rm -f "$RUNNER_TEMP/ac_api_key.p8" "$RUNNER_TEMP/cert.p12"
 
       - name: Upload archive artifact
         if: always()

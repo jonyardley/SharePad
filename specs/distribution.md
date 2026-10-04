@@ -198,15 +198,36 @@ which only the team has. Internal builds skip beta review.
   Both sign in with the Xcode account, or with an App Store Connect API key when
   `ASC_KEY_PATH`, `ASC_KEY_ID` and `ASC_ISSUER_ID` are set.
 - **From CI:** the **TestFlight (iPad)** workflow (`.github/workflows/testflight.yml`,
-  run by hand from Actions) runs `just pad-upload` on a macOS runner. The archive is
-  development-signed, so the runner needs that identity's private key: Xcode cannot
-  mint one per run on a fresh machine (Apple forums 695759), which is why Intrada
-  stores its certificate in fastlane match. Here the Apple Development certificate is
-  imported from `PAD_DEV_CERT_P12_BASE64` and `PAD_DEV_CERT_PASSWORD`, as `release.yml`
-  does for Developer ID. The export cloud-signs for distribution through the
-  notarisation key (`AC_API_KEY_*`), which needs the **Admin** role: a weaker key
-  fails at the export with a cloud signing permission error. The certificate expires
-  yearly; renew it and re-set both secrets.
+  run by hand from Actions) runs `just pad-upload` on Jon's M4, the Mac that also
+  runs intrada's gate, registered here as a second runner `sharepad-m4`. Not a
+  rented runner: those carry Xcode 26 at most, and an Xcode 26 build crashed on
+  iPadOS 27 at the first pinch while the same code built with Xcode 27 did not
+  (#183). The first step fails unless the runner is on Xcode 27 or newer.
+  The archive is development-signed, so the runner needs that identity's private
+  key: Xcode cannot mint one per run (Apple forums 695759). It is imported from
+  `PAD_DEV_CERT_P12_BASE64` and `PAD_DEV_CERT_PASSWORD` into a temporary keychain
+  that the last step deletes, since the M4 keeps its disk between runs. The export
+  cloud-signs for distribution through `AC_API_KEY_*`, which needs the **Admin**
+  role. The certificate expires yearly; renew it and re-set both secrets.
+- **Public repo, self-hosted runner:** every outside contributor's pull request
+  needs approval before any workflow runs (Settings, Actions, General), so a fork
+  cannot edit a workflow onto the M4. Keep it that way.
+- **Registering the runner (once, on the M4):** a personal account's runner serves
+  one repo, so this is a second runner next to `~/actions-runner` (intrada's).
+  ```bash
+  mkdir ~/actions-runner-sharepad && cd ~/actions-runner-sharepad
+  curl -fsSLO https://github.com/actions/runner/releases/download/v2.337.0/actions-runner-osx-arm64-2.337.0.tar.gz
+  tar xzf actions-runner-osx-arm64-2.337.0.tar.gz
+  ./config.sh --unattended --url https://github.com/jonyardley/SharePad --name sharepad-m4 \
+    --labels sharepad-m4 --token "$(gh api -X POST repos/jonyardley/SharePad/actions/runners/registration-token --jq .token)"
+  cp ~/actions-runner/.path .path
+  ./svc.sh install && ./svc.sh start
+  /usr/libexec/PlistBuddy -c "Add :KeepAlive bool true" \
+    ~/Library/LaunchAgents/actions.runner.jonyardley-SharePad.sharepad-m4.plist
+  ./svc.sh stop && ./svc.sh start
+  ```
+  The `.path` copy gives it the same `~/.local/bin` (XcodeGen) as intrada's runner;
+  `just` must be on that path too.
 - **One-off setup (Jon):** an App Store Connect app record for
   `com.jonyardley.sharepad.ipad`, and the internal testers group.
 - **Not yet working in the beta:** scanning the pairing QR with the Camera app,
