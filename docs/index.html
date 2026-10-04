@@ -62,7 +62,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
   @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
-  section[id], a[id] { scroll-margin-top: 88px; }
+  section[id], a[id], details[id] { scroll-margin-top: 88px; }
   :focus-visible { outline: 2px solid var(--periwinkle); outline-offset: 3px; border-radius: 4px; }
   a, .btn { -webkit-tap-highlight-color: transparent; }
   h1, h2, h3 { text-wrap: balance; }
@@ -819,9 +819,12 @@
   var openHashedFaq = function () {
     var id = location.hash.slice(1);
     var item = id && document.getElementById(id);
-    if (item && item.tagName === "DETAILS") item.open = true;
+    if (!item || item.tagName !== "DETAILS") return;
+    item.open = true;
+    item.scrollIntoView({ block: "start" });
   };
-  openHashedFaq();
+  if (document.readyState === "complete") openHashedFaq();
+  else window.addEventListener("load", openHashedFaq);
   window.addEventListener("hashchange", openHashedFaq);
 </script>
 
