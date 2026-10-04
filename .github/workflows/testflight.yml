@@ -37,7 +37,8 @@ jobs:
       - name: Require Xcode 27 or newer
         run: |
           set -euo pipefail
-          have=$(xcodebuild -version | head -1)
+          have=$(xcodebuild -version)
+          have=${have%%$'\n'*}
           major=$(echo "$have" | sed -E 's/^Xcode ([0-9]+).*/\1/')
           if [ "$major" -lt 27 ]; then
             echo "::error::runner is on $have; an upload needs Xcode 27 or newer, since an Xcode 26 build crashes on iPadOS 27 (#183)" >&2
