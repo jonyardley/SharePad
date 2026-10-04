@@ -11,7 +11,7 @@ tag a release.
   your iPad once, and from then on your drawing appears in the SharePad window
   over Wi-Fi whenever the app is open.
 - The cable still works exactly as before. If your iPad is on the cable and Wi-Fi
-  at once, SharePad uses the cable and your iPad shows that it has.
+  at once, SharePad uses the cable and the iPad app says so.
 - If a Wi-Fi share drops mid-call, the popover tells you, just as it does for the
   cable.
 - A tidier popover: settings, About, Check for Updates and Quit now live in a

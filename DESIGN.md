@@ -217,8 +217,8 @@ session status) — kept in a testable reducer.
 Since W1 (2026-10-02) the reducer takes one `SourceInput` per source (USB and
 wireless), local network access and the preferred source. `starting`, `live` and
 `failed` carry the active source (`.live(.wireless)`), and `localNetworkDenied`
-is new. Camera permission gates only the USB source. With wireless absent (every
-Release build) the outputs are the USB states above, unchanged.
+is new. Camera permission gates only the USB source. With no wireless source
+present or paired, the outputs are the USB states above, unchanged.
 
 ---
 

@@ -638,8 +638,8 @@ iPad pairing screen carries the record-prompt line.
 Hardware check (scanning the
 what's-new QR with the Camera app) not yet run.
 
-**W1 status (2026-10-02):** built, Debug builds only until 1.3.0 (#192); unit tests cover the reducer,
-the local network probe and the wireless paths through `AppModel`. The verify-by
+**W1 status (2026-10-02):** built, Debug builds only until 1.3.0 (#192); unit
+tests cover the reducer, the local network probe and the wireless paths through `AppModel`. The verify-by
 line passed on hardware 2026-10-03 (see W2b status), except denying local network
 on macOS 15, which waits for a Mac whose Local Network answer can be spent (W5
 office-network check). Left for W4 on purpose: no `pause` to the iPad
@@ -700,8 +700,8 @@ Two PRs. **W4a** is Mac only; **W4b** crosses into `SharePadWire` and the iPad a
    When the cable holds the window and the trial overlay is up, the reason is
    cable.
 
-**W4b status (2026-10-03):** built, Debug only until 1.3.0 (#192); hardware check deferred to Jon's
-end-to-end pass. `AppState.wirelessPause` decides the pause: Wi-Fi stays
+**W4b status (2026-10-03):** built, Debug only until 1.3.0 (#192); hardware
+check deferred to Jon's end-to-end pass. `AppState.wirelessPause` decides the pause: Wi-Fi stays
 active while no usable cable could hold the window, so a Wi-Fi only connect is
 never paused and resumed on the way in. Deferred ([#181](https://github.com/jonyardley/SharePad/issues/181)): while the trial overlay pauses
 a Wi-Fi share the popover reads "Connecting to … over Wi-Fi…", since a paused
