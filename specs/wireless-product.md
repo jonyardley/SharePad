@@ -638,6 +638,12 @@ iPad pairing screen carries the record-prompt line.
 Hardware check (scanning the
 what's-new QR with the Camera app) not yet run.
 
+**W5 submission prep (2026-10-04):** the iPad icon is full bleed, and
+`specs/app-store-submission.md` holds the listing copy, review notes, demo video
+shot list and App Store Connect steps. Decided (Jon): the private palette lookup
+ships as it is (#169), and review gets a demo video plus a Mac build and a
+licence key. Open: review needs a Mac build with wireless before 1.3.0 is public.
+
 **W1 status (2026-10-02):** built, Debug builds only until 1.3.0 (#192); unit
 tests cover the reducer, the local network probe and the wireless paths through `AppModel`. The verify-by
 line passed on hardware 2026-10-03 (see W2b status), except denying local network
