@@ -9,8 +9,10 @@
 ## 1. Before you start
 
 - **A Mac build that has wireless.** Review pairs the iPad app with the Mac app,
-  and the latest public DMG (1.2.0) has no wireless. The review notes need a
-  link to a 1.3.0 build; until there is one, `<MAC LINK>` below stays blank.
+  and the latest public DMG (1.2.0) has no wireless. Decided (Jon, 2026-10-04,
+  4a): a notarised 1.3.0 dry-run build from the Release workflow sits on the
+  `review-1.3.0` GitHub pre-release, which is not "latest" and not in the
+  appcast, so existing users see nothing. Link: `https://github.com/jonyardley/SharePad/releases/download/review-1.3.0/SharePad.dmg`
 - **A licence key for review.** Mint one for an address you own (for example
   `appreview@sharepad.co`), from `workers/licenses`:
   `ED25519_PRIVATE_KEY=<from your password manager> node scripts/mint-key.mjs appreview@sharepad.co`.
@@ -39,8 +41,7 @@ App: `com.jonyardley.sharepad.ipad`, version 1.0.0.
 7. **Build.** Pick the TestFlight build from §1. No export compliance question:
    `ITSAppUsesNonExemptEncryption` is false (the link uses the OS's TLS).
 8. **App Review Information.** Sign-in required: **No**. Contact: your name,
-   phone and email. Notes from §4, with `<MAC LINK>`, `<EMAIL>` and `<KEY>`
-   filled in. Attach the demo video file in **Attachment**.
+   phone and email. Notes from §4, with `<EMAIL>` and `<KEY>` filled in. Attach the demo video file in **Attachment**.
 9. **Version release.** **Manually release this version**, so launch day
    (merge #171, tag the Mac release) is your call after approval.
 10. **Add for Review**, then **Submit**.
@@ -94,7 +95,7 @@ Good to know
 
 ## 4. Review notes
 
-Paste into **App Review Information, Notes** (4000 max). Fill the three blanks.
+Paste into **App Review Information, Notes** (4000 max). Fill the two blanks.
 
 ```
 SharePad for iPad is a companion to SharePad for Mac, a menu-bar app that shows an iPad drawing in a window on the Mac so it can be shared in a video call (Zoom, Google Meet and so on). The iPad app streams its own drawing canvas to a paired Mac over the local network. Without a paired Mac, the app is a drawing canvas that shows "Not paired".
@@ -102,7 +103,7 @@ SharePad for iPad is a companion to SharePad for Mac, a menu-bar app that shows 
 A demo video of the full flow is attached.
 
 TO TRY IT
-1. Download the Mac app: <MAC LINK>. It runs on macOS 14 or later and starts a 7-day trial on first launch. If the trial has ended on your Mac, click the SharePad icon in the menu bar and enter this licence: email <EMAIL>, key <KEY>
+1. Download the Mac app: https://github.com/jonyardley/SharePad/releases/download/review-1.3.0/SharePad.dmg . It runs on macOS 14 or later and starts a 7-day trial on first launch. If the trial has ended on your Mac, click the SharePad icon in the menu bar and enter this licence: email <EMAIL>, key <KEY>
 2. Put the Mac and iPad on the same Wi-Fi network. Networks that block devices from seeing each other (some guest and corporate Wi-Fi) will stop pairing.
 3. On the Mac, click the SharePad icon in the menu bar, then Pair an iPad. A window shows a QR code and a typed code.
 4. On the iPad, open SharePad and tap Pair. Allow local network access and the camera, then scan the code, or tap Type the code instead.
@@ -161,7 +162,8 @@ website, not the store page.
 2. Fill the App Store link in `site/site.config.json` and merge #171.
 3. Tag the Mac release (`specs/release-runbook.md` Step 5) so 1.3.0 reaches
    existing users with its what's-new window.
-4. Run the W5 verify-by checks (`specs/wireless-product.md` §10) that need the
+4. Delete the `review-1.3.0` pre-release and its tag once 1.3.0 is out.
+5. Run the W5 verify-by checks (`specs/wireless-product.md` §10) that need the
    live listing: the pairing QR scanned with the Camera app on an iPad without
    the app reaches the App Store.
 
