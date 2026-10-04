@@ -97,14 +97,6 @@ final class CanvasController: NSObject {
         canvasView.becomeFirstResponder()
     }
 
-    func undo() {
-        canvasView.undoManager?.undo()
-    }
-
-    func redo() {
-        canvasView.undoManager?.redo()
-    }
-
     func clear() {
         let previous = canvasView.drawing
         guard !previous.strokes.isEmpty else { return }

@@ -13,18 +13,19 @@ final class CanvasUndoTests: XCTestCase {
         super.tearDown()
     }
 
-    func testUndoBringsBackAClearedDrawing() {
+    func testUndoBringsBackAClearedDrawing() throws {
         let canvas = makeCanvas(drawing: PKDrawing(strokes: [Self.stroke]))
+        let undoManager = try XCTUnwrap(canvas.hostView.undoManager)
         canvas.clear()
         canvas.resetView()
         XCTAssertFalse(canvas.hasStrokes)
 
         RunLoop.main.run(until: Date().addingTimeInterval(0.1))
-        canvas.undo()
+        undoManager.undo()
         XCTAssertTrue(canvas.hasStrokes)
 
         RunLoop.main.run(until: Date().addingTimeInterval(0.1))
-        canvas.redo()
+        undoManager.redo()
         XCTAssertFalse(canvas.hasStrokes)
     }
 
