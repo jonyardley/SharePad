@@ -99,8 +99,8 @@ frame with no known canvas rectangle is never sent (W3a, `CanvasCrop` and
 
 The current drawing (one `PKDrawing`, kept until **Clear**), the paired Mac's
 identity and secret (Keychain, this device only, not synced), and the paper
-choice. No history, no export, no iCloud. Export is a later product decision,
-not v1.
+choice. No history and no iCloud. The drawing can be saved as an image or a PDF
+(#196); nothing else leaves the iPad except the stream to the paired Mac.
 
 ### Licence of the source code
 

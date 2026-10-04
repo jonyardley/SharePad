@@ -32,7 +32,7 @@ struct SettingsSheet: View {
                     }
                 }
                 Section {
-                    LinkRow(title: "Get SharePad for Mac", address: "https://sharepad.co")
+                    Text(verbatim: "SharePad for Mac: sharepad.co")
                     LinkRow(title: "Privacy", address: "https://sharepad.co/privacy.html")
                     LabeledContent("Version", value: model.appVersion)
                 } header: {
