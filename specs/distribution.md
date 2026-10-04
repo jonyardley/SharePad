@@ -123,6 +123,12 @@ separate `TEAM_ID` secret is needed.)
 `MARKETING_VERSION` is derived from the tag (`v1.2.3` → `1.2.3`) so the released
 version always matches the tag — the single source of truth.
 
+**Test builds without publishing.** Run the workflow by hand (Actions → Release →
+Run workflow, on `main`) with a `version` such as `1.3.0`. It builds, signs and
+notarizes exactly as a tag would, skips every publish step, and keeps the DMG as a
+run artifact for 14 days. Never push a test tag: every `v*` tag publishes to every
+installed copy.
+
 ## 9. Adjacent production gaps (fold in here)
 
 These aren't "distribution" proper but belong to the same 1.0 push:
