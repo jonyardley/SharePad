@@ -1,0 +1,12 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["9S5FG4LQAF.com.jonyardley.sharepad.ipad"],
+        "components": [{ "/": "/pair" }],
+        "appID": "9S5FG4LQAF.com.jonyardley.sharepad.ipad",
+        "paths": ["/pair"]
+      }
+    ]
+  }
+}
