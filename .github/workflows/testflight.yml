@@ -79,15 +79,21 @@ jobs:
           ASC_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
           ASC_KEY_PATH: ${{ runner.temp }}/ac_api_key.p8
           PAD_BUILD_NUMBER: ${{ inputs.build_number }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
           set -euo pipefail
           [ -n "$PAD_BUILD_NUMBER" ] || unset PAD_BUILD_NUMBER
           # The M4's login keychain holds its own Apple Development identity, which
           # Xcode prefers and the job cannot unlock (errSecInternalComponent), so
           # only the job's keychain is searched while signing.
+          KEYCHAIN="$RUNNER_TEMP/build.keychain-db"
           saved=$(security list-keychains -d user | tr -d '"')
-          trap 'security list-keychains -d user -s $saved' EXIT
-          security list-keychains -d user -s "$RUNNER_TEMP/build.keychain-db"
+          saved_default=$(security default-keychain -d user | tr -d '" ')
+          trap 'security list-keychains -d user -s $saved; security default-keychain -d user -s "$saved_default"' EXIT
+          security list-keychains -d user -s "$KEYCHAIN"
+          security default-keychain -d user -s "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security find-identity -v -p codesigning "$KEYCHAIN"
           just pad-upload
 
       # The M4 keeps its disk between runs, so nothing signing-related may outlive the job.
