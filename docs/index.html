@@ -499,6 +499,14 @@
         "@type": "Answer",
         "text": "Yes. SharePad shows your iPad in a window on your Mac. There’s no account, no sign-in and no tracking. SharePad goes online to check for updates, and sends crash reports if you switch them on in the app (they’re off until you do). What you draw or share never leaves your Mac. The privacy policy has the details."
       }
+    },
+    {
+      "@type": "Question",
+      "name": "Need help?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Email hello@sharepad.co and you’ll hear back from a person. Bugs and ideas are welcome as GitHub issues."
+      }
     }
   ]
 }
@@ -734,6 +742,11 @@
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
         <div class="faq-body">Yes. SharePad shows your iPad in a window on your Mac. There’s no account, no sign-in and no tracking. SharePad goes online to check for updates, and sends crash reports if you switch them on in the app (they’re off until you do). What you draw or share never leaves your Mac. The <a href="privacy.html">privacy policy</a> has the details.</div>
       </details>
+      <details class="faq-item" id="support">
+        <summary>Need help?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+        <div class="faq-body">Email <a href="mailto:hello@sharepad.co">hello@sharepad.co</a> and you’ll hear back from a person. Bugs and ideas are welcome as <a href="https://github.com/jonyardley/SharePad/issues">GitHub issues</a>.</div>
+      </details>
     </div>
   </div>
 </section>
@@ -802,6 +815,14 @@
       }
     });
   });
+
+  var openHashedFaq = function () {
+    var id = location.hash.slice(1);
+    var item = id && document.getElementById(id);
+    if (item && item.tagName === "DETAILS") item.open = true;
+  };
+  openHashedFaq();
+  window.addEventListener("hashchange", openHashedFaq);
 </script>
 
 <!-- Cloudflare Web Analytics -->
