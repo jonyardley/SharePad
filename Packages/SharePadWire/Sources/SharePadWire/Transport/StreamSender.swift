@@ -26,7 +26,8 @@ public final class StreamSender: @unchecked Sendable {
     private var security: Security
     private var lastResults: [NWBrowser.Result] = []
     private var pairedServices: [String: PairingRecord] = [:]
-    private var dialled: PairingRecord?
+    private var dialled: PairedService?
+    private var dialCycle = PairedDialCycle()
     private var isStreaming = false
     private var canvas: CanvasRect?
     private var lastConfig: StreamConfig?
@@ -67,7 +68,10 @@ public final class StreamSender: @unchecked Sendable {
     }
 
     public func stop() {
-        queue.async { [weak self] in self?.send(.stop) }
+        queue.async { [weak self] in
+            _ = self?.dialCycle.reduce(.reset)
+            self?.send(.stop)
+        }
     }
 
     public func setCanvas(_ rect: CanvasRect?) {
@@ -300,7 +304,8 @@ private extension StreamSender {
             uniquingKeysWith: { first, _ in first }
         )
         endpoints = all.filter { pairedServices[$0.key] != nil }
-        send(.found(ranked.map(\.name)))
+        _ = dialCycle.reduce(.advertised(ranked))
+        send(.found(dialCycle.dialable))
     }
 
     func connect(to name: String) {
@@ -317,7 +322,7 @@ private extension StreamSender {
                 send(.connectionLost)
                 return
             }
-            dialled = record
+            dialled = PairedService(name: name, record: record)
             open(WireConnection.outbound(to: endpoint, security: .paired(record), queue: queue))
         }
     }
@@ -329,24 +334,28 @@ private extension StreamSender {
                 dropConnection()
                 return
             }
-            connection.send(.authenticate(.paired(dialled, exporter: exporter)))
+            connection.send(.authenticate(.paired(dialled.record, exporter: exporter)))
         }
         connection.send(.hello(identity))
     }
 
     func helloReceived(_ hello: Hello) {
         if let dialled {
-            guard hello.deviceID == dialled.peerID else {
+            guard hello.deviceID == dialled.record.peerID else {
                 dropConnection()
                 return
             }
-            report(.connected(macID: dialled.peerID))
+            _ = dialCycle.reduce(.linkUp)
+            report(.connected(macID: dialled.record.peerID))
         }
         send(.helloReceived(hello))
     }
 
     func handshakeFailed() {
-        if let dialled { report(.handshakeFailed(macID: dialled.peerID)) }
+        let counted = dialled.map { dialCycle.reduce(.handshakeFailed($0)) } ?? []
+        for case let .countFailure(macID) in counted {
+            report(.handshakeFailed(macID: macID))
+        }
         dropConnection()
     }
 
@@ -367,11 +376,11 @@ private extension StreamSender {
     func pairingsChanged(_ records: [PairingRecord]) {
         guard case .paired = security else { return }
         security = .paired(records)
-        if let dialled, !records.contains(where: { $0.pairingID == dialled.pairingID }) {
+        if let dialled, !records.contains(where: { $0.pairingID == dialled.record.pairingID }) {
             let forgotten = connection
             connection = nil
             self.dialled = nil
-            forgotten?.send(.forgotten(pairingID: dialled.pairingID)) { forgotten?.cancel() }
+            forgotten?.send(.forgotten(pairingID: dialled.record.pairingID)) { forgotten?.cancel() }
             send(.connectionLost)
         }
         found(lastResults)

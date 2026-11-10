@@ -61,7 +61,14 @@ can stream.
 - **Settings** lists paired Macs with **Forget this Mac**.
 - **Health**: a TLS failure while dialling a paired Mac counts against that Mac
   (`PairingHealth`); after three in a row the pill reads **Not paired with
-  {Mac}** with **Pair again…**.
+  {Mac}** with **Pair again…**. The TXT id is public, so a rogue service can
+  claim a paired Mac's id (#229). `PairedDialCycle` skips a service that failed
+  TLS until the link goes live or the cycle ends, and counts one failure against
+  the Mac only once every service advertising its id has failed; that ends the
+  cycle for the Mac, and its services are dialled again. While the real Mac is on
+  the network, a rogue can no longer mark the pairing broken. A rogue on
+  its own is indistinguishable from a Mac that forgot the iPad, so it still
+  counts.
 
 ## Key decisions
 

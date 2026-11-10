@@ -283,6 +283,11 @@ before touching capture.
   before its hello. Install ids on both ends come from `localDeviceID()` in the
   Keychain, never `identifierForVendor` or a per-launch UUID; `LinkGate` closes a
   link whose hello id differs from the paired one.
+- **The Bonjour TXT id is public, so a rogue can claim a paired Mac's id** (#229).
+  `PairedDialCycle` skips a service that failed TLS until the link goes live, and
+  counts a failure against the Mac only once every service with its id has failed
+  in that cycle. Don't feed `PairingHealth` from a single dial's TLS failure. A
+  rogue alone still counts: it looks the same as a Mac that forgot the iPad.
 - **iPad frames leave only with a known canvas rectangle.** `CaptureContext` drops
   any frame without a layout or while a sheet or popover covers the canvas. New
   chrome that draws over the canvas must register an `Overlay` with the model.
