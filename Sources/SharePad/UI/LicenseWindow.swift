@@ -72,7 +72,7 @@ struct LicenseEntryView: View {
                     .foregroundStyle(.red)
             }
             HStack {
-                if License.recoverURL != nil {
+                if model.canRecover {
                     Button("Lost your key?") { model.openRecoverPage() }
                         .buttonStyle(.link)
                 }

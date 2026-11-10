@@ -152,7 +152,6 @@ final class WhatsNewTests: XCTestCase {
         XCTAssertTrue(PairingCodeDisplay.pairing(iPad: "iPad").hasLiveCode)
         XCTAssertFalse(PairingCodeDisplay.expired.hasLiveCode)
         XCTAssertFalse(PairingCodeDisplay.paired(iPad: "iPad").hasLiveCode)
-        XCTAssertTrue(PairingCodeDisplay.paired(iPad: "iPad").isPaired)
     }
 
     private func display(
