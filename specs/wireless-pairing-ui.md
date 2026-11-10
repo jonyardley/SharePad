@@ -67,8 +67,9 @@ can stream.
   skipped until the link goes live, the link stops, the Mac's pairing changes,
   or the Mac's cycle ends. A Mac's cycle ends once every service advertising its
   id has been tried: at once if none failed TLS, otherwise one settle interval
-  (`SenderLink.connectTimeout`) after a browse shows nothing of it left to dial,
-  and then one failure is counted. So a Mac that forgot the iPad still reaches
+  (`SenderLink.connectTimeout`, timed per Mac) after a browse shows nothing of
+  it left to dial, and then one failure is counted. Ending a cycle or changing
+  a pairing also forgets skipped names the latest browse no longer shows. So a Mac that forgot the iPad still reaches
   **Not paired**, about a backoff plus five seconds per count. A TLS error on a
   link that is already live is only a lost connection, never a count. While the
   real Mac is reachable and seen in the same browse, a rogue can neither hold
@@ -123,9 +124,11 @@ can stream.
      dial per cycle, and when it is the Mac's only service it is redialled at
      once.
    - Services are told apart by Bonjour name only.
-   - There is one settle timer. A Mac that stalls while another Mac's settle
-     is pending ends at that earlier deadline, so its wait can be shorter
-     than the full interval.
+   - Forgetting names a browse no longer shows can drop another Mac's skipped
+     rogue when that browse was partial, so the rogue takes one more dial.
+   - A transient TLS error on a healthy Mac with one service now costs about
+     5.5 s to reconnect instead of about 0.5 s (backoff plus the settle), and
+     counts one failure.
 
 ## Open questions
 

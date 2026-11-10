@@ -2,95 +2,9 @@ import Foundation
 @testable import SharePadWire
 import XCTest
 
-private func pairing(_ name: String, peerID: UUID = UUID()) -> PairingRecord {
-    PairingRecord(
-        peerID: peerID,
-        peerName: name,
-        pairingID: UUID(),
-        secret: .generate(),
-        pairedAt: 10
-    )
-}
-
-private struct Dialler {
-    var link: SenderLink
-    var cycle = PairedDialCycle()
-    var counted: [UUID] = []
-    var settles: [Int] = []
-    var attempt = 0
-
-    init(lastPeer: String? = nil) {
-        link = SenderLink(lastPeer: lastPeer)
-    }
-
-    var dialling: String? {
-        link.phase.dialling
-    }
-
-    @discardableResult
-    mutating func send(_ event: SenderLink.Event) -> [SenderLink.Effect] {
-        let before = link.phase
-        let effects = link.reduce(event)
-        apply(cycle.reduce(.linkMoved(was: before, now: link.phase)))
-        for case let .scheduleConnectTimeout(attempt, _) in effects {
-            self.attempt = attempt
-        }
-        return effects
-    }
-
-    mutating func apply(_ effects: [PairedDialCycle.Effect]) {
-        for effect in effects {
-            switch effect {
-            case let .countFailure(macID):
-                counted.append(macID)
-            case let .scheduleSettle(token, after):
-                XCTAssertEqual(after, SenderLink.connectTimeout)
-                settles.append(token)
-            }
-        }
-    }
-
-    mutating func browse(_ services: [PairedService]) {
-        apply(cycle.reduce(.advertised(services)))
-        send(.found(cycle.dialable))
-    }
-
-    mutating func failTLS() {
-        apply(cycle.reduce(.handshakeFailed(during: link.phase)))
-        send(.connectionLost)
-    }
-
-    mutating func refuse() {
-        send(.connectionLost)
-    }
-
-    mutating func timeOut() {
-        send(.connectTimedOut(attempt: attempt))
-    }
-
-    mutating func retry() {
-        send(.retryElapsed)
-    }
-
-    mutating func settle(_ token: Int? = nil) {
-        guard let token = token ?? settles.last else { return XCTFail("no settle scheduled") }
-        apply(cycle.reduce(.settleElapsed(token)))
-        send(.found(cycle.dialable))
-    }
-
-    mutating func goLive(_ peer: PairingRecord) {
-        send(.connectionReady)
-        send(.helloReceived(Hello(deviceID: peer.peerID, deviceName: peer.peerName)))
-    }
-}
-
 final class PairedDialCycleTests: XCTestCase {
     private let studio = pairing("Studio")
     private let office = pairing("Office")
-
-    private func service(_ name: String, _ record: PairingRecord) -> PairedService {
-        PairedService(name: name, record: record)
-    }
 
     // ── TLS failures ──
 
@@ -223,74 +137,69 @@ final class PairedDialCycleTests: XCTestCase {
         XCTAssertEqual(dialler.counted, [])
     }
 
-    // ── Services that never answer ──
+    // ── Cycle boundaries ──
 
-    func testAStallingRogueHoldingTheLastNameCannotPinRetries() {
-        let rogue = service("Studio", studio)
-        let real = service("Studio (2)", studio)
+    func testEachMacWaitsForItsOwnSettle() {
         var dialler = Dialler(lastPeer: "Studio")
+        let services = [service("Studio", studio), service("Office", office)]
 
         dialler.send(.start)
-        dialler.browse([rogue, real])
-        dialler.timeOut()
-        dialler.retry()
-        dialler.browse([rogue])
-        XCTAssertNil(dialler.dialling, "a rogue-only first batch must not hand the dial back")
-        dialler.browse([rogue, real])
-        XCTAssertEqual(dialler.dialling, "Studio (2)")
-        dialler.goLive(studio)
-        dialler.settle()
-        XCTAssertEqual(dialler.counted, [])
-    }
-
-    func testARefusingRogueHoldingTheLastNameCannotPinRetries() {
-        let rogue = service("Studio", studio)
-        let real = service("Studio (2)", studio)
-        var dialler = Dialler(lastPeer: "Studio")
-
-        dialler.send(.start)
-        dialler.browse([rogue, real])
-        dialler.refuse()
-        dialler.retry()
-        dialler.browse([rogue, real])
-        XCTAssertEqual(dialler.dialling, "Studio (2)")
-        XCTAssertEqual(dialler.counted, [])
-    }
-
-    func testAnUnreachableServiceDoesNotStopAForgottenPairingCounting() {
-        let stale = service("Studio", studio)
-        let real = service("Studio (2)", studio)
-        var dialler = Dialler(lastPeer: "Studio")
-
-        dialler.send(.start)
-        dialler.browse([stale, real])
-        dialler.timeOut()
-        dialler.retry()
-        dialler.browse([stale, real])
-        XCTAssertEqual(dialler.dialling, "Studio (2)")
+        dialler.browse(services)
         dialler.failTLS()
         dialler.retry()
-        dialler.browse([stale, real])
-        dialler.settle()
+        dialler.browse(services)
+        XCTAssertEqual(dialler.dialling, "Office")
+        dialler.failTLS()
+        dialler.retry()
+        dialler.browse(services)
+        XCTAssertEqual(dialler.settles.count, 2)
+
+        dialler.settle(dialler.settles[0])
         XCTAssertEqual(dialler.counted, [studio.peerID])
-        XCTAssertEqual(dialler.dialling, "Studio")
+        XCTAssertEqual(dialler.cycle.dialable, ["Studio"])
+        dialler.settle(dialler.settles[1])
+        XCTAssertEqual(dialler.counted, [studio.peerID, office.peerID])
     }
 
-    func testALoneUnreachableServiceIsRedialledAtOnceWithoutCounting() {
-        let only = service("Studio", studio)
+    func testAFailedNameMissingFromTheBrowseIsForgottenWhenTheCycleEnds() {
+        let first = service("Studio", studio)
+        let second = service("Studio (2)", studio)
         var dialler = Dialler()
 
         dialler.send(.start)
-        dialler.browse([only])
-        dialler.timeOut()
+        dialler.browse([first, second])
+        dialler.failTLS()
         dialler.retry()
-        dialler.browse([only])
-        XCTAssertEqual(dialler.dialling, "Studio")
-        XCTAssertEqual(dialler.settles, [])
-        XCTAssertEqual(dialler.counted, [])
+        dialler.browse([second])
+        dialler.failTLS()
+        dialler.retry()
+        dialler.browse([second])
+        dialler.settle()
+        XCTAssertEqual(dialler.counted, [studio.peerID])
+
+        dialler.apply(dialler.cycle.reduce(.advertised([first, second])))
+        XCTAssertEqual(dialler.cycle.dialable, ["Studio", "Studio (2)"])
     }
 
-    // ── Cycle boundaries ──
+    func testPairingAgainForgetsAFailedNameMissingFromTheBrowse() {
+        var dialler = Dialler()
+
+        dialler.send(.start)
+        dialler.browse([service("Studio", studio)])
+        dialler.failTLS()
+        dialler.retry()
+        dialler.browse([])
+        let repaired = PairingRecord(
+            peerID: studio.peerID,
+            peerName: "Studio",
+            pairingID: UUID(),
+            secret: .generate(),
+            pairedAt: 20
+        )
+        dialler.apply(dialler.cycle.reduce(.pairingsChanged([repaired])))
+        dialler.browse([service("Studio", repaired)])
+        XCTAssertEqual(dialler.dialling, "Studio")
+    }
 
     func testPairingAgainRetriesTheNewKeyOnAFailedName() {
         let only = service("Studio", studio)

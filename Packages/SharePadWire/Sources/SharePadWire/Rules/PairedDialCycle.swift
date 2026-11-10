@@ -26,7 +26,7 @@ public struct PairedDialCycle: Equatable, Sendable {
     private var advertised: [PairedService] = []
     private var outcomes: [String: Outcome] = [:]
     private var settleToken = 0
-    private var settlePending = false
+    private var settles: [UUID: Int] = [:]
 
     public init() {}
 
@@ -50,11 +50,13 @@ public struct PairedDialCycle: Equatable, Sendable {
             for service in advertised where !kept.contains(service.record.pairingID) {
                 outcomes[service.name] = nil
             }
+            dropUnadvertised()
             return []
         case let .settleElapsed(token):
-            guard settlePending, token == settleToken else { return [] }
-            settlePending = false
-            return stalledMacs.compactMap { endCycle(for: $0) }
+            guard let macID = settles.first(where: { $0.value == token })?.key else { return [] }
+            settles[macID] = nil
+            guard stalledMacs.contains(macID), let effect = endCycle(for: macID) else { return [] }
+            return [effect]
         }
     }
 
@@ -63,7 +65,7 @@ public struct PairedDialCycle: Equatable, Sendable {
         switch now {
         case .idle, .live:
             outcomes = [:]
-            settlePending = false
+            settles = [:]
         case .backingOff:
             guard let name = was.dialling else { return }
             if outcomes[name] == nil { outcomes[name] = .unreachable }
@@ -76,10 +78,15 @@ public struct PairedDialCycle: Equatable, Sendable {
     }
 
     private mutating func scheduleSettleIfStalled() -> [Effect] {
-        guard !settlePending, !stalledMacs.isEmpty else { return [] }
-        settleToken += 1
-        settlePending = true
-        return [.scheduleSettle(settleToken, after: Self.settleDelay)]
+        let stalled = stalledMacs
+        settles = settles.filter { stalled.contains($0.key) }
+        var effects: [Effect] = []
+        for macID in stalled where settles[macID] == nil {
+            settleToken += 1
+            settles[macID] = settleToken
+            effects.append(.scheduleSettle(settleToken, after: Self.settleDelay))
+        }
+        return effects
     }
 
     private mutating func endCycle(for macID: UUID) -> Effect? {
@@ -87,7 +94,14 @@ public struct PairedDialCycle: Equatable, Sendable {
         for name in names(of: macID) {
             outcomes[name] = nil
         }
+        settles[macID] = nil
+        dropUnadvertised()
         return counts ? .countFailure(macID) : nil
+    }
+
+    private mutating func dropUnadvertised() {
+        let names = Set(advertised.map(\.name))
+        outcomes = outcomes.filter { names.contains($0.key) }
     }
 
     private var stalledMacs: [UUID] {
