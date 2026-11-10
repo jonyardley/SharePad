@@ -51,7 +51,7 @@ struct PairingScreenContent: Equatable {
         "Scan the code it shows.",
     ]
     static let recordPromptNote =
-        "Each time you open SharePad, your iPad asks to record the screen. Tap Allow."
+        "Each time SharePad connects to your Mac, your iPad asks to record the screen. Tap Allow."
 
     let status: String?
     let isWorking: Bool

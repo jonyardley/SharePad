@@ -40,7 +40,7 @@ companion app's own canvas only.
 |---|---|---|---|
 | 1 | What the iPad streams | **The companion app's own canvas first** (in-app ReplayKit, the spike's proven path); **whole screen later** through a Broadcast Upload Extension | In-app capture only records the capturing app, so v1 is a whiteboard app. The extension's ~50 MB memory cap is unproven at iPad resolution and needs its own spike (W6) |
 | 2 | Distribution | **App Store, free.** TestFlight for the beta (W3 to W5) only | TestFlight builds expire after 90 days and external testers wait on beta review: fine for a beta, wrong as the channel |
-| 3 | Licensing | **The Mac licence covers wireless.** The iPad app has no purchase, no licence check and no link to buy | One product, one price. App Store guideline 3.1.3(f) lets a free companion app skip in-app purchase only if it has no purchase calls to action |
+| 3 | Licensing | **The Mac licence covers wireless.** The iPad app has no purchase, no licence check and no link to buy | One product, one price. App Store guideline 3.1.1: nothing is sold or unlocked on the iPad, so there is no in-app purchase; 3.1.1(a): no calls to action to buy elsewhere |
 | 4 | Trial | Wireless counts against the existing Mac trial meter (`specs/licensing.md` §5). The paired iPad's id stands in for `sessionDeviceID` | The gate already lives in the share window, so it covers any source. No iPad-side gate to build |
 | 5 | Source owners | **One owner per source.** `CaptureController` keeps the `AVCaptureSession`; a new `WirelessReceiver` owns the listener, the connection and the decoder. Both sit behind one protocol. `AppModel` picks the active one | Extends Non-Negotiable 1 instead of breaking it: nothing outside a source touches its pipeline |
 | 6 | USB versus wireless | **Cable wins** when both are present, unless the user picks otherwise in the source picker. A Wi-Fi pick lasts until the app quits (W4, decided 2026-10-03). A feed already showing frames keeps the window until the cable shows frames too | The cable is lower latency and needs no radio. Plugging in mid-call must not lose the share |
@@ -471,8 +471,9 @@ PR. Text wireframes for review in the diff:
 │      menu bar, then Pair an iPad…            │
 │   2. Scan the code it shows.                 │
 │                                              │
-│   Each time you open SharePad, your iPad     │
-│   asks to record the screen. Tap Allow.      │
+│   Each time SharePad connects to your Mac,   │
+│   your iPad asks to record the screen.       │
+│   Tap Allow.                                 │
 │                                              │
 │            [ Scan code ]                     │
 │         Type the code instead                │
@@ -572,16 +573,18 @@ Rules:
 | Mac | Pairing window | The same QR; a line under it: "No iPad app yet? Scanning this with the Camera app takes you to it." |
 | Web | `sharepad.co/pair` (no app installed) | "Get SharePad for iPad" with the App Store badge, then "Back on your Mac, scan the code again." The page never reads the `#` part |
 | iPad | First-run pairing, step 0 | "You also need SharePad on your Mac: sharepad.co" as plain text |
-| iPad | Pairing screen, under the steps | "Each time you open SharePad, your iPad asks to record the screen. Tap Allow." (§11, item 2) |
+| iPad | Pairing screen, under the steps | "Each time SharePad connects to your Mac, your iPad asks to record the screen. Tap Allow." (§11, item 2) |
 | Web | `sharepad.co/pair` (app installed or not) | The same line about the record prompt |
 | iPad | Settings sheet | "SharePad for Mac: sharepad.co" as plain text |
 | App Store | iPad listing, first line of the description | "Requires SharePad for Mac." |
 
-**iPad wording rules (App Store guidelines 3.1.1 and 3.1.3(f)).** Outside the US
-storefront, a free companion app may not carry calls to action for purchasing
-elsewhere. So the iPad app names the Mac app and sharepad.co as plain text and
-never says "buy", "free", "trial" or "licence", and has no button that opens the
-site. The review notes explain the companion relationship and include a demo
+**iPad wording rules (App Store guidelines 3.1.1 and 3.1.1(a)).** Nothing is
+sold or unlocked on the iPad, so it needs no in-app purchase (3.1.1). Outside the
+US storefront, the app may not carry calls to action for purchasing elsewhere
+(3.1.1(a)). So the iPad app names the Mac app and sharepad.co as plain text and
+never says "buy", "free", "trial" or "licence". The one button that opens the
+site is the Privacy row in Settings, which opens the privacy policy, never a
+page to buy. The review notes explain the companion relationship and include a demo
 video.
 
 ### Copy rules
