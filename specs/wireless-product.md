@@ -579,13 +579,13 @@ Rules:
 | App Store | iPad listing, first line of the description | "Requires SharePad for Mac." |
 
 **iPad wording rules (App Store guidelines 3.1.1 and 3.1.1(a)).** Nothing is
-sold or unlocked on the iPad, so it needs no in-app purchase (3.1.1). Outside the
-US storefront, the app may not carry calls to action for purchasing elsewhere
-(3.1.1(a)). So the iPad app names the Mac app and sharepad.co as plain text and
-never says "buy", "free", "trial" or "licence". The one button that opens the
-site is the Privacy row in Settings, which opens the privacy policy, never a
-page to buy. The review notes explain the companion relationship and include a demo
-video.
+sold or unlocked on the iPad, so it needs no in-app purchase (3.1.1). Outside
+the US storefront, the app may not carry calls to action for purchasing
+elsewhere (3.1.1(a)). So the iPad app names the Mac app and sharepad.co as plain
+text and never says "buy", "free", "trial" or "licence". The one button that
+opens the site is the Privacy row in Settings, which opens the privacy policy,
+which Apple requires. The review notes explain the companion relationship and
+include a demo video.
 
 ### Copy rules
 
@@ -609,7 +609,7 @@ Each phase is its own PR and can be verified on its own. Hardware phases are
 | **W3a: iPad app shell** | `Sources/SharePadPad` target: canvas, tool picker, paper menu, connection pill, settings, canvas-rectangle crop, auto start and stop, frames held while a sheet or popover covers the canvas. Streams over the unauthenticated W0 link, Debug builds only; `StreamLink` is the seam W3b fills. GPLv3 with the App Store permission (§11, item 1) | On an iPad, against the spike receiver: toolbar never appears on the Mac; open app streams within 3 s of the Mac being found; backgrounding stops capture |
 | **W3b: iPad beta** | TestFlight beta of the paired iPad app (pairing, Forget and the "Not paired" pill moved to W2b) | On two iPad models: everything in W3a over the paired link; an hour on battery without a drop |
 | **W4: Lifecycle** | Cable-wins switching, 5 s reconnect hold, Wi-Fi lost-share banner, `pause` while the cable is active, trial meter keyed to the paired iPad | Plugging the cable in mid-share switches with no window flicker; Wi-Fi off for 3 s recovers in place; off for 10 s hides and shows the banner; trial pause covers a wireless feed |
-| **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app; the notes say the record prompt shows on every open); `sharepad.co/pair` page and the universal-link association file; what's-new window with its tested show-once rule; signposting copy (§9); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; scanning the pairing QR with the Camera app on an iPad without the app reaches the App Store, and with it opens pairing; updating from 1.2 shows what's new once, a fresh install never shows it, and an update while sharing waits until the share ends; on a busy office network: about one keyframe per 10 s, capture-to-decoded median under 30 ms, p95 under 60 ms and no camera reading over 100 ms in 15 |
+| **W5: Release** | App Store submission (review notes and a demo video, since review needs the Mac app; the notes say the record prompt shows each time SharePad connects to the Mac); `sharepad.co/pair` page and the universal-link association file; what's-new window with its tested show-once rule; signposting copy (§9); privacy page paragraph; site and marketing copy; Mac release carrying wireless | App approved; a fresh install pairs in under 2 minutes; scanning the pairing QR with the Camera app on an iPad without the app reaches the App Store, and with it opens pairing; updating from 1.2 shows what's new once, a fresh install never shows it, and an update while sharing waits until the share ends; on a busy office network: about one keyframe per 10 s, capture-to-decoded median under 30 ms, p95 under 60 ms and no camera reading over 100 ms in 15 |
 | **W6: Whole screen** | Spike first: a Broadcast Upload Extension encoding inside the ~50 MB cap on the largest iPad Pro. On GO, add it as a second capture mode in the iPad app | Spike: steady frame rate, memory under the cap for 30 minutes, glass to glass within the latency bar (§8). Product: drawing in Notes or Procreate streams to the Mac |
 
 **W2b status (2026-10-02):** built; package, Mac and iPad unit tests cover the
@@ -630,8 +630,8 @@ app icon, privacy manifest and own version, plus `just pad-archive`,
 for W5, since internal builds skip beta review. **Hardware check (2026-10-03),
 passed** with TestFlight build 20261003.1119 on the iPad mini and an iPad Pro:
 everything in W3a over the paired link, and an hour on battery without a drop.
-One finding: ReplayKit asks to record on every open (§11, item 2), which breaks
-"open the app and it streams".
+One finding: ReplayKit asks to record each time SharePad connects to the Mac
+(§11, item 2), which breaks "open the app and it streams".
 
 **W5b status (2026-10-03):** built. The what's-new window shows the live pairing
 code, follows it through pairing to "Paired with <iPad>", and its **Pair an iPad…**
@@ -728,13 +728,15 @@ the 4 s keepalive.
    Lands with W3.
 2. **ReplayKit consent prompt frequency.** **Measured in W3b (2026-10-03): it
    asks on every open**, so "open the app and it streams" does not hold with
-   in-app capture. Within one open, the app
+   in-app capture. Capture, and so the prompt, starts only once a paired Mac's
+   link is up, so in practice it asks each time SharePad connects to the Mac.
+   Within one open, the app
    holds capture for 10 s after the link drops so a Wi-Fi blip does not restart
    it. **Decision 1a (Jon, 2026-10-03):** spike rendering the app's
    own canvas into pixel buffers for the existing encoder, in place of ReplayKit
    (`specs/canvas-render-spike.md`). **NO-GO (2026-10-03):** the snapshot
    stuttered on the 2020 iPad Pro and the spike was abandoned. **Decided (Jon,
-   2026-10-03): ship v1 with the prompt.** It costs one tap per open; the copy
+   2026-10-03): ship v1 with the prompt.** It costs one tap per connection; the copy
    says so once, on the iPad pairing screen and on `sharepad.co/pair` (§9,
    Signposting), and the review notes mention it. The untried `layer` render and
    the W6 broadcast picker were passed over: the first may hit the same cost, and
