@@ -24,6 +24,7 @@ struct SettingsSheet: View {
                     Button(model.pairings.pairButtonTitle) {
                         model.showPairing()
                     }
+                    .disabled(!model.pairings.canPair)
                 }
                 if model.pairings.storeFailed {
                     Section {

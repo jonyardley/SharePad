@@ -12,7 +12,11 @@ final class MacPairings {
     private(set) var typedCode = ""
     private var broken: Set<UUID> = []
 
-    let identity: Hello
+    let identity: Hello?
+
+    var canPair: Bool {
+        identity != nil
+    }
 
     var state: PairingState {
         PairingState(records: macs, broken: broken)
@@ -47,12 +51,11 @@ final class MacPairings {
 
     init(store: PairingStore, deviceName: String) {
         self.store = store
-        let deviceID = try? store.localDeviceID()
-        let loaded = Result { try store.loadPairings() }
-        identity = Hello(deviceID: deviceID ?? UUID(), deviceName: deviceName)
-        _ = book.reduce(.loaded((try? loaded.get()) ?? []))
+        identity = (try? store.localDeviceID()).map { Hello(deviceID: $0, deviceName: deviceName) }
+        let loaded = try? store.loadPairings()
+        _ = book.reduce(.loaded(loaded ?? []))
         macs = book.records
-        storeFailed = deviceID == nil || (try? loaded.get()) == nil
+        storeFailed = identity == nil || loaded == nil
     }
 
     // ── Intents ──
@@ -75,12 +78,13 @@ final class MacPairings {
 
     @discardableResult
     func pairWithScannedCode(_ text: String) -> Bool {
-        guard let code = TypedCode.code(scanned: text) else { return false }
+        guard canPair, let code = TypedCode.code(scanned: text) else { return false }
         start(code)
         return true
     }
 
     func start(_ code: PairingCode) {
+        guard let identity else { return }
         saveFailed = false
         let session = session ?? PairingSession(
             identity: identity,
@@ -154,7 +158,7 @@ final class MacPairings {
     private func persist(_ write: () throws -> Void) {
         do {
             try write()
-            storeFailed = false
+            storeFailed = identity == nil
         } catch {
             log.error("pairing store write failed: \(error.localizedDescription)")
             storeFailed = true

@@ -73,7 +73,7 @@ struct PairingSheet: View {
                     cameraUnavailable = false
                     isScanning = true
                 }
-                .disabled(working)
+                .disabled(working || !model.pairings.canPair)
             }
             if cameraUnavailable {
                 Text("The camera is off for SharePad. Type the code instead.")
@@ -90,7 +90,9 @@ struct PairingSheet: View {
                 .submitLabel(.go)
                 .onSubmit { model.pairings.pairWithTypedCode() }
                 Button("Pair") { model.pairings.pairWithTypedCode() }
-                    .disabled(!model.pairings.isTypedCodeComplete || working)
+                    .disabled(
+                        !model.pairings.isTypedCodeComplete || working || !model.pairings.canPair
+                    )
             } else {
                 Button("Type the code instead") { isTyping = true }
             }
