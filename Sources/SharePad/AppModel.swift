@@ -353,7 +353,10 @@ extension AppModel {
         }
         isLive = running
         failed = !running
-        if !running { reporter.report(.restartFailed) }
+        if !running {
+            reporter.report(.restartFailed)
+            hideIfShowingUSB()
+        }
         isReconfiguring = false
     }
 

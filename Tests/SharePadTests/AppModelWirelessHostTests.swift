@@ -82,6 +82,30 @@ final class AppModelWirelessHostTests: AppModelTestCase {
         XCTAssertEqual(wireless.hostPauses.last, .cable)
     }
 
+    func testAFailedRestartHandsTheWindowToAPausedWirelessFeed() async throws {
+        let wireless = FakeWirelessFeed()
+        let capture = FakeCaptureController()
+        let model = try makeModel(
+            capture: capture,
+            window: FakeShareWindow(),
+            preferences: ephemeralPreferences(),
+            wireless: wireless,
+            permission: .authorized
+        )
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+        await model.reconcile(devices: [device("a")])
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: false))
+        XCTAssertEqual(wireless.hostPauses.last, .cable)
+        capture.resumeResult = false
+        capture.startResult = false
+
+        await model.restart()
+
+        XCTAssertTrue(model.failed)
+        XCTAssertEqual(model.hostedFeed, .wireless)
+        XCTAssertEqual(wireless.hostActive.last, true)
+    }
+
     func testACableWithNoWirelessPeerStillPausesTheNextOne() async throws {
         let wireless = FakeWirelessFeed()
         let model = try makeWirelessModel(wireless: wireless)
