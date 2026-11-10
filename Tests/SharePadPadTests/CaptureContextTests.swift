@@ -32,11 +32,17 @@ final class CaptureContextTests: XCTestCase {
         let crop = CanvasRect(x: 0, y: 0, width: 40, height: 15)
 
         XCTAssertEqual(
-            try context.decide(for: frame(isCanvasOnly: false), at: changedAt + 0.1),
+            try context.decide(
+                for: frame(isCanvasOnly: false),
+                at: changedAt + FrameGate.recrop - 0.01
+            ),
             .init(allowed: false, crop: crop)
         )
         XCTAssertEqual(
-            try context.decide(for: frame(isCanvasOnly: false), at: changedAt + FrameGate.recrop),
+            try context.decide(
+                for: frame(isCanvasOnly: false),
+                at: changedAt + FrameGate.recrop + 0.01
+            ),
             .init(allowed: true, crop: crop)
         )
     }
@@ -47,7 +53,7 @@ final class CaptureContextTests: XCTestCase {
         context.overlay(.settings, shown: true, at: 0)
         XCTAssertEqual(
             try context.decide(for: frame(isCanvasOnly: false), at: 1),
-            .init(allowed: false, crop: CanvasRect(x: 0, y: 0, width: 40, height: 30))
+            .init(allowed: false, crop: .whole(width: 40, height: 30))
         )
     }
 
