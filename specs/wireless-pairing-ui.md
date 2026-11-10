@@ -123,6 +123,9 @@ can stream.
      dial per cycle, and when it is the Mac's only service it is redialled at
      once.
    - Services are told apart by Bonjour name only.
+   - There is one settle timer. A Mac that stalls while another Mac's settle
+     is pending ends at that earlier deadline, so its wait can be shorter
+     than the full interval.
 
 ## Open questions
 
