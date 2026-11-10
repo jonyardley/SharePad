@@ -24,11 +24,11 @@ struct SettingsSheet: View {
                     Button(model.pairings.pairButtonTitle) {
                         model.showPairing()
                     }
-                    .disabled(!model.pairings.canPair)
+                    .disabled(!model.pairings.screen.canStartPairing)
                 }
-                if model.pairings.storeFailed {
+                if let note = model.pairings.storeNote {
                     Section {
-                        Text("This iPad couldn’t read or save its paired Macs.")
+                        Text(verbatim: note)
                             .foregroundStyle(.secondary)
                     }
                 }

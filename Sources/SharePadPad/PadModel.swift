@@ -43,6 +43,7 @@ final class PadModel {
         ConnectionPill(
             link: linkStatus,
             pairing: pairings.state,
+            pairingUnavailable: !pairings.canPair,
             localNetworkDenied: localNetworkDenied,
             captureDeclined: rules.captureDeclined,
             toolsUnlocated: toolsUnlocated

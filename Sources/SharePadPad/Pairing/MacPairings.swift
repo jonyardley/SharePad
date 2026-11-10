@@ -23,7 +23,17 @@ final class MacPairings {
     }
 
     var screen: PairingScreenContent {
-        PairingScreenContent(phase: phase, saveFailed: saveFailed, hasPairings: !macs.isEmpty)
+        PairingScreenContent(
+            phase: phase,
+            saveFailed: saveFailed,
+            hasPairings: !macs.isEmpty,
+            pairingUnavailable: !canPair
+        )
+    }
+
+    var storeNote: String? {
+        if !canPair { return PairingScreenContent.keychainUnreadable }
+        return storeFailed ? "This iPad couldn’t read or save its paired Macs." : nil
     }
 
     var isTypedCodeComplete: Bool {
@@ -71,9 +81,11 @@ final class MacPairings {
         typedCode = TypedCode.format(text)
     }
 
-    func pairWithTypedCode() {
-        guard let code = TypedCode.code(from: typedCode) else { return }
+    @discardableResult
+    func pairWithTypedCode() -> Bool {
+        guard canPair, let code = TypedCode.code(from: typedCode) else { return false }
         start(code)
+        return true
     }
 
     @discardableResult

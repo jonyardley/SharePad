@@ -41,12 +41,21 @@ final class MacPairingsTests: XCTestCase {
         XCTAssertNil(pairings.identity)
         XCTAssertTrue(pairings.storeFailed)
         XCTAssertFalse(pairings.canPair)
+        XCTAssertFalse(pairings.screen.canStartPairing)
+        XCTAssertEqual(pairings.screen.status, PairingScreenContent.keychainUnreadable)
+        XCTAssertEqual(pairings.storeNote, PairingScreenContent.keychainUnreadable)
 
         pairings.setTypedCode(PairingCode.generate().typed)
-        pairings.pairWithTypedCode()
-        XCTAssertEqual(pairings.phase, .idle)
+        XCTAssertTrue(pairings.isTypedCodeComplete)
+        XCTAssertFalse(pairings.pairWithTypedCode())
         XCTAssertFalse(pairings.pairWithScannedCode(PairingCode.generate().typed))
-        XCTAssertEqual(pairings.phase, .idle)
+    }
+
+    func testAReadableInstallIDCanPairAndShowsNoNote() throws {
+        let (pairings, _) = try pairings([])
+        XCTAssertTrue(pairings.screen.canStartPairing)
+        XCTAssertNil(pairings.screen.status)
+        XCTAssertNil(pairings.storeNote)
     }
 
     func testASuccessfulWriteKeepsTheNoteWhileTheInstallIDIsUnreadable() throws {

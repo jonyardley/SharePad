@@ -25,7 +25,7 @@ struct PairingSheet: View {
                     Text(verbatim: PairingScreenContent.recordPromptNote)
                 }
                 if !screen.isPaired {
-                    entry(working: screen.isWorking)
+                    entry(screen)
                 }
                 if let status = screen.status {
                     Section {
@@ -52,7 +52,7 @@ struct PairingSheet: View {
         }
     }
 
-    private func entry(working: Bool) -> some View {
+    private func entry(_ screen: PairingScreenContent) -> some View {
         Section {
             if isScanning {
                 QRScannerView(
@@ -73,7 +73,7 @@ struct PairingSheet: View {
                     cameraUnavailable = false
                     isScanning = true
                 }
-                .disabled(working || !model.pairings.canPair)
+                .disabled(!screen.canStartPairing)
             }
             if cameraUnavailable {
                 Text("The camera is off for SharePad. Type the code instead.")
@@ -90,9 +90,7 @@ struct PairingSheet: View {
                 .submitLabel(.go)
                 .onSubmit { model.pairings.pairWithTypedCode() }
                 Button("Pair") { model.pairings.pairWithTypedCode() }
-                    .disabled(
-                        !model.pairings.isTypedCodeComplete || working || !model.pairings.canPair
-                    )
+                    .disabled(!model.pairings.isTypedCodeComplete || !screen.canStartPairing)
             } else {
                 Button("Type the code instead") { isTyping = true }
             }
