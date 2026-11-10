@@ -85,9 +85,10 @@ final class AppModelWirelessHostTests: AppModelTestCase {
     func testAFailedRestartHandsTheWindowToAPausedWirelessFeed() async throws {
         let wireless = FakeWirelessFeed()
         let capture = FakeCaptureController()
+        let window = FakeShareWindow()
         let model = try makeModel(
             capture: capture,
-            window: FakeShareWindow(),
+            window: window,
             preferences: ephemeralPreferences(),
             wireless: wireless,
             permission: .authorized
@@ -96,6 +97,7 @@ final class AppModelWirelessHostTests: AppModelTestCase {
         await model.reconcile(devices: [device("a")])
         model.applyWireless(WirelessStatus(peer: peer, isReceiving: false))
         XCTAssertEqual(wireless.hostPauses.last, .cable)
+        XCTAssertTrue(model.isWindowVisible)
         capture.resumeResult = false
         capture.startResult = false
 
@@ -104,6 +106,38 @@ final class AppModelWirelessHostTests: AppModelTestCase {
         XCTAssertTrue(model.failed)
         XCTAssertEqual(model.hostedFeed, .wireless)
         XCTAssertEqual(wireless.hostActive.last, true)
+        XCTAssertTrue(model.isWindowVisible)
+        XCTAssertEqual(window.hideCount, 0)
+        XCTAssertIdentical(window.feedLayers.last, wireless.hostedLayer)
+    }
+
+    func testARestartAfterAFailedOneTakesTheWindowBackForTheCable() async throws {
+        let wireless = FakeWirelessFeed()
+        let capture = FakeCaptureController()
+        let window = FakeShareWindow()
+        let model = try makeModel(
+            capture: capture,
+            window: window,
+            preferences: ephemeralPreferences(),
+            wireless: wireless,
+            permission: .authorized
+        )
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+        await model.reconcile(devices: [device("a")])
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: false))
+        capture.resumeResult = false
+        capture.startResult = false
+        await model.restart()
+        model.applyWireless(WirelessStatus(peer: peer, isReceiving: true))
+        XCTAssertEqual(model.hostedFeed, .wireless)
+        capture.resumeResult = true
+
+        await model.restart()
+
+        XCTAssertTrue(model.isLive)
+        XCTAssertEqual(model.hostedFeed, .usb)
+        XCTAssertEqual(wireless.hostPauses.last, .cable)
+        XCTAssertIdentical(window.feedLayers.last, capture.hostedLayer)
     }
 
     func testACableWithNoWirelessPeerStillPausesTheNextOne() async throws {
