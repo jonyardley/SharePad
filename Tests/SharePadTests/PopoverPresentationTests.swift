@@ -1,3 +1,4 @@
+import AVFoundation
 @testable import SharePad
 import XCTest
 
@@ -101,28 +102,6 @@ final class PopoverPresentationTests: XCTestCase {
         XCTAssertEqual(license(.trialExpired), .pausesAfter(minutes: 15))
     }
 
-    func testWhatsNewOffersPairingWhenWirelessIsAvailableAndNothingIsPaired() {
-        XCTAssertEqual(
-            WhatsNew.Buttons(wirelessAvailable: true, pairing: .closed),
-            .pairOrNotNow
-        )
-        XCTAssertEqual(
-            WhatsNew.Buttons(wirelessAvailable: true, pairing: .expired),
-            .pairOrNotNow
-        )
-    }
-
-    func testWhatsNewSaysDoneOncePaired() {
-        XCTAssertEqual(
-            WhatsNew.Buttons(wirelessAvailable: true, pairing: .paired(iPad: "Jon’s iPad")),
-            .done
-        )
-    }
-
-    func testWhatsNewSaysDoneWithoutWireless() {
-        XCTAssertEqual(WhatsNew.Buttons(wirelessAvailable: false, pairing: .closed), .done)
-    }
-
     private func hint(
         _ state: AppState,
         _ wireless: WirelessStatus = WirelessStatus(),
@@ -175,21 +154,58 @@ final class AppModelPopoverTests: AppModelTestCase {
         XCTAssertEqual(withWireless.whatsNewButtons, .pairOrNotNow)
     }
 
+    func testWhatsNewSaysDoneOnceTheModelHasPaired() throws {
+        let model = try makeModel(
+            capture: FakeCaptureController(),
+            window: FakeShareWindow(),
+            preferences: ephemeralPreferences(),
+            wireless: FakeWirelessFeed()
+        )
+        var status = WirelessStatus()
+        status.pairing = .paired(iPad: "Jon’s iPad")
+        model.applyWireless(status)
+
+        XCTAssertEqual(model.whatsNewButtons, .done)
+    }
+
+    func testAReconnectingWiFiShareShowsOnTheModel() throws {
+        let model = try wirelessShareModel(permission: .authorized, isReconnecting: true)
+
+        XCTAssertEqual(model.statusLine, .reconnectingOverWiFi)
+    }
+
     func testAWiFiShareWithoutCameraAccessHintsAtTheCable() throws {
+        let model = try wirelessShareModel(permission: .denied, isReconnecting: false)
+
+        XCTAssertEqual(model.statusHint, .cableNeedsCamera)
+    }
+
+    func testANewInstallShowsTheTrialOnTheModel() throws {
+        let model = try makeModel(
+            capture: FakeCaptureController(),
+            window: FakeShareWindow(),
+            preferences: ephemeralPreferences()
+        )
+
+        XCTAssertEqual(model.licenseStatus, .trial(daysLeft: EntitlementClock.trialDays))
+    }
+
+    private func wirelessShareModel(
+        permission: AVAuthorizationStatus,
+        isReconnecting: Bool
+    ) throws -> AppModel {
         let model = try makeModel(
             capture: FakeCaptureController(),
             window: FakeShareWindow(),
             preferences: ephemeralPreferences(),
             wireless: FakeWirelessFeed(),
-            permission: .denied
+            permission: permission
         )
         model.applyWireless(WirelessStatus(
             peer: WirelessPeer(id: UUID(), name: "Jon’s iPad"),
             isReceiving: true,
-            isReconnecting: true
+            isReconnecting: isReconnecting
         ))
-
-        XCTAssertEqual(model.statusLine, .reconnectingOverWiFi)
-        XCTAssertEqual(model.statusHint, .cableNeedsCamera)
+        return model
     }
 }

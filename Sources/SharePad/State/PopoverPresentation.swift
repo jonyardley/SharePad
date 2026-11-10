@@ -38,14 +38,13 @@ enum StatusHint: Equatable {
     case localNetworkOff
     case cableNeedsCamera
 
-    // A connected-but-locked or not-yet-trusted iPad shows up to discovery but never
-    // starts a session, so it sits in .starting looking stuck (the hint also flashes
-    // briefly on a healthy connect). The app can't tell "locked" from "still trusting".
     init?(state: AppState, wireless: WirelessStatus, cameraDenied: Bool) {
         switch state {
         case .noDevice where wireless.pairingStoreFailed: self = .pairingStoreFailed
         case .noDevice where wireless.listenerFailed: self = .listenerFailed
         case .noDevice: self = .plugIn
+        // A locked or not-yet-trusted iPad is discovered but never starts, so it looks
+        // stuck here, and the app can't tell "locked" from "still trusting".
         case .starting(.usb): self = .unlockAndTrust
         case .failed(.usb): self = .checkCable
         case .permissionDenied: self = .cameraOff
