@@ -26,7 +26,7 @@ public final class StreamSender: @unchecked Sendable {
     private var security: Security
     private var lastResults: [NWBrowser.Result] = []
     private var pairedServices: [String: PairingRecord] = [:]
-    private var dialled: PairedService?
+    private var dialled: PairingRecord?
     private var dialCycle = PairedDialCycle()
     private var isStreaming = false
     private var canvas: CanvasRect?
@@ -68,10 +68,7 @@ public final class StreamSender: @unchecked Sendable {
     }
 
     public func stop() {
-        queue.async { [weak self] in
-            _ = self?.dialCycle.reduce(.reset)
-            self?.send(.stop)
-        }
+        queue.async { [weak self] in self?.send(.stop) }
     }
 
     public func setCanvas(_ rect: CanvasRect?) {
@@ -100,7 +97,9 @@ public final class StreamSender: @unchecked Sendable {
     // ── Link ──
 
     private func send(_ event: SenderLink.Event) {
+        let before = link.phase
         let effects = link.reduce(event)
+        apply(dialCycle.reduce(.linkMoved(was: before, now: link.phase)))
         effects.forEach(perform)
         let phase = link.phase
         let onPhase = onPhase
@@ -304,7 +303,7 @@ private extension StreamSender {
             uniquingKeysWith: { first, _ in first }
         )
         endpoints = all.filter { pairedServices[$0.key] != nil }
-        _ = dialCycle.reduce(.advertised(ranked))
+        apply(dialCycle.reduce(.advertised(ranked)))
         send(.found(dialCycle.dialable))
     }
 
@@ -322,7 +321,7 @@ private extension StreamSender {
                 send(.connectionLost)
                 return
             }
-            dialled = PairedService(name: name, record: record)
+            dialled = record
             open(WireConnection.outbound(to: endpoint, security: .paired(record), queue: queue))
         }
     }
@@ -334,28 +333,24 @@ private extension StreamSender {
                 dropConnection()
                 return
             }
-            connection.send(.authenticate(.paired(dialled.record, exporter: exporter)))
+            connection.send(.authenticate(.paired(dialled, exporter: exporter)))
         }
         connection.send(.hello(identity))
     }
 
     func helloReceived(_ hello: Hello) {
         if let dialled {
-            guard hello.deviceID == dialled.record.peerID else {
+            guard hello.deviceID == dialled.peerID else {
                 dropConnection()
                 return
             }
-            _ = dialCycle.reduce(.linkUp)
-            report(.connected(macID: dialled.record.peerID))
+            report(.connected(macID: dialled.peerID))
         }
         send(.helloReceived(hello))
     }
 
     func handshakeFailed() {
-        let counted = dialled.map { dialCycle.reduce(.handshakeFailed($0)) } ?? []
-        for case let .countFailure(macID) in counted {
-            report(.handshakeFailed(macID: macID))
-        }
+        apply(dialCycle.reduce(.handshakeFailed(during: link.phase)))
         dropConnection()
     }
 
@@ -376,14 +371,31 @@ private extension StreamSender {
     func pairingsChanged(_ records: [PairingRecord]) {
         guard case .paired = security else { return }
         security = .paired(records)
-        if let dialled, !records.contains(where: { $0.pairingID == dialled.record.pairingID }) {
+        if let dialled, !records.contains(where: { $0.pairingID == dialled.pairingID }) {
             let forgotten = connection
             connection = nil
             self.dialled = nil
-            forgotten?.send(.forgotten(pairingID: dialled.record.pairingID)) { forgotten?.cancel() }
+            forgotten?.send(.forgotten(pairingID: dialled.pairingID)) { forgotten?.cancel() }
             send(.connectionLost)
         }
+        apply(dialCycle.reduce(.pairingsChanged(records)))
         found(lastResults)
+    }
+
+    func apply(_ effects: [PairedDialCycle.Effect]) {
+        for effect in effects {
+            switch effect {
+            case let .countFailure(macID):
+                report(.handshakeFailed(macID: macID))
+            case let .scheduleSettle(token, delay):
+                queue.asyncAfter(deadline: .now() + delay) { [weak self] in self?.settle(token) }
+            }
+        }
+    }
+
+    func settle(_ token: Int) {
+        apply(dialCycle.reduce(.settleElapsed(token)))
+        send(.found(dialCycle.dialable))
     }
 
     func startBrowsing() {

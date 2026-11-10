@@ -62,13 +62,17 @@ can stream.
 - **Health**: a TLS failure while dialling a paired Mac counts against that Mac
   (`PairingHealth`); after three in a row the pill reads **Not paired with
   {Mac}** with **Pair again…**. The TXT id is public, so a rogue service can
-  claim a paired Mac's id (#229). `PairedDialCycle` skips a service that failed
-  TLS until the link goes live or the cycle ends, and counts one failure against
-  the Mac only once every service advertising its id has failed; that ends the
-  cycle for the Mac, and its services are dialled again. While the real Mac is on
-  the network, a rogue can no longer mark the pairing broken. A rogue on
-  its own is indistinguishable from a Mac that forgot the iPad, so it still
-  counts.
+  claim a paired Mac's id (#229), and the iPad dials through a pure
+  `PairedDialCycle`. A service that fails TLS, refuses, drops or times out is
+  skipped until the link goes live, the link stops, the Mac's pairing changes,
+  or the Mac's cycle ends. A Mac's cycle ends once every service advertising its
+  id has been tried: at once if none failed TLS, otherwise one settle interval
+  (`SenderLink.connectTimeout`) after a browse shows nothing of it left to dial,
+  and then one failure is counted. So a Mac that forgot the iPad still reaches
+  **Not paired**, about a backoff plus five seconds per count. A TLS error on a
+  link that is already live is only a lost connection, never a count. While the
+  real Mac is reachable and seen in the same browse, a rogue can neither hold
+  the dial nor count a failure; the gaps that remain are key decision 8.
 
 ## Key decisions
 
@@ -105,6 +109,20 @@ can stream.
    on the happy path.
 7. **The unauthenticated link is gone from both apps.** `spike/wireless` keeps
    it for measurement; a spike sender can no longer reach the real app.
+
+8. **Spoofed ids are contained, not prevented** (#229). The TXT id cannot be
+   authenticated before TLS, so `PairedDialCycle` limits what a rogue can do;
+   these gaps remain, accepted for v1:
+   - A rogue on its own, with the real Mac off the network or asleep, counts:
+     from the iPad it looks the same as a Mac that forgot the pairing.
+   - A rogue that fails TLS while the real Mac is advertised but unreachable
+     counts once the real Mac's dial times out.
+   - Early arrival is narrowed, not closed: if a browse only ever shows the
+     rogue before the settle ends, the rogue counts.
+   - A rogue seen first that drops quickly without a TLS error still takes one
+     dial per cycle, and when it is the Mac's only service it is redialled at
+     once.
+   - Services are told apart by Bonjour name only.
 
 ## Open questions
 
