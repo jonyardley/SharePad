@@ -134,6 +134,27 @@ final class AppModelLifecycleTests: AppModelTestCase {
         XCTAssertTrue(model.failed)
     }
 
+    func testAFailedRestartOverTheCableKeepsTheWindowUp() async throws {
+        let capture = FakeCaptureController()
+        let window = FakeShareWindow()
+        let model = try makeModel(
+            capture: capture,
+            window: window,
+            preferences: ephemeralPreferences(),
+            permission: .authorized
+        )
+        await model.reconcile(devices: [device("a")])
+        XCTAssertTrue(model.isWindowVisible)
+        capture.resumeResult = false
+        capture.startResult = false
+
+        await model.restart()
+
+        XCTAssertTrue(model.failed)
+        XCTAssertTrue(model.isWindowVisible)
+        XCTAssertEqual(window.hideCount, 0)
+    }
+
     func testPopoverLifecycleTogglesThumbnail() throws {
         let capture = FakeCaptureController()
         let window = FakeShareWindow()

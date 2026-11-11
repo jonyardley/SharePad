@@ -48,7 +48,8 @@ The happy path works (Phases 0–3), but the app isn't yet dependable:
   - Consume `CaptureController`'s restart events → re-`start(deviceID:
     currentDeviceID)` (start() already reconfigures + runs). Guard against
     tight-loops (ignore while a restart is in flight; if it re-fails, settle on
-    `failed`).
+    `failed`). Since #227 a failed restart with a Wi-Fi iPad paused behind the cable
+    hands the window to Wi-Fi instead of showing the dead cable picture.
   - Track `failed`; expose `state: AppState` via the reducer.
   - `openCameraSettings()` → `NSWorkspace.shared.open(Privacy_Camera URL)`;
     `retry()` → re-start for the current device.

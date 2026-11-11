@@ -333,7 +333,8 @@ before touching capture.
   window the Wi-Fi feed is paused and stops counting as receiving
   (`AppState.wirelessPause`, which also says why: cable or trial), and its picture
   is cleared, so unplugging shows a moment of black before a fresh keyframe, never
-  an old drawing.
+  an old drawing. If the cable's restart fails, the window goes to the paused Wi-Fi
+  feed, which resumes; a later successful cable restart takes it back (#227).
 - **Wireless TLS-PSK is TLS 1.2 only, and the suite must be pinned**
   (`specs/wireless-product.md` §6, open question 3). Network.framework's default
   PSK suite has no forward secrecy, so `LinkSecurity` pins ECDHE-PSK and a loopback

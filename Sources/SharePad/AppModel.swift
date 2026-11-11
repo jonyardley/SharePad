@@ -353,6 +353,7 @@ extension AppModel {
         }
         isLive = running
         failed = !running
+        syncHostedFeed()
         if !running { reporter.report(.restartFailed) }
         isReconfiguring = false
     }
