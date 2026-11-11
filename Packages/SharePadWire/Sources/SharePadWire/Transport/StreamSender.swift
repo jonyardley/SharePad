@@ -303,6 +303,8 @@ private extension StreamSender {
             uniquingKeysWith: { first, _ in first }
         )
         endpoints = all.filter { pairedServices[$0.key] != nil }
+        // Settles first: one armed here beats the equal connect timeout the dial below
+        // starts (specs/wireless-pairing-ui.md, key decision 8).
         apply(dialCycle.reduce(.advertised(ranked)))
         send(.found(dialCycle.dialable))
     }
@@ -400,6 +402,7 @@ private extension StreamSender {
 
     func startBrowsing() {
         browser?.cancel()
+        lastResults = []
         let browser = WireBrowser()
         browser.onResults = { [weak self] results in self?.found(results) }
         let onDenied = onLocalNetworkDenied

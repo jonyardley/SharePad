@@ -80,6 +80,37 @@ final class PairedDialCycleBrowsingTests: XCTestCase {
         XCTAssertEqual(dialler.link.phase, .backingOff)
     }
 
+    func testATimingOutMacSeenFirstHoldsOffACountForAsLongAsItComesFirst() {
+        var dialler = Dialler(lastPeer: "Studio")
+        let both = [service("Office", office), service("Studio", studio)]
+
+        dialler.send(.start)
+        dialler.browse([service("Studio", studio)])
+        dialler.failTLS()
+        for _ in 1 ... 3 {
+            dialler.retry()
+            dialler.browse([service("Office", office)])
+            XCTAssertEqual(dialler.dialling, "Office")
+            dialler.browse(both)
+            let armed = dialler.settles.last
+            dialler.timeOut()
+            if let armed { dialler.settle(armed) }
+        }
+        XCTAssertEqual(dialler.settles.count, 3, "a settle each round, each dropped by the backoff")
+        XCTAssertEqual(dialler.counted, [])
+    }
+
+    func testAPairingChangeBeforeTheNewBrowseAnswersStartsNoSettle() {
+        var dialler = Dialler(lastPeer: "Studio")
+
+        dialler.send(.start)
+        dialler.browse([service("Studio", studio)])
+        dialler.failTLS()
+        dialler.retry()
+        dialler.pairingsChanged([studio, office])
+        XCTAssertEqual(dialler.settles, [], "the old browser's list is gone")
+    }
+
     func testGoingLiveOnAnotherMacDropsAPendingSettle() {
         var dialler = studioStalledWhileOfficeIsDialled()
         let stale = dialler.settles[0]

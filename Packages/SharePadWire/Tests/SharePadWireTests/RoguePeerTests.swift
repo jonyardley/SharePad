@@ -78,6 +78,8 @@ final class RoguePeerTests: XCTestCase {
         return listener
     }
 
+    // Only `.tls` reaches the dial cycle; StreamSender logs a POSIX `.waiting`, so that and
+    // silence run out SenderLink.connectTimeout (specs/wireless-pairing-ui.md, key decision 8).
     private func dial(_ rogue: Rogue, waiting seconds: TimeInterval = 2) throws -> Seen {
         let peer = Box()
         let listener = try listen(rogue, keeping: peer)
@@ -128,8 +130,6 @@ final class RoguePeerTests: XCTestCase {
         return outcome.seen ?? .nothing
     }
 
-    // StreamSender counts only `.tls`; a POSIX `.waiting` or silence waits out
-    // SenderLink.connectTimeout (specs/wireless-pairing-ui.md, key decision 8).
     func testJunkThenACloseFailsTLS() throws {
         XCTAssertEqual(try dial(.junkThenClose), .tls)
     }
@@ -139,8 +139,8 @@ final class RoguePeerTests: XCTestCase {
         XCTAssertEqual(try dial(.refused), .waitingPOSIX)
     }
 
-    func testAPeerThatNeverCompletesARecordJustStalls() throws {
-        XCTAssertEqual(try dial(.silent), .nothing)
-        XCTAssertEqual(try dial(.junkThenHold), .nothing)
+    func testAPeerThatNeverCompletesARecordStallsPastTheConnectTimeout() throws {
+        XCTAssertEqual(try dial(.silent, waiting: SenderLink.connectTimeout), .nothing)
+        XCTAssertEqual(try dial(.junkThenHold, waiting: SenderLink.connectTimeout), .nothing)
     }
 }

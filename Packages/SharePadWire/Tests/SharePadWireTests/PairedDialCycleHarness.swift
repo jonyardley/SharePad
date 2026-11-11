@@ -33,6 +33,7 @@ struct Dialler {
         let before = link.phase
         let effects = link.reduce(event)
         apply(cycle.reduce(.linkMoved(was: before, now: link.phase)))
+        if effects.contains(.startBrowsing) { lastBrowse = [] }
         for case let .scheduleConnectTimeout(attempt, _) in effects {
             self.attempt = attempt
         }
