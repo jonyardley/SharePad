@@ -195,7 +195,7 @@ final class AppModel {
         permission = CameraPermission.status
         window.setKeepOnTop(keepOnTop)
         window.setTrialActions(
-            onBuy: License.buyURL != nil ? { [weak self] in self?.openBuyPage() } : nil,
+            onBuy: canBuy ? { [weak self] in self?.openBuyPage() } : nil,
             onEnterLicense: { [weak self] in self?.onEnterLicenseRequested?() }
         )
         windowHotkey = GlobalHotkey(
@@ -516,6 +516,23 @@ extension AppModel {
         return .valid
     }
 
+    var canBuy: Bool {
+        License.buyURL != nil
+    }
+
+    var canRecover: Bool {
+        License.recoverURL != nil
+    }
+
+    var licenseStatus: LicenseStatus {
+        LicenseStatus(
+            entitlement: entitlement,
+            overlayShown: isTrialOverlayShown,
+            sessionEndsAt: sessionEndsAt,
+            sessionLimitMinutes: sessionLimitMinutes
+        )
+    }
+
     func openBuyPage() {
         guard let url = License.buyURL else { return }
         NSWorkspace.shared.open(url)
@@ -613,6 +630,14 @@ extension AppModel {
 
     var isCameraAccessDenied: Bool {
         access == .denied
+    }
+
+    var statusLine: StatusLine {
+        StatusLine(state: state, isReconnecting: wirelessStatus.isReconnecting)
+    }
+
+    var statusHint: StatusHint? {
+        StatusHint(state: state, wireless: wirelessStatus, cameraDenied: isCameraAccessDenied)
     }
 
     var thumbnailLayer: CALayer {
@@ -864,6 +889,10 @@ extension AppModel {
 // ── What's new ──
 
 extension AppModel {
+    var whatsNewButtons: WhatsNew.Buttons {
+        WhatsNew.Buttons(wirelessAvailable: isWirelessAvailable, pairing: wirelessStatus.pairing)
+    }
+
     func checkWhatsNew() async {
         guard let appVersion else { return }
         let decision = WhatsNew.decide(

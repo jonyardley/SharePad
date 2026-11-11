@@ -326,6 +326,7 @@ ipad-share/
       WirelessStatus.swift    # what the wireless source reports to AppModel
       PairingProgress.swift   # pairing window and paired-list state, no secrets
       PairingPresentation.swift # pure presenters for the panel and popover rows
+      PopoverPresentation.swift # pure status line, hint and licence row for the popover
     Capture/
       FeedSource.swift         # protocol both sources sit behind
       CaptureController.swift  # owns AVCaptureSession (protocol-fronted)

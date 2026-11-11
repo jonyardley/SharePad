@@ -34,6 +34,16 @@ enum WhatsNew {
         case leave
     }
 
+    enum Buttons: Equatable {
+        case pairOrNotNow
+        case done
+
+        init(wirelessAvailable: Bool, pairing: PairingProgress) {
+            if case .paired = pairing { self = .done; return }
+            self = wirelessAvailable ? .pairOrNotNow : .done
+        }
+    }
+
     // Bug-fix releases never go here.
     static let featureReleases = ["1.3.0"]
 
