@@ -18,6 +18,7 @@ struct Dialler {
     var counted: [UUID] = []
     var settles: [Int] = []
     var attempt = 0
+    var lastBrowse: [PairedService] = []
 
     init(lastPeer: String? = nil) {
         link = SenderLink(lastPeer: lastPeer)
@@ -51,7 +52,18 @@ struct Dialler {
     }
 
     mutating func browse(_ services: [PairedService]) {
+        lastBrowse = services
         apply(cycle.reduce(.advertised(services)))
+        send(.found(cycle.dialable))
+    }
+
+    mutating func pairingsChanged(_ records: [PairingRecord]) {
+        apply(cycle.reduce(.pairingsChanged(records)))
+        let ranked = lastBrowse.compactMap { advertised in
+            records.first { $0.peerID == advertised.record.peerID }
+                .map { service(advertised.name, $0) }
+        }
+        apply(cycle.reduce(.advertised(ranked)))
         send(.found(cycle.dialable))
     }
 

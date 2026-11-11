@@ -1,7 +1,8 @@
 import Foundation
 
-// The TXT id is public in mDNS, so a rogue can claim a paired Mac's id (#229): a TLS
-// failure counts only once every service with that id has been tried in this cycle.
+// The TXT id is public in mDNS, so a rogue can claim a paired Mac's id: a TLS failure
+// counts only once every service with that id has been tried in this cycle
+// (specs/wireless-pairing-ui.md, key decision 8).
 public struct PairedDialCycle: Equatable, Sendable {
     public static let settleDelay = SenderLink.connectTimeout
 
@@ -24,6 +25,7 @@ public struct PairedDialCycle: Equatable, Sendable {
     }
 
     private var advertised: [PairedService] = []
+    private var browsing = false
     private var outcomes: [String: Outcome] = [:]
     private var settleToken = 0
     private var settles: [UUID: Int] = [:]
@@ -37,6 +39,7 @@ public struct PairedDialCycle: Equatable, Sendable {
     public mutating func reduce(_ event: Event) -> [Effect] {
         switch event {
         case let .advertised(services):
+            guard browsing else { return [] }
             advertised = services
             return scheduleSettleIfStalled()
         case let .handshakeFailed(phase):
@@ -62,10 +65,11 @@ public struct PairedDialCycle: Equatable, Sendable {
 
     private mutating func linkMoved(was: SenderLink.Phase, now: SenderLink.Phase) {
         guard was != now else { return }
+        browsing = now.browsing
+        if !browsing { settles = [:] }
         switch now {
         case .idle, .live:
             outcomes = [:]
-            settles = [:]
         case .backingOff:
             guard let name = was.dialling else { return }
             if outcomes[name] == nil { outcomes[name] = .unreachable }

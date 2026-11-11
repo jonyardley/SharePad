@@ -287,9 +287,10 @@ before touching capture.
   `PairedDialCycle` skips a service that failed to connect (TLS, refused, timed
   out) until the link goes live, the link stops, that Mac's pairing changes, or
   every service with that id has been tried. Only then does a TLS failure count,
-  once per cycle, after a settle interval. Don't feed `PairingHealth` from a
-  single dial, and keep StreamSender passing every link phase change to the
-  cycle. Remaining gaps: `specs/wireless-pairing-ui.md` key decision 8.
+  once per cycle, after a settle interval of browsing (a stopped browser drops a
+  pending settle; the next browse starts a full one). Don't feed `PairingHealth`
+  from a single dial, and keep StreamSender passing every link phase change to
+  the cycle. Remaining gaps: `specs/wireless-pairing-ui.md` key decision 8.
 - **iPad frames leave only with a known canvas rectangle.** `CaptureContext` drops
   any frame without a layout or while a sheet or popover covers the canvas. New
   chrome that draws over the canvas must register an `Overlay` with the model.

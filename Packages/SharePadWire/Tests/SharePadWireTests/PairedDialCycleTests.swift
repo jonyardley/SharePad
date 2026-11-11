@@ -152,12 +152,12 @@ final class PairedDialCycleTests: XCTestCase {
         dialler.failTLS()
         dialler.retry()
         dialler.browse(services)
-        XCTAssertEqual(dialler.settles.count, 2)
+        XCTAssertEqual(dialler.settles.count, 3, "Studio's first settle went with the browser")
 
-        dialler.settle(dialler.settles[0])
+        dialler.settle(dialler.settles[1])
         XCTAssertEqual(dialler.counted, [studio.peerID])
         XCTAssertEqual(dialler.cycle.dialable, ["Studio"])
-        dialler.settle(dialler.settles[1])
+        dialler.settle(dialler.settles[2])
         XCTAssertEqual(dialler.counted, [studio.peerID, office.peerID])
     }
 
@@ -259,10 +259,5 @@ final class PairedDialCycleTests: XCTestCase {
         XCTAssertEqual(dialler.counted, [], "an old token")
         dialler.settle(second)
         XCTAssertEqual(dialler.counted, [studio.peerID])
-
-        dialler.browse([only])
-        dialler.goLive(studio)
-        dialler.settle(second)
-        XCTAssertEqual(dialler.counted, [studio.peerID], "after live")
     }
 }

@@ -20,6 +20,13 @@ public struct SenderLink: Equatable, Sendable {
             default: nil
             }
         }
+
+        public var browsing: Bool {
+            switch self {
+            case .searching, .connecting: true
+            default: false
+            }
+        }
     }
 
     public enum Event: Equatable, Sendable {
