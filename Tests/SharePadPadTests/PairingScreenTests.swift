@@ -129,11 +129,33 @@ final class PairingScreenContentTests: XCTestCase {
         )
     }
 
+    func testAnUnreadableKeychainExplainsItselfAndBlocksPairing() {
+        let screen = PairingScreenContent(
+            phase: .idle,
+            saveFailed: true,
+            hasPairings: false,
+            pairingUnavailable: true
+        )
+        XCTAssertFalse(screen.canStartPairing)
+        XCTAssertEqual(
+            screen.status,
+            "This iPad couldn’t read its Keychain, so Wi-Fi sharing is off. "
+                + "Close SharePad and open it again."
+        )
+    }
+
+    func testPairingCanStartOnlyWhenNotAlreadyWorking() {
+        XCTAssertTrue(content(.idle).canStartPairing)
+        XCTAssertFalse(content(.searching).canStartPairing)
+    }
+
     func testIPadCopyNeverMentionsPriceTrialOrLicence() {
         let texts = [PairingScreenContent.macAppNote, PairingScreenContent.recordPromptNote]
             + PairingScreenContent.steps + [
                 content(.failed(.noMacAccepted)).status,
                 content(.idle, saveFailed: true).status,
+                PairingScreenContent.keychainUnreadable,
+                ConnectionPill.wirelessOff,
             ].compactMap(\.self)
         for text in texts {
             for word in ["buy", "free", "trial", "licence", "license", "price"] {

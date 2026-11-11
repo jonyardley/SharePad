@@ -56,6 +56,22 @@ final class ConnectionPillTests: XCTestCase {
         )
     }
 
+    func testAnUnreadableKeychainWinsWithNoAction() {
+        for pairing in [PairingState.unpaired, .paired, .broken("Studio")] {
+            let off = ConnectionPill(
+                link: .looking("Studio"),
+                pairing: pairing,
+                pairingUnavailable: true,
+                localNetworkDenied: true,
+                captureDeclined: false
+            )
+            XCTAssertEqual(
+                off,
+                ConnectionPill(text: "Wi-Fi sharing is off", tone: .attention)
+            )
+        }
+    }
+
     func testABrokenPairingNamesTheMacUntilALinkIsUp() {
         let broken = ConnectionPill(
             link: .looking("Studio"),

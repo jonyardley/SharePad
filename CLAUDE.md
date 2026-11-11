@@ -282,7 +282,8 @@ before touching capture.
   whose TXT `id` matches a pairing, with that pairing's key, and authenticates
   before its hello. Install ids on both ends come from `localDeviceID()` in the
   Keychain, never `identifierForVendor` or a per-launch UUID; `LinkGate` closes a
-  link whose hello id differs from the paired one.
+  link whose hello id differs from the paired one. An unreadable id fails closed:
+  the iPad neither pairs nor dials, and says Wi-Fi sharing is off (#228).
 - **iPad frames leave only with a known canvas rectangle.** `CaptureContext` drops
   any frame without a layout or while a sheet or popover covers the canvas. New
   chrome that draws over the canvas must register an `Overlay` with the model.
