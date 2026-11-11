@@ -68,13 +68,15 @@ can stream.
   or the Mac's cycle ends. A Mac's cycle ends once every service advertising its
   id has been tried: at once if none failed TLS, otherwise one settle interval
   (`SenderLink.connectTimeout`, timed per Mac) after a browse shows nothing of
-  it left to dial, and then one failure is counted. Ending a cycle or changing
-  a pairing also forgets skipped names the latest browse no longer shows. So
-  a Mac that forgot the iPad still reaches **Not paired**, about a backoff plus
-  five seconds per count. A TLS error on a
-  link that is already live is only a lost connection, never a count. While the
-  real Mac is reachable and seen in the same browse, a rogue can neither hold
-  the dial nor count a failure; the gaps that remain are key decision 8.
+  it left to dial, and then one failure is counted. The settle counts browsing
+  time only: when the browser stops (backoff, handshake) a pending settle is
+  dropped and the next browse starts a full one. Ending a cycle or changing a
+  pairing also forgets skipped names the latest browse no longer shows. So a
+  Mac that forgot the iPad still reaches **Not paired**, about a backoff plus
+  five seconds per count. A TLS error on a link that is already live is only a
+  lost connection, never a count. While the real Mac is reachable and seen in
+  the same browse, a single rogue registered under its own name can neither
+  hold the dial nor count a failure; the gaps that remain are key decision 8.
 
 ## Key decisions
 
@@ -111,7 +113,6 @@ can stream.
    on the happy path.
 7. **The unauthenticated link is gone from both apps.** `spike/wireless` keeps
    it for measurement; a spike sender can no longer reach the real app.
-
 8. **Spoofed ids are contained, not prevented** (#229). The TXT id cannot be
    authenticated before TLS, so `PairedDialCycle` limits what a rogue can do;
    these gaps remain, accepted for v1:
@@ -124,7 +125,19 @@ can stream.
    - A rogue seen first that drops quickly without a TLS error still takes one
      dial per cycle, and when it is the Mac's only service it is redialled at
      once.
-   - Services are told apart by Bonjour name only.
+   - Services are told apart by Bonjour name only, and the name is resolved at
+     connect. mDNS cannot be authenticated, so an attacker answering for the
+     real Mac's own instance name can make dials of that name reach a rogue,
+     which fails TLS and counts while the real Mac is up (#251, no code fix).
+   - Many rogues each take one dial per cycle, and the backoff doubles after
+     each failure, so eight rogues seen ahead of the real Mac cost about 27.5 s
+     before it is dialled (more if they stall). A rogue that keeps registering
+     fresh names keeps adding untried names. The real Mac's name is tried first
+     once it has been live, so this mostly costs a first connect (#251).
+   - Another paired Mac whose dial fails at once without a TLS error keeps
+     stopping the browser, which can hold off a count. A refused or reset dial
+     does not do this: it surfaces as a POSIX wait and runs out the connect
+     timeout (`RoguePeerTests`, loopback). Two-Mac pinning is #247.
    - Forgetting names a browse no longer shows can drop another Mac's skipped
      rogue when that browse was partial, so the rogue takes one more dial.
    - A transient TLS error on a healthy Mac with one service now costs about
