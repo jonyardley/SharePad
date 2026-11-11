@@ -27,6 +27,7 @@ public final class StreamSender: @unchecked Sendable {
     private var lastResults: [NWBrowser.Result] = []
     private var pairedServices: [String: PairingRecord] = [:]
     private var dialled: PairingRecord?
+    private var dialCycle = PairedDialCycle()
     private var isStreaming = false
     private var canvas: CanvasRect?
     private var lastConfig: StreamConfig?
@@ -96,7 +97,9 @@ public final class StreamSender: @unchecked Sendable {
     // ── Link ──
 
     private func send(_ event: SenderLink.Event) {
+        let before = link.phase
         let effects = link.reduce(event)
+        apply(dialCycle.reduce(.linkMoved(was: before, now: link.phase)))
         effects.forEach(perform)
         let phase = link.phase
         let onPhase = onPhase
@@ -300,7 +303,10 @@ private extension StreamSender {
             uniquingKeysWith: { first, _ in first }
         )
         endpoints = all.filter { pairedServices[$0.key] != nil }
-        send(.found(ranked.map(\.name)))
+        // Settles first: one armed here beats the equal connect timeout the dial below
+        // starts (specs/wireless-pairing-ui.md, key decision 8).
+        apply(dialCycle.reduce(.advertised(ranked)))
+        send(.found(dialCycle.dialable))
     }
 
     func connect(to name: String) {
@@ -346,7 +352,7 @@ private extension StreamSender {
     }
 
     func handshakeFailed() {
-        if let dialled { report(.handshakeFailed(macID: dialled.peerID)) }
+        apply(dialCycle.reduce(.handshakeFailed(during: link.phase)))
         dropConnection()
     }
 
@@ -374,11 +380,29 @@ private extension StreamSender {
             forgotten?.send(.forgotten(pairingID: dialled.pairingID)) { forgotten?.cancel() }
             send(.connectionLost)
         }
+        apply(dialCycle.reduce(.pairingsChanged(records)))
         found(lastResults)
+    }
+
+    func apply(_ effects: [PairedDialCycle.Effect]) {
+        for effect in effects {
+            switch effect {
+            case let .countFailure(macID):
+                report(.handshakeFailed(macID: macID))
+            case let .scheduleSettle(token, delay):
+                queue.asyncAfter(deadline: .now() + delay) { [weak self] in self?.settle(token) }
+            }
+        }
+    }
+
+    func settle(_ token: Int) {
+        apply(dialCycle.reduce(.settleElapsed(token)))
+        send(.found(dialCycle.dialable))
     }
 
     func startBrowsing() {
         browser?.cancel()
+        lastResults = []
         let browser = WireBrowser()
         browser.onResults = { [weak self] results in self?.found(results) }
         let onDenied = onLocalNetworkDenied

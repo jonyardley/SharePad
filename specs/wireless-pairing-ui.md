@@ -61,7 +61,22 @@ can stream.
 - **Settings** lists paired Macs with **Forget this Mac**.
 - **Health**: a TLS failure while dialling a paired Mac counts against that Mac
   (`PairingHealth`); after three in a row the pill reads **Not paired with
-  {Mac}** with **Pair again…**.
+  {Mac}** with **Pair again…**. The TXT id is public, so a rogue service can
+  claim a paired Mac's id (#229), and the iPad dials through a pure
+  `PairedDialCycle`. A service that fails TLS, refuses, drops or times out is
+  skipped until the link goes live, the link stops, the Mac's pairing changes,
+  or the Mac's cycle ends. A Mac's cycle ends once every service advertising its
+  id has been tried: at once if none failed TLS, otherwise one settle interval
+  (`SenderLink.connectTimeout`, timed per Mac) after a browse shows nothing of
+  it left to dial, and then one failure is counted. The settle counts browsing
+  time only: when the browser stops (backoff, handshake) a pending settle is
+  dropped and the next browse starts a full one. Ending a cycle or changing a
+  pairing also forgets skipped names the latest browse no longer shows. So a
+  Mac that forgot the iPad still reaches **Not paired**, about a backoff plus
+  five seconds per count. A TLS error on a link that is already live is only a
+  lost connection, never a count. While the real Mac is reachable and seen in
+  the same browse, a single rogue registered under its own name can neither
+  hold the dial nor count a failure; the gaps that remain are key decision 8.
 
 ## Key decisions
 
@@ -100,6 +115,41 @@ can stream.
    on the happy path.
 7. **The unauthenticated link is gone from both apps.** `spike/wireless` keeps
    it for measurement; a spike sender can no longer reach the real app.
+8. **Spoofed ids are contained, not prevented** (#229). The TXT id cannot be
+   authenticated before TLS, so `PairedDialCycle` limits what a rogue can do;
+   these gaps remain, accepted for v1:
+   - A rogue on its own, with the real Mac off the network or asleep, counts:
+     from the iPad it looks the same as a Mac that forgot the pairing.
+   - A rogue that fails TLS while the real Mac is advertised but unreachable
+     counts once the real Mac's dial times out.
+   - Early arrival is narrowed, not closed: if a browse only ever shows the
+     rogue before the settle ends, the rogue counts.
+   - A rogue seen first that drops quickly without a TLS error still takes one
+     dial per cycle, and when it is the Mac's only service it is redialled at
+     once.
+   - Services are told apart by Bonjour name only, and the name is resolved at
+     connect. mDNS cannot be authenticated, so an attacker answering for the
+     real Mac's own instance name can make dials of that name reach a rogue,
+     which fails TLS and counts while the real Mac is up (#251, no code fix).
+   - Many rogues each take one dial per cycle, and the backoff doubles after
+     each failure, so eight rogues seen ahead of the real Mac cost about 27.5 s
+     before it is dialled (more if they stall). A rogue that keeps registering
+     fresh names keeps adding untried names. The real Mac's name is tried first
+     once it has been live, so this mostly costs a first connect (#251).
+   - Another paired Mac whose dial ends without a TLS error before the settle
+     is due keeps stopping the browser, which can hold off a count (#251).
+     Refused, reset and silent dials end that way only at the 5 s connect
+     timeout: they surface as a POSIX wait or nothing (`RoguePeerTests`,
+     loopback). Such a Mac does not hold off the count when the failed Mac is
+     seen no later than the browse result that starts its dial: the settle
+     armed there is scheduled just before the equal timeout and fires first
+     (`StreamSender.found`). If the timing-out Mac keeps arriving first, the
+     count is held off for as long as that lasts.
+   - Forgetting names a browse no longer shows can drop another Mac's skipped
+     rogue when that browse was partial, so the rogue takes one more dial.
+   - A transient TLS error on a healthy Mac with one service now costs about
+     5.5 s to reconnect instead of about 0.5 s (backoff plus the settle), and
+     counts one failure.
 
 ## Open questions
 

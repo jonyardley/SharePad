@@ -284,6 +284,14 @@ before touching capture.
   Keychain, never `identifierForVendor` or a per-launch UUID; `LinkGate` closes a
   link whose hello id differs from the paired one. An unreadable id fails closed:
   the iPad neither pairs nor dials, and says Wi-Fi sharing is off (#228).
+- **The Bonjour TXT id is public, so a rogue can claim a paired Mac's id** (#229).
+  `PairedDialCycle` skips a service that failed to connect (TLS, refused, timed
+  out) until the link goes live, the link stops, that Mac's pairing changes, or
+  every service with that id has been tried. Only then does a TLS failure count,
+  once per cycle, after a settle interval of browsing (a stopped browser drops a
+  pending settle; the next browse starts a full one). Don't feed `PairingHealth`
+  from a single dial, and keep StreamSender passing every link phase change to
+  the cycle. Remaining gaps: `specs/wireless-pairing-ui.md` key decision 8.
 - **iPad frames leave only with a known canvas rectangle.** `CaptureContext` drops
   any frame without a layout or while a sheet or popover covers the canvas. New
   chrome that draws over the canvas must register an `Overlay` with the model.

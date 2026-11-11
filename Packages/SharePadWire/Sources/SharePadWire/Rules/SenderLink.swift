@@ -13,6 +13,20 @@ public struct SenderLink: Equatable, Sendable {
         case paused(String, PauseReason)
         case backingOff
         case incompatible(String, peerVersion: UInt16)
+
+        public var dialling: String? {
+            switch self {
+            case let .connecting(peer), let .handshaking(peer): peer
+            default: nil
+            }
+        }
+
+        public var browsing: Bool {
+            switch self {
+            case .searching, .connecting: true
+            default: false
+            }
+        }
     }
 
     public enum Event: Equatable, Sendable {
