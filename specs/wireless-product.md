@@ -730,17 +730,16 @@ the 4 s keepalive.
    asks on every open**, so "open the app and it streams" does not hold with
    in-app capture. Capture, and so the prompt, starts only once a paired Mac's
    link is up, so in practice it asks each time SharePad connects to the Mac.
-   Within one open, the app
-   holds capture for 10 s after the link drops so a Wi-Fi blip does not restart
-   it. **Decision 1a (Jon, 2026-10-03):** spike rendering the app's
-   own canvas into pixel buffers for the existing encoder, in place of ReplayKit
-   (`specs/canvas-render-spike.md`). **NO-GO (2026-10-03):** the snapshot
-   stuttered on the 2020 iPad Pro and the spike was abandoned. **Decided (Jon,
-   2026-10-03): ship v1 with the prompt.** It costs one tap per connection; the copy
-   says so once, on the iPad pairing screen and on `sharepad.co/pair` (§9,
-   Signposting), and the review notes mention it. The untried `layer` render and
-   the W6 broadcast picker were passed over: the first may hit the same cost, and
-   the second still needs a tap to start.
+   Within one open, the app holds capture for 10 s after the link drops so a
+   Wi-Fi blip does not restart it. **Decision 1a (Jon, 2026-10-03):** spike
+   rendering the app's own canvas into pixel buffers for the existing encoder,
+   in place of ReplayKit (`specs/canvas-render-spike.md`). **NO-GO
+   (2026-10-03):** the snapshot stuttered on the 2020 iPad Pro and the spike was
+   abandoned. **Decided (Jon, 2026-10-03): ship v1 with the prompt.** It costs
+   one tap per connection; the copy says so once, on the iPad pairing screen and
+   on `sharepad.co/pair` (§9, Signposting), and the review notes mention it. The
+   untried `layer` render and the W6 broadcast picker were passed over: the
+   first may hit the same cost, and the second still needs a tap to start.
 3. ~~**Forward secrecy mode** of Network.framework's PSK TLS (§6).~~ **Answered
    in W2a (2026-10-02).** Network.framework does external PSKs over **TLS 1.2
    only**: a TLS 1.3-only PSK handshake fails on loopback, matching Apple DTS
