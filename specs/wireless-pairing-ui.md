@@ -69,8 +69,9 @@ can stream.
   id has been tried: at once if none failed TLS, otherwise one settle interval
   (`SenderLink.connectTimeout`, timed per Mac) after a browse shows nothing of
   it left to dial, and then one failure is counted. Ending a cycle or changing
-  a pairing also forgets skipped names the latest browse no longer shows. So a Mac that forgot the iPad still reaches
-  **Not paired**, about a backoff plus five seconds per count. A TLS error on a
+  a pairing also forgets skipped names the latest browse no longer shows. So
+  a Mac that forgot the iPad still reaches **Not paired**, about a backoff plus
+  five seconds per count. A TLS error on a
   link that is already live is only a lost connection, never a count. While the
   real Mac is reachable and seen in the same browse, a rogue can neither hold
   the dial nor count a failure; the gaps that remain are key decision 8.
