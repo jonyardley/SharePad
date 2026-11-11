@@ -135,9 +135,12 @@ can stream.
      fresh names keeps adding untried names. The real Mac's name is tried first
      once it has been live, so this mostly costs a first connect (#251).
    - Another paired Mac whose dial fails at once without a TLS error keeps
-     stopping the browser, which can hold off a count. A refused or reset dial
-     does not do this: it surfaces as a POSIX wait and runs out the connect
-     timeout (`RoguePeerTests`, loopback). Two-Mac pinning is #247.
+     stopping the browser, which can hold off a count (#251). A refused or reset
+     dial does not do this: it surfaces as a POSIX wait and runs out the
+     connect timeout (`RoguePeerTests`, loopback). A Mac that keeps timing out
+     does not either, provided both Macs come in the same browse: the settle is
+     scheduled just before that dial's equal 5 s timeout and fires first.
+     Otherwise the count waits one more round.
    - Forgetting names a browse no longer shows can drop another Mac's skipped
      rogue when that browse was partial, so the rogue takes one more dial.
    - A transient TLS error on a healthy Mac with one service now costs about

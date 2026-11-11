@@ -1,8 +1,7 @@
 import Foundation
 
-// The TXT id is public in mDNS, so a rogue can claim a paired Mac's id: a TLS failure
-// counts only once every service with that id has been tried in this cycle
-// (specs/wireless-pairing-ui.md, key decision 8).
+// A rogue can claim a paired Mac's public TXT id, so a TLS failure counts only once every
+// service with that id has been tried (specs/wireless-pairing-ui.md, key decision 8).
 public struct PairedDialCycle: Equatable, Sendable {
     public static let settleDelay = SenderLink.connectTimeout
 
