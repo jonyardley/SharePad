@@ -89,10 +89,12 @@ struct PairingSheet: View {
                 .autocorrectionDisabled()
                 .submitLabel(.go)
                 .onSubmit { model.pairings.pairWithTypedCode() }
+                .disabled(!screen.canStartPairing)
                 Button("Pair") { model.pairings.pairWithTypedCode() }
                     .disabled(!model.pairings.isTypedCodeComplete || !screen.canStartPairing)
             } else {
                 Button("Type the code instead") { isTyping = true }
+                    .disabled(!screen.canStartPairing)
             }
         }
     }

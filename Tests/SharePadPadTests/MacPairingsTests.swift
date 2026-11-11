@@ -68,6 +68,7 @@ final class MacPairingsTests: XCTestCase {
 
         XCTAssertEqual(try store.loadPairings(), [])
         XCTAssertTrue(pairings.storeFailed)
+        XCTAssertEqual(pairings.storeNote, PairingScreenContent.keychainUnreadable)
     }
 
     func testNothingPairedIsUnpaired() throws {
