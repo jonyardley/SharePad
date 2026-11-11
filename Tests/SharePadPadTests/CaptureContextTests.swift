@@ -47,6 +47,23 @@ final class CaptureContextTests: XCTestCase {
         )
     }
 
+    func testTheFirstLayoutSendsFramesAtOnce() throws {
+        let context = CaptureContext()
+        context.setLayout(layout(), at: 10)
+        XCTAssertTrue(try context.decide(for: frame(isCanvasOnly: false), at: 10).allowed)
+    }
+
+    func testALayoutThatKeepsTheShareableAreaDoesNotHoldFrames() throws {
+        let context = CaptureContext()
+        let canvas = CGRect(x: 0, y: 0, width: 400, height: 250)
+        context.setLayout(layout(canvas: canvas), at: 0)
+        context.setLayout(
+            layout(canvas: canvas, obstructions: [CGRect(x: 0, y: 260, width: 400, height: 40)]),
+            at: 10
+        )
+        XCTAssertTrue(try context.decide(for: frame(isCanvasOnly: false), at: 10).allowed)
+    }
+
     func testAScreenFrameWithALayoutIsHeldWhileAnOverlayIsShown() throws {
         let context = CaptureContext()
         context.setLayout(layout(), at: 0)
