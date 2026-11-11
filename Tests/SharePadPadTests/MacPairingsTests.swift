@@ -1,3 +1,4 @@
+import Security
 @testable import SharePadPad
 import SharePadWire
 import XCTest
@@ -28,10 +29,46 @@ final class MacPairingsTests: XCTestCase {
         let studio = record("Studio")
         let (pairings, _) = try pairings([studio])
         XCTAssertEqual(pairings.macs, [studio])
-        XCTAssertEqual(pairings.identity.deviceID, deviceID)
-        XCTAssertEqual(pairings.identity.deviceName, "Jon’s iPad")
+        XCTAssertEqual(pairings.identity?.deviceID, deviceID)
+        XCTAssertEqual(pairings.identity?.deviceName, "Jon’s iPad")
         XCTAssertEqual(pairings.state, .paired)
         XCTAssertFalse(pairings.storeFailed)
+        XCTAssertTrue(pairings.canPair)
+    }
+
+    func testAnUnreadableInstallIDLeavesNoIdentityAndNoPairing() {
+        let pairings = MacPairings(store: NoInstallIDStore(), deviceName: "Jon’s iPad")
+        XCTAssertNil(pairings.identity)
+        XCTAssertTrue(pairings.storeFailed)
+        XCTAssertFalse(pairings.canPair)
+        XCTAssertFalse(pairings.screen.canStartPairing)
+        XCTAssertEqual(pairings.screen.status, PairingScreenContent.keychainUnreadable)
+        XCTAssertEqual(pairings.storeNote, PairingScreenContent.keychainUnreadable)
+
+        pairings.setTypedCode(PairingCode.generate().typed)
+        XCTAssertTrue(pairings.isTypedCodeComplete)
+        XCTAssertFalse(pairings.pairWithTypedCode())
+        XCTAssertFalse(pairings.pairWithScannedCode(PairingCode.generate().typed))
+    }
+
+    func testAReadableInstallIDCanPairAndShowsNoNote() throws {
+        let (pairings, _) = try pairings([])
+        XCTAssertTrue(pairings.screen.canStartPairing)
+        XCTAssertNil(pairings.screen.status)
+        XCTAssertNil(pairings.storeNote)
+    }
+
+    func testASuccessfulWriteKeepsTheNoteWhileTheInstallIDIsUnreadable() throws {
+        let studio = record("Studio")
+        let store = NoInstallIDStore()
+        try store.savePairing(studio)
+        let pairings = MacPairings(store: store, deviceName: "Jon’s iPad")
+
+        pairings.forget(id: studio.peerID)
+
+        XCTAssertEqual(try store.loadPairings(), [])
+        XCTAssertTrue(pairings.storeFailed)
+        XCTAssertEqual(pairings.storeNote, PairingScreenContent.keychainUnreadable)
     }
 
     func testNothingPairedIsUnpaired() throws {
@@ -99,5 +136,25 @@ final class MacPairingsTests: XCTestCase {
         XCTAssertTrue(pairings.isTypedCodeComplete)
         XCTAssertEqual(pairings.phase, .idle)
         XCTAssertEqual(pairings.closeButtonTitle, "Close")
+    }
+}
+
+private final class NoInstallIDStore: PairingStore {
+    private let records = InMemoryPairingStore(deviceID: UUID())
+
+    func loadPairings() throws -> [PairingRecord] {
+        try records.loadPairings()
+    }
+
+    func savePairing(_ record: PairingRecord) throws {
+        try records.savePairing(record)
+    }
+
+    func deletePairing(peerID: UUID) throws {
+        try records.deletePairing(peerID: peerID)
+    }
+
+    func localDeviceID() throws -> UUID {
+        throw PairingStoreError.keychain(errSecInteractionNotAllowed)
     }
 }

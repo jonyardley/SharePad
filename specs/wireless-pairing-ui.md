@@ -101,7 +101,9 @@ can stream.
 4. **Install ids come from the Keychain on both ends** (`localDeviceID()`, open
    question 10), replacing W1's per-launch Mac id and W3a's
    `identifierForVendor`. The hello's id must equal the id the other side stored
-   at pairing, or `LinkGate` closes the link.
+   at pairing, or `LinkGate` closes the link. If the iPad can't read its id it
+   fails closed: no pairing, no link, and the pill, pairing sheet and Settings say
+   Wi-Fi sharing is off (#228).
 5. **The Mac still says hello first.** It sends its hello once TLS is up, before
    the iPad authenticates. TLS with a pre-shared key already proves the iPad
    holds one of the Mac's keys, and the hello carries only the name and id the

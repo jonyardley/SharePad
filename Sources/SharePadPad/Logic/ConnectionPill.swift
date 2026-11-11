@@ -51,6 +51,8 @@ struct ConnectionPill: Equatable {
         case pairAgain
     }
 
+    static let wirelessOff = "Wi-Fi sharing is off"
+
     let text: String
     let tone: Tone
     let action: Action?
@@ -64,11 +66,14 @@ struct ConnectionPill: Equatable {
     init(
         link: LinkStatus,
         pairing: PairingState = .paired,
+        pairingUnavailable: Bool = false,
         localNetworkDenied: Bool,
         captureDeclined: Bool,
         toolsUnlocated: Bool = false
     ) {
-        if pairing == .unpaired {
+        if pairingUnavailable {
+            self.init(text: Self.wirelessOff, tone: .attention)
+        } else if pairing == .unpaired {
             self.init(text: "Not paired with a Mac", tone: .attention, action: .pair)
         } else if localNetworkDenied {
             self.init(text: "Local network is off", tone: .attention, action: .openSettings)
