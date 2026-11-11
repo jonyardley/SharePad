@@ -16,8 +16,8 @@ struct PopoverView: View {
             statusText
                 .foregroundStyle(.secondary)
 
-            if let hint = statusHint {
-                Text(hint)
+            if let hint = model.statusHint {
+                Text(hintText(hint))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -66,28 +66,22 @@ struct PopoverView: View {
     }
 
     @ViewBuilder private var licenseSection: some View {
-        switch model.entitlement {
+        switch model.licenseStatus {
         case .licensed:
             EmptyView()
         case let .trial(daysLeft):
             licenseRow(status: "Free trial: \(daysLeft) day\(daysLeft == 1 ? "" : "s") left")
-        case .trialExpired:
-            trialExpiredRow
-        }
-    }
-
-    @ViewBuilder private var trialExpiredRow: some View {
-        if model.isTrialOverlayShown {
+        case .paused:
             licenseRow(status: "Sharing paused. Enter your licence key to resume.")
-        } else if let endsAt = model.sessionEndsAt {
+        case let .pausesAt(endsAt):
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 licenseRow(status: "Trial ended. Sharing pauses in "
                     + SessionCountdown.remainingText(until: endsAt, now: context.date) + ".")
             }
-        } else {
+        case let .pausesAfter(minutes):
             licenseRow(
                 status: "Trial ended. Sharing pauses after up to "
-                    + "\(model.sessionLimitMinutes) minutes."
+                    + "\(minutes) minutes."
             )
         }
     }
@@ -99,7 +93,7 @@ struct PopoverView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             HStack {
-                if License.buyURL != nil {
+                if model.canBuy {
                     Button("Buy a Licence") { model.openBuyPage() }
                 }
                 Button("Enter Licence…") { LicenseWindow.present(model: model) }
@@ -222,19 +216,17 @@ struct PopoverView: View {
     }
 
     private var statusText: Text {
-        switch model.state {
+        switch model.statusLine {
         case .checkingPermission: Text("Requesting camera access…")
-        case .permissionDenied: Text("Camera access is off")
-        case .permissionRestricted: Text("Camera access is blocked")
-        case .localNetworkDenied: Text("Local network access is off")
-        case .noDevice: Text("No iPad connected")
-        case .starting(.usb): Text("Connecting…")
-        case .starting(.wireless): Text("Connecting to \(wirelessName) over Wi-Fi…")
-        case .live(.usb): Text(model.currentDeviceName ?? "iPad")
-        case .live(.wireless):
-            Text(model.wirelessStatus.isReconnecting
-                ? "Reconnecting to \(wirelessName)…"
-                : "\(wirelessName) · Wi-Fi")
+        case .cameraOff: Text("Camera access is off")
+        case .cameraBlocked: Text("Camera access is blocked")
+        case .localNetworkOff: Text("Local network access is off")
+        case .noIPad: Text("No iPad connected")
+        case .connecting(.usb): Text("Connecting…")
+        case .connecting(.wireless): Text("Connecting to \(wirelessName) over Wi-Fi…")
+        case .sharingOverCable: Text(model.currentDeviceName ?? "iPad")
+        case .reconnectingOverWiFi: Text("Reconnecting to \(wirelessName)…")
+        case .sharingOverWiFi: Text("\(wirelessName) · Wi-Fi")
         case .failed(.usb): Text("Couldn't connect to your iPad")
         case .failed(.wireless): Text("Couldn't connect to your iPad over Wi-Fi")
         }
@@ -244,29 +236,25 @@ struct PopoverView: View {
         model.wirelessStatus.peer?.name ?? "iPad"
     }
 
-    // A connected-but-locked or not-yet-trusted iPad shows up to discovery but never
-    // starts a session, so it sits in .starting looking stuck (the hint also flashes
-    // briefly on a healthy connect). The app can't tell "locked" from "still trusting".
-    private var statusHint: String? {
-        switch model.state {
-        case .noDevice where model.wirelessStatus.pairingStoreFailed:
+    private func hintText(_ hint: StatusHint) -> String {
+        switch hint {
+        case .pairingStoreFailed:
             "Couldn’t read paired iPads from the Keychain. The cable still works."
-        case .noDevice where model.wirelessStatus.listenerFailed:
+        case .listenerFailed:
             "Wi-Fi sharing couldn't start. SharePad will keep trying. The cable still works."
-        case .noDevice: "Plug your iPad in with its cable to begin."
-        case .starting(.usb): "Unlock your iPad and tap Trust if it asks."
-        case .failed(.usb): "Unlock it, check the cable, then try again."
-        case .permissionDenied:
+        case .plugIn: "Plug your iPad in with its cable to begin."
+        case .unlockAndTrust: "Unlock your iPad and tap Trust if it asks."
+        case .checkCable: "Unlock it, check the cable, then try again."
+        case .cameraOff:
             """
             SharePad sees your iPad through camera access. \
             Turn it on in Privacy & Security › Camera.
             """
-        case .permissionRestricted:
+        case .cameraBlocked:
             "SharePad needs it to see your iPad. Ask whoever manages this Mac."
-        case .localNetworkDenied: "Turn SharePad on under Local Network to share over Wi-Fi."
-        case .live(.wireless) where model.isCameraAccessDenied:
+        case .localNetworkOff: "Turn SharePad on under Local Network to share over Wi-Fi."
+        case .cableNeedsCamera:
             "Sharing over the cable needs camera access."
-        default: nil
         }
     }
 }

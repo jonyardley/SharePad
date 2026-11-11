@@ -43,6 +43,7 @@ final class PadModel {
         ConnectionPill(
             link: linkStatus,
             pairing: pairings.state,
+            pairingUnavailable: !pairings.canPair,
             localNetworkDenied: localNetworkDenied,
             captureDeclined: rules.captureDeclined,
             toolsUnlocated: toolsUnlocated
@@ -68,17 +69,19 @@ final class PadModel {
         @ObservationIgnored private let spike: CaptureSpike?
     #endif
     @ObservationIgnored private let log = Logger(subsystem: "co.sharepad.ipad", category: "model")
-    @ObservationIgnored private lazy var link: StreamLink = PairedLink(
-        identity: pairings.identity,
-        lastMac: preferences.lastMac,
-        pairings: pairings.macs,
-        callbacks: LinkCallbacks(
-            onStatus: { [weak self] status in self?.linkChanged(status) },
-            onLocalNetworkDenied: { [weak self] denied in self?.localNetworkDenied = denied },
-            onPairedEvent: { [weak self] event in self?.pairings.linkEvent(event) },
-            onStats: { [weak self] stats in self?.linkStats(stats) }
+    @ObservationIgnored private lazy var link: StreamLink? = pairings.identity.map { identity in
+        PairedLink(
+            identity: identity,
+            lastMac: preferences.lastMac,
+            pairings: pairings.macs,
+            callbacks: LinkCallbacks(
+                onStatus: { [weak self] status in self?.linkChanged(status) },
+                onLocalNetworkDenied: { [weak self] denied in self?.localNetworkDenied = denied },
+                onPairedEvent: { [weak self] event in self?.pairings.linkEvent(event) },
+                onStats: { [weak self] stats in self?.linkStats(stats) }
+            )
         )
-    )
+    }
 
     init(
         preferences: PadPreferences = PadPreferences(),
@@ -111,7 +114,7 @@ final class PadModel {
         canvas
             .onToolsUnlocated = { [weak self] unlocated in self?.toolsUnlocatedChanged(unlocated) }
         UIApplication.shared.applicationSupportsShakeToEdit = false
-        pairings.onChange = { [weak self] records in self?.link.setPairings(records) }
+        pairings.onChange = { [weak self] records in self?.link?.setPairings(records) }
         isPairingShown = pairings.macs.isEmpty
         captureContext.overlay(
             .pairing,
@@ -211,9 +214,9 @@ final class PadModel {
     private func perform(_ effect: StreamingRules.Effect) {
         switch effect {
         case .startLink:
-            link.start()
+            link?.start()
         case .stopLink:
-            link.stop()
+            link?.stop()
         case .startCapture:
             recorder.start(onFrame: frameSink()) { [weak self] started in
                 self?.apply(started ? .captureStarted : .captureFailed)
@@ -239,8 +242,8 @@ final class PadModel {
                 probe?.captured(frame)
             #endif
             let decision = context.decide(for: frame, at: ProcessInfo.processInfo.systemUptime)
-            if let crop = decision.crop { link.setCanvas(crop) }
-            guard decision.allowed else { return }
+            if let crop = decision.crop { link?.setCanvas(crop) }
+            guard decision.allowed, let link else { return }
             link.submit(
                 pixelBuffer: frame.pixelBuffer,
                 presentationTime: frame.presentationTime,

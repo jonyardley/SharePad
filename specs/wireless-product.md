@@ -690,7 +690,9 @@ Two PRs. **W4a** is Mac only; **W4b** crosses into `SharePadWire` and the iPad a
   the wireless feed is not the hosted one, or the trial overlay covers it, and
   `resume` when that ends. A paused feed stops counting as receiving, so a USB
   restart cannot flip the window back to stale Wi-Fi. On pause the Wi-Fi layer is
-  flushed; on resume the iPad sends a keyframe (decision 2).
+  flushed; on resume the iPad sends a keyframe (decision 2). A *failed* USB restart
+  hands the window to the paused Wi-Fi feed, which resumes; a later successful
+  restart hands it back to the cable (#227).
 - **A dead link is noticed in about 4 s.** TCP keepalive gets an interval and a
   count; a Mac `ping` heartbeat is the fallback if the hardware check shows it is
   not enough.
