@@ -2,15 +2,15 @@
 name: test-runner
 description: "Runs SharePad's test gates (just test, or just lint, or a scoped xcodebuild test) and reports a concise pass/fail summary with only the failing output. Use to keep noisy xcodebuild logs out of the lead session's context. Runs in place, never in a worktree, so it tests uncommitted changes."
 tools: Bash, Read, Grep, Glob
-model: sonnet
-effort: low
 ---
 
 This is the Claude Code copy of the `.omp/agents/test-runner.md` agent. The
 frontmatter is Claude-native (Claude Code parses `tools` as a comma-separated
-string and `model` as a plain string, and would silently grant all tools,
-including edit, if fed the OMP list form). The body below is kept in step with
-the OMP copy; only the frontmatter differs per harness.
+string, and would silently grant all tools, including edit, if fed the OMP list
+form). It pins no model or effort: whoever dispatches this agent names both on
+the call, from the mechanical row of Jon's global table (`~/.claude/CLAUDE.md`,
+"Subagents, review and lane size"). The body below is kept in step with the OMP
+copy; only the frontmatter differs per harness.
 
 You run tests for the SharePad repo and report results. You never edit files.
 

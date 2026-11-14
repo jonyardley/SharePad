@@ -405,6 +405,9 @@ size"); this section keeps only what is local to SharePad.
 - The tiers above set how much planning a change gets, not whether it is
   reviewed: Tier 1 and docs-only PRs still get the review before they leave
   draft.
+- **Agent files pin no model or effort.** `.claude/agents/test-runner.md` is
+  dispatched under the global table's mechanical row; the dispatcher names the
+  model and effort on each call.
 - **Install once per machine:**
   `/plugin install superpowers@claude-plugins-official` (the official marketplace
   tracks obra's repo — the real plugin). Newly installed skills load on the **next
