@@ -381,18 +381,22 @@ If unsure between tiers, go one lighter; drift up if scope expands.
 ### Code review (Superpowers)
 
 Code review runs through the **Superpowers** plugin
-([obra/superpowers](https://github.com/obra/superpowers)) — not by hand.
+([obra/superpowers](https://github.com/obra/superpowers)), not by hand.
+`superpowers:requesting-code-review` is SharePad's own reviewer. Who runs it,
+when, at what model and effort, and when a PR also needs a second reviewer all
+come from Jon's global rules (`~/.claude/CLAUDE.md`, "Subagents, review and lane
+size"); this section keeps only what is local to SharePad.
 
-- **Before merging any PR that contains code** (Tier 2+), run
-  `superpowers:requesting-code-review`. It dispatches a fresh subagent to review
-  the diff against the plan and reports issues by severity. Tell it
-  **"comment-policy violations are Blockers, not Nits"** (see Code Style →
-  Comments).
-- Then run `superpowers:receiving-code-review` to work the findings — reach
-  "I agree" before implementing. Apply Blockers and important findings inline;
-  open a tracked issue for anything deferred and link it in the PR.
-- **Tier 1** trivia (typos, dep bumps, single-line config) and **docs-only** PRs
-  may skip review, but still run `just fmt` / `just lint`.
+- **The builder runs it** once the gates (`just fmt`, `just lint`, `just test`)
+  pass, on every PR before it leaves draft. Tell it **"comment-policy violations
+  are Blockers, not Nits"** (see Code Style, Comments).
+- The builder then runs `superpowers:receiving-code-review` to work the findings
+  (reach "I agree" before implementing), fixing each one or answering it in the
+  PR. Open a tracked issue for anything deferred and link it in the PR.
+- **SharePad's sensitive surfaces**, which always get the global rules' second
+  reviewer: wireless pairing and network trust (pairing store, Keychain install
+  ids, `LinkGate`, `PairedDialCycle`, `ListenerPlan`, TLS keys), licence key
+  validation (`Licensing/`), and entitlements and the permission flow.
 - **Install once per machine:**
   `/plugin install superpowers@claude-plugins-official` (the official marketplace
   tracks obra's repo — the real plugin). Newly installed skills load on the **next
@@ -417,8 +421,9 @@ skip the others.
    feature-branch → PR.
 3. Run `just fmt` before commit and `just lint` before push — locally, not via CI
    roundtrips.
-4. **Before merging a code PR, run the Superpowers code review** (see the Code
-   review section). Don't merge an unreviewed code change.
+4. **Before a PR leaves draft, the builder runs the Superpowers code review** (see
+   the Code review section and Jon's global rules). Don't mark an unreviewed
+   change ready.
 5. For any capture/permission/window change: **verify on the actual iPad in a real
    meeting app** before calling it done (see Testing).
 
