@@ -394,9 +394,17 @@ size"); this section keeps only what is local to SharePad.
   (reach "I agree" before implementing), fixing each one or answering it in the
   PR. Open a tracked issue for anything deferred and link it in the PR.
 - **SharePad's sensitive surfaces**, which always get the global rules' second
-  reviewer: wireless pairing and network trust (pairing store, Keychain install
-  ids, `LinkGate`, `PairedDialCycle`, `ListenerPlan`, TLS keys), licence key
-  validation (`Licensing/`), and entitlements and the permission flow.
+  reviewer: wireless pairing and network trust
+  (`Packages/SharePadWire/Sources/SharePadWire/Pairing/`, including the Keychain
+  install ids in `PairingStore.swift` and `LinkGate`, plus
+  `Rules/PairedDialCycle.swift` and `Rules/ListenerPlan.swift`), licence key
+  validation
+  (`Sources/SharePad/Licensing/`), the entitlements files
+  (`Sources/*/*.entitlements`) and the permission flow
+  (`Sources/SharePad/Support/Permissions.swift`).
+- The tiers above set how much planning a change gets, not whether it is
+  reviewed: Tier 1 and docs-only PRs still get the review before they leave
+  draft.
 - **Install once per machine:**
   `/plugin install superpowers@claude-plugins-official` (the official marketplace
   tracks obra's repo — the real plugin). Newly installed skills load on the **next
