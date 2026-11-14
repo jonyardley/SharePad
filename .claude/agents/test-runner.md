@@ -3,6 +3,7 @@ name: test-runner
 description: "Runs SharePad's test gates (just test, or just lint, or a scoped xcodebuild test) and reports a concise pass/fail summary with only the failing output. Use to keep noisy xcodebuild logs out of the lead session's context. Runs in place, never in a worktree, so it tests uncommitted changes."
 tools: Bash, Read, Grep, Glob
 model: sonnet
+effort: low
 ---
 
 This is the Claude Code copy of the `.omp/agents/test-runner.md` agent. The
