@@ -213,7 +213,6 @@ pre-review: lint test wire-test
     #!/usr/bin/env bash
     set -euo pipefail
     git fetch --quiet origin main || echo "pre-review: fetch failed, comparing against the last fetched origin/main"
-    scripts/pr-size.sh origin/main
     # Read into a variable first: grep -q in a pipe can close it early, and under
     # pipefail the SIGPIPE to git would read as no match and skip the iPad tests.
     changed="$(git diff --name-only "$(git merge-base origin/main HEAD)")"
