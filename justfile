@@ -217,7 +217,7 @@ pre-review: lint test wire-test
     # Read into a variable first: grep -q in a pipe can close it early, and under
     # pipefail the SIGPIPE to git would read as no match and skip the iPad tests.
     changed="$(git diff --name-only "$(git merge-base origin/main HEAD)")"
-    if grep -qE '^(Sources/SharePadPad|Tests/SharePadPad|Packages)/|^project[.]yml$' <<<"$changed"; then
+    if grep -qE '^(Sources/SharePadPad|Tests/SharePadPadTests|Packages)/|^project[.]yml$' <<<"$changed"; then
         just _pad-test-only
     fi
     echo "pre-review OK"
