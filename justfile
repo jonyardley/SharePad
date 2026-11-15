@@ -208,7 +208,8 @@ verify-release:
     echo "verify-release OK"
 
 # the one command to pass before code review (CLAUDE.md, Code review); it
-# compares against a fresh origin/main and counts uncommitted edits too
+# compares against a fresh origin/main, uncommitted edits included, to decide
+# whether the iPad tests run
 pre-review: lint test wire-test
     #!/usr/bin/env bash
     set -euo pipefail
