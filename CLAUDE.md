@@ -81,7 +81,7 @@ just pad-probe NAME SOURCE  # Debug iPad app on a capture source (hierarchy, lay
 just pad-probe-pull NAME    # copy the probe CSVs to spike/canvas-render/runs (specs/canvas-render-spike.md)
 just fmt           # swiftformat .   (must pass before commit)
 just lint          # swiftlint + swiftformat --lint (must pass before push)
-just pre-review    # lint, Mac and wire tests, PR size count, iPad tests if touched (must pass before review)
+just pre-review    # lint, Mac and wire tests, iPad tests if touched (must pass before review)
 just scan          # gitleaks secret scan over full history (same check CI runs)
 just downloads     # GitHub Release download counts (DMG installs + appcast update-checks)
 just appcast-stats # active installs + version adoption from the appcast Worker (Analytics Engine)
@@ -386,17 +386,13 @@ Code review runs through the **Superpowers** plugin
 `superpowers:requesting-code-review` is SharePad's own reviewer. Who runs it,
 when, at what model and effort, and when a PR also needs a second reviewer all
 come from Jon's global rules (`~/.claude/CLAUDE.md`, "Subagents, review and lane
-size" and "Speed and reliability", which also set the PR size limit); this
-section keeps only what is local to SharePad.
+size"); this section keeps only what is local to SharePad.
 
 - **The gate is `just pre-review`**: it must pass before the reviewer runs. Tell
   the reviewer **"comment-policy violations are Blockers, not Nits"** (see Code
   Style, Comments).
 - The Fix agent works the findings with `superpowers:receiving-code-review`.
   Open a tracked issue for anything deferred and link it in the PR.
-- **PR size**: `.github/workflows/pr-size.yml` fails a PR over 800 added lines
-  without a "## Size" section. It leaves out lock files, fixtures, the rendered
-  `docs/*.html` pages and spike probe runs (`scripts/pr-size.sh`).
 - **Self-hosted runner**: `testflight.yml` runs on the `sharepad-m4` Mac.
 - **SharePad's sensitive surfaces**, which always get the global rules' second
   reviewer: wireless pairing and network trust
