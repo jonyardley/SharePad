@@ -70,7 +70,10 @@ pad-build: gen
     xcodebuild -project SharePad.xcodeproj -scheme SharePadPad -configuration Debug -destination "platform=iOS Simulator,id=$SIM" -derivedDataPath .build/pad build
 
 # run the iPad app's unit tests on the iOS Simulator
-pad-test: gen
+pad-test: gen _pad-test-only
+
+# the iPad tests without regenerating the project, for recipes that already ran gen
+_pad-test-only:
     #!/usr/bin/env bash
     set -euo pipefail
     SIM="$(just _pad-simulator)"
@@ -204,14 +207,18 @@ verify-release:
     grep -q 'sparkle:edSignature' "$APPCAST" || { echo "appcast missing EdDSA signature" >&2; exit 1; }
     echo "verify-release OK"
 
-# the checks to pass before code review: lint, Mac and wire tests, the PR size
-# count, and the iPad tests when the change touches the iPad app or shared code
+# the one command to pass before code review (CLAUDE.md, Code review); it
+# compares against a fresh origin/main and counts uncommitted edits too
 pre-review: lint test wire-test
     #!/usr/bin/env bash
     set -euo pipefail
+    git fetch --quiet origin main || echo "pre-review: fetch failed, comparing against the last fetched origin/main"
     scripts/pr-size.sh origin/main
-    if git diff --name-only origin/main...HEAD | grep -qE '^(Sources/SharePadPad|Tests/SharePadPad|Packages)/|^project[.]yml$'; then
-        just pad-test
+    # Read into a variable first: grep -q in a pipe can close it early, and under
+    # pipefail the SIGPIPE to git would read as no match and skip the iPad tests.
+    changed="$(git diff --name-only "$(git merge-base origin/main HEAD)")"
+    if grep -qE '^(Sources/SharePadPad|Tests/SharePadPad|Packages)/|^project[.]yml$' <<<"$changed"; then
+        just _pad-test-only
     fi
     echo "pre-review OK"
 

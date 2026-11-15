@@ -1,6 +1,6 @@
 name: PR size
 
-# Fails a pull request over 800 added lines (lock, fixture and generated files
+# Fails a pull request over 800 added lines (lock files and generated docs pages
 # left out) unless its description has a "## Size" section saying why.
 # "edited" re-runs it when the description changes.
 on:
