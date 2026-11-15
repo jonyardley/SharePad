@@ -1,0 +1,34 @@
+name: PR size
+
+# Fails a pull request over 800 added lines (lock files and generated docs pages
+# left out) unless its description has a "## Size" section saying why.
+# "edited" re-runs it when the description changes.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-size-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  size:
+    name: PR size
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      # The description goes through env, never inline, so its text cannot run.
+      - name: Count added lines
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash scripts/pr-size.sh "$BASE_SHA" "$HEAD_SHA"
