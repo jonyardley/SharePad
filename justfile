@@ -204,6 +204,17 @@ verify-release:
     grep -q 'sparkle:edSignature' "$APPCAST" || { echo "appcast missing EdDSA signature" >&2; exit 1; }
     echo "verify-release OK"
 
+# the checks to pass before code review: lint, Mac and wire tests, the PR size
+# count, and the iPad tests when the change touches the iPad app or shared code
+pre-review: lint test wire-test
+    #!/usr/bin/env bash
+    set -euo pipefail
+    scripts/pr-size.sh origin/main
+    if git diff --name-only origin/main...HEAD | grep -qE '^(Sources/SharePadPad|Tests/SharePadPad|Packages)/|^project[.]yml$'; then
+        just pad-test
+    fi
+    echo "pre-review OK"
+
 # scan full git history for committed secrets (same check CI runs)
 scan:
     gitleaks git --config .gitleaks.toml --redact --no-banner --verbose .
