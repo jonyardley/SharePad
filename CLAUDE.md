@@ -72,6 +72,7 @@ just pad-probe NAME SOURCE  # Debug iPad app on a capture source (hierarchy, lay
 just pad-probe-pull NAME    # copy the probe CSVs to spike/canvas-render/runs (specs/canvas-render-spike.md)
 just fmt           # swiftformat .   (must pass before commit)
 just lint          # swiftlint + swiftformat --lint (must pass before push)
+just pre-review    # lint, Mac and wire tests, iPad tests if touched (must pass before review)
 just scan          # gitleaks secret scan over full history (same check CI runs)
 just downloads     # GitHub Release download counts (DMG installs + appcast update-checks)
 just appcast-stats # active installs + version adoption from the appcast Worker (Analytics Engine)
@@ -378,10 +379,11 @@ also needs a second reviewer all come from Jon's global rules
 (`~/.claude/CLAUDE.md`, "Subagents, review and lane size"); this section keeps
 only what is local to SharePad.
 
-- **The builder runs it** once the gates (`just fmt`, `just lint`, `just test`)
-  pass, on every PR before it leaves draft. Tell it **"comment-policy violations
-  are Blockers, not Nits"** (see Code Style, Comments).
+- **The gate is `just pre-review`**: it must pass before the reviewer runs. Tell
+  the reviewer **"comment-policy violations are Blockers, not Nits"** (see Code
+  Style, Comments).
 - Open a tracked issue for anything deferred and link it in the PR.
+- **Self-hosted runner**: `testflight.yml` runs on the `sharepad-m4` Mac.
 - **SharePad's sensitive surfaces**, which always get the global rules' second
   reviewer: wireless pairing and network trust
   (`Packages/SharePadWire/Sources/SharePadWire/Pairing/`, including the Keychain
@@ -394,6 +396,10 @@ only what is local to SharePad.
 - The tiers above set how much planning a change gets, not whether it is
   reviewed: Tier 1 and docs-only PRs still get the review before they leave
   draft.
+- **Agent files pin no model or effort.** Claude Code agents in
+  `.claude/agents/` (today only `test-runner.md`, a mechanical row agent) leave
+  both out of their frontmatter; whoever dispatches one names them on the call,
+  from the global table.
 
 ## Always
 
@@ -402,8 +408,8 @@ only what is local to SharePad.
    conflict before coding.
 2. Work on a feature branch, never `main` — `main` is seeded; all work is
    feature-branch → PR.
-3. Run `just fmt` before commit and `just lint` before push — locally, not via CI
-   roundtrips.
+3. Run `just fmt` before commit, `just lint` before push and `just pre-review`
+   before review, locally, not via CI roundtrips.
 4. **Before a PR leaves draft, the builder runs the code review** (see
    the Code review section and Jon's global rules). Don't mark an unreviewed
    change ready.
