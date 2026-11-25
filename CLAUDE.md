@@ -1,9 +1,12 @@
 # SharePad — Development Guidelines
 
-> For the current release, check the top of `CHANGELOG.md` and
-> `git tag --sort=-creatordate | head` rather than trusting a date here. The
-> design spec (`DESIGN.md`) is the source of truth for *what* we're building and
-> *why*; this file is *how* we build it. Read `DESIGN.md` first.
+> The current public release is the one `gh release list --limit 3` marks
+> Latest, or the newest `v*` tag (`git tag -l 'v*' --sort=-v:refname | head -1`).
+> The top section of `CHANGELOG.md` may not be released yet, and `review-*` tags
+> are App Review pre-releases. The design spec (`DESIGN.md`) is the source of
+> truth for *what* we're building and *why*; this file is *how* we build it.
+> Read `DESIGN.md` first. The module map below (Project Structure) is the actual layout;
+> `DESIGN.md` §8 is headed as the target.
 
 ## Project Overview
 
@@ -231,7 +234,7 @@ before touching capture.
 - **Muxed input → surprise mic prompt.** Adding the muxed input naively triggers a
   Microphone TCC dialog. Use `addInputWithNoConnections` + wire only the video
   connection (Non-Negotiable 5).
-- **App Sandbox breaks the opt-in.** Ship un-sandboxed (v1). Enabling the sandbox =
+- **App Sandbox breaks the opt-in.** Ship un-sandboxed. Enabling the sandbox =
   empty device list with no obvious cause.
 - **The appcast feed is the `appcast.sharepad.co` Worker, not gh-pages directly.**
   `SUFeedURL` points at the logging-proxy Worker (`specs/appcast-analytics.md`); it
@@ -373,7 +376,9 @@ If unsure between tiers, go one lighter; drift up if scope expands.
 
 ### Code review
 
-The `requesting-code-review` skill is SharePad's reviewer. Who runs it, when, at
+The `requesting-code-review` skill is SharePad's reviewer. It is a user-level
+skill (`~/.claude/skills/`), not part of this repo; where it is missing, the
+global rules' fallback applies (`/code-review` at medium). Who runs it, when, at
 what model and effort, how many rounds, who fixes the findings, and when a PR
 also needs a second reviewer all come from Jon's global rules
 (`~/.claude/CLAUDE.md`, "Subagents, review and lane size"); this section keeps
