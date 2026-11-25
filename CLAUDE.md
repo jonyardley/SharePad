@@ -1,18 +1,12 @@
 # SharePad — Development Guidelines
 
-> Last reviewed: 2026-06-16.
->
-> **Status: Phases 0–5 all shipped** (incl. #7 window-frame persistence and #10
-> popover live thumbnail + device picker) **plus the 7-day trial + Ed25519
-> licence-key gate** (app + worker + Stripe/Cloudflare deployment, live 2026-06-14
-> — see `CHANGELOG.md` 1.1.0). **v1.2.0 is the current public release; the product
-> is feature-complete and now in the marketing/launch phase.** The full pipeline
-> exists — CMIO opt-in, `.muxed` capture, borderless aspect-locked share window,
-> popover, automatic connect/disconnect/wake lifecycle, and the trial-gated in-app
-> purchase flow. What remains is publicity, maintenance, and follow-ups. The module
-> map below is the *actual* layout. The design spec is the source of truth for
-> *what* we're building and *why*; this file is *how* we build it. Read `DESIGN.md`
-> first.
+> The current public release is the one `gh release list --limit 3` marks
+> Latest, or the newest `v*` tag (`git tag -l 'v*' --sort=-v:refname | head -1`).
+> The top section of `CHANGELOG.md` may not be released yet, and `review-*` tags
+> are App Review pre-releases. The design spec (`DESIGN.md`) is the source of
+> truth for *what* we're building and *why*; this file is *how* we build it.
+> Read `DESIGN.md` first. The module map below (Project Structure) is the actual layout;
+> `DESIGN.md` §8 is headed as the target.
 
 ## Project Overview
 
@@ -146,9 +140,10 @@ capture/UI boundary blurs.
 
 - **Camera** only: `NSCameraUsageDescription` + `AVCaptureDevice.requestAccess(for: .video)`.
   Microphone is deliberately avoided (Non-Negotiable 5).
-- **No App Sandbox in v1** — it blocks the CMIO screen-capture opt-in. The app
-  ships un-sandboxed for personal use; this is why distribution is deferred. Don't
-  enable the sandbox without revisiting `DESIGN.md` §6 caveats.
+- **No App Sandbox**, because it blocks the CMIO screen-capture opt-in. That is
+  why the Mac app is sold as a Developer ID notarized direct download rather than
+  through the App Store (`specs/distribution.md`). Don't enable the sandbox
+  without revisiting `DESIGN.md` §6 caveats.
 
 ## Design System
 
@@ -239,7 +234,7 @@ before touching capture.
 - **Muxed input → surprise mic prompt.** Adding the muxed input naively triggers a
   Microphone TCC dialog. Use `addInputWithNoConnections` + wire only the video
   connection (Non-Negotiable 5).
-- **App Sandbox breaks the opt-in.** Ship un-sandboxed (v1). Enabling the sandbox =
+- **App Sandbox breaks the opt-in.** Ship un-sandboxed. Enabling the sandbox =
   empty device list with no obvious cause.
 - **The appcast feed is the `appcast.sharepad.co` Worker, not gh-pages directly.**
   `SUFeedURL` points at the logging-proxy Worker (`specs/appcast-analytics.md`); it
@@ -379,20 +374,20 @@ load-bearing, easy-to-silently-break parts.
 ### Decision rule
 If unsure between tiers, go one lighter; drift up if scope expands.
 
-### Code review (Superpowers)
+### Code review
 
-Code review runs through the **Superpowers** plugin
-([obra/superpowers](https://github.com/obra/superpowers)), not by hand.
-`superpowers:requesting-code-review` is SharePad's own reviewer. Who runs it,
-when, at what model and effort, and when a PR also needs a second reviewer all
-come from Jon's global rules (`~/.claude/CLAUDE.md`, "Subagents, review and lane
-size"); this section keeps only what is local to SharePad.
+The `requesting-code-review` skill is SharePad's reviewer. It is a user-level
+skill (`~/.claude/skills/`), not part of this repo; where it is missing, the
+global rules' fallback applies (`/code-review` at medium). Who runs it, when, at
+what model and effort, how many rounds, who fixes the findings, and when a PR
+also needs a second reviewer all come from Jon's global rules
+(`~/.claude/CLAUDE.md`, "Subagents, review and lane size"); this section keeps
+only what is local to SharePad.
 
 - **The gate is `just pre-review`**: it must pass before the reviewer runs. Tell
   the reviewer **"comment-policy violations are Blockers, not Nits"** (see Code
   Style, Comments).
-- The Fix agent works the findings with `superpowers:receiving-code-review`.
-  Open a tracked issue for anything deferred and link it in the PR.
+- Open a tracked issue for anything deferred and link it in the PR.
 - **Self-hosted runner**: `testflight.yml` runs on the `sharepad-m4` Mac.
 - **SharePad's sensitive surfaces**, which always get the global rules' second
   reviewer: wireless pairing and network trust
@@ -410,20 +405,6 @@ size"); this section keeps only what is local to SharePad.
   `.claude/agents/` (today only `test-runner.md`, a mechanical row agent) leave
   both out of their frontmatter; whoever dispatches one names them on the call,
   from the global table.
-- **Install once per machine:**
-  `/plugin install superpowers@claude-plugins-official` (the official marketplace
-  tracks obra's repo — the real plugin). Newly installed skills load on the **next
-  session**; no other setup. If `/plugin` isn't available in your environment,
-  install via your plugin manager and start a fresh session.
-
-**Scope it to review (and optionally TDD) — not the whole methodology.**
-Superpowers also ships auto-triggering skills for brainstorming, writing-plans,
-subagent-driven-development, executing-plans, and finishing-a-development-branch.
-Those collapse the tier workflow above into one-size-fits-all ceremony — **don't
-let them drive.** Use `requesting-code-review` / `receiving-code-review`
-deliberately; `superpowers:test-driven-development` is welcome for the pure-logic
-state reducer (non-UI Tier 2+). When invoking one Superpowers skill, tell it to
-skip the others.
 
 ## Always
 
@@ -434,7 +415,7 @@ skip the others.
    feature-branch → PR.
 3. Run `just fmt` before commit, `just lint` before push and `just pre-review`
    before review, locally, not via CI roundtrips.
-4. **Before a PR leaves draft, the builder runs the Superpowers code review** (see
+4. **Before a PR leaves draft, the builder runs the code review** (see
    the Code review section and Jon's global rules). Don't mark an unreviewed
    change ready.
 5. For any capture/permission/window change: **verify on the actual iPad in a real

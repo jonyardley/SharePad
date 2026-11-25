@@ -268,8 +268,9 @@ This is the part the earlier research under-specified.
 ### Caveats
 
 - **No App Sandbox in v1.** The CMIO opt-in / screen-capture-device access is
-  restricted under the sandbox. Personal build ships un-sandboxed — another reason
-  distribution is deferred.
+  restricted under the sandbox. The app ships un-sandboxed, so it is sold as a
+  Developer ID notarized direct download (DMG) with Sparkle updates, not through
+  the App Store (`specs/distribution.md`).
 - **iPad must be unlocked** and "Trust This Computer" tapped once; a locked iPad
   shows black.
 - **Wake from sleep** may interrupt the session — observe
