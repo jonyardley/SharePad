@@ -12,8 +12,8 @@
 A macOS **menu-bar app** that shows a USB-connected iPad in a clean window you
 can share in any video call. Draw in your favourite app and everyone sees it full
 size. Connect the iPad to your Mac and its window is already waiting in the
-"Share window" list of Zoom, Meet and Teams. **Share your thinking, not just your
-screen**, without the per-call QuickTime faff.
+"Share window" list of Zoom, Meet and Teams. **Draw on your iPad. Share it in any
+call.** No per-call QuickTime faff.
 
 <p align="center">
   <img src="docs/assets/popover.png" alt="The SharePad menu-bar popover: a live preview of the connected iPad, the device name, a Hide Window button, and toggles for show window on connect, keep window on top, and launch at login" width="280">

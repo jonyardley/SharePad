@@ -12,7 +12,7 @@ Honest, plain, and understated — confident without hype. It explains *how it
 actually works* and trusts the reader. Section headings are short statements, not
 slogans. Examples straight from the live site:
 
-- "Share your thinking, not just your screen."
+- "Draw on your iPad. Share it in any call."
 - "Turn the iPad into a live whiteboard using your favourite drawing or writing
   app. Connect it to your Mac and share in any call, without the faff."
 - "Ready the moment you plug in." · "Nothing leaves your Mac." · "How it ships,
@@ -31,7 +31,7 @@ slogans. Examples straight from the live site:
 Reproduced here as the reference. Edit the HTML for any change; keep this in step.
 
 - **Title:** SharePad: Share your iPad on any call, in an instant
-- **Hero:** Share your thinking, not just your screen.
+- **Hero:** Draw on your iPad. Share it in any call.
   - Turn the iPad into a live whiteboard using your favourite drawing or writing
     app. Connect it to your Mac and share in any call, without the faff.
   - CTA pair: **Download — free for 7 days** and **Buy a licence — £2.99**.
@@ -85,7 +85,7 @@ not rewritten, in the same voice):
   name and a support email.
 
 ### Product description (checkout — already live, on voice)
-Share your thinking, not just your screen. SharePad turns your iPad into a live
+Draw on your iPad. Share it in any call. SharePad turns your iPad into a live
 whiteboard you can share in any call. Connect to your Mac over USB, and a clean
 window opens automatically. Select from the "Share window" list in Zoom, Meet or
 Teams and your favourite drawing app is ready to share. No mid-call faff. A
