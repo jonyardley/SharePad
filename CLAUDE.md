@@ -186,8 +186,9 @@ Traps and the design system live in `.claude/rules/`:
 - `design-system.md`: spacing, colour and status item (both apps' `UI/`).
 
 They load when a session whose folder is the worktree opens a matching file
-with the Read tool, and usually for its helpers. A session in main reading a
-worktree's files gets none, no helper can count on them, and a shell read
-loads none: then read them by hand. Every rule binds either way.
+with the Read tool. A session in main reading a worktree's files gets none,
+and a shell read loads none: then read them by hand. Helpers usually get them
+but can't count on it, so a brief that relies on a trap names its rule file.
+Every rule binds either way.
 
 Release signing and notarisation are env-driven: `specs/distribution.md`.

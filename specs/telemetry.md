@@ -19,8 +19,8 @@ is involved.
   machine" bar the Sparkle update check. Any telemetry changes that promise, so it
   must be **genuinely opt-in (default off)**, disclosed, and anonymous. This is the
   load-bearing decision: default-on would contradict a customer-facing commitment.
-- **No new third-party dependencies** (CLAUDE.md, Code style). No Sentry, no crash-SDK. First-party
-  frameworks only.
+- **No new third-party dependencies** (CLAUDE.md, Code style). No Sentry, no
+  crash-SDK. First-party frameworks only.
 - **No sandbox** today, so MetricKit has no entitlement blocker.
 
 ## Approach

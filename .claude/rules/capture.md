@@ -6,6 +6,9 @@ paths:
   - "Sources/SharePad/State/AppState.swift"
   - "Sources/SharePad/AppModel.swift"
   - "Sources/SharePad/App.swift"
+  - "Sources/SharePad/Updater/**"
+  - "Sources/SharePad/Support/Permissions.swift"
+  - "Tests/SharePadTests/AppModelConnectTests.swift"
   - "Tests/SharePadTests/WindowSharingTests.swift"
   - "Tests/SharePadTests/ShareWindowLayerSwapTests.swift"
 ---

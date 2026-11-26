@@ -17,6 +17,7 @@ paths:
   - "Tests/SharePadTests/AppModelWireless*.swift"
   - "Tests/SharePadTests/LocalNetworkProbeTests.swift"
   - "project.yml"
+  - "justfile"
 ---
 
 # Wireless and pairing

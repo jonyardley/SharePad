@@ -3,6 +3,7 @@ paths:
   - "Sources/SharePad/Licensing/**"
   - "Sources/SharePad/Updater/**"
   - "Sources/SharePad/UI/LicenseWindow.swift"
+  - "Packages/SharePadWire/Sources/SharePadWire/Pairing/PairingStore.swift"
   - "workers/licenses/**"
   - "workers/purchase-email/**"
   - "workers/appcast/**"

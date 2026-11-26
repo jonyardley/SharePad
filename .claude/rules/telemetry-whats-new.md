@@ -9,6 +9,7 @@ paths:
   - "Sources/SharePad/UI/PopoverView.swift"
   - "Sources/SharePad/AppModel.swift"
   - "Sources/SharePad/App.swift"
+  - "Sources/SharePad/Updater/**"
   - "Tests/SharePadTests/AppModelDiagnosticsTests.swift"
   - "Tests/SharePadTests/WhatsNewTests.swift"
   - "Tests/SharePadTests/AppModelWhatsNewTests.swift"

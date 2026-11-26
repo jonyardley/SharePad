@@ -9,9 +9,10 @@
 
 # Prewalk hands the session to a cheaper model at the first edit after any todo
 # call. It cannot tell a licence-key change from a copy tweak, so in this repo it
-# inverts the domain-sensitivity override in CLAUDE.md: capture pipeline, CMIO
-# opt-in, permissions, entitlements, Ed25519 licensing and the Sparkle appcast
-# are exactly the surfaces that must go UP a tier, never down. Arm it deliberately
+# inverts the Specs rule and the sensitive surfaces under Code review in
+# CLAUDE.md: capture pipeline, CMIO opt-in, permissions, entitlements, Ed25519
+# licensing and the Sparkle appcast are exactly the surfaces that must get MORE
+# planning and review, never less. Arm it deliberately
 # per session when executing a finished plan instead:
 #   omp --prewalk-into anthropic/claude-sonnet-5:xhigh
 prewalk:
@@ -30,7 +31,7 @@ modelRoles:
   # every install on the auto-updater). `slow` sits one keystroke from the model
   # switcher via the default cycleOrder.
   slow: anthropic/claude-fable-5:max
-  # Conventional Tier 2 fan-out writers on non-sensitive surfaces.
+  # Conventional plan-level fan-out writers on non-sensitive surfaces.
   task: anthropic/claude-sonnet-5:xhigh
   # The reviewer is never weaker than the writer. Costs nothing until
   # advisor.enabled or --advisor; pair it on capture/licensing/appcast work,

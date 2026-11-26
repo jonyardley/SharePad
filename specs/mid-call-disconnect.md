@@ -38,8 +38,8 @@ because "the share just dropped" is an event, not a state the app rests in.
 
 ## Key decisions
 
-- Plan only, no spec: a new control following existing patterns, with no
-  permission or entitlement change.
+- Plan-level change (no spec required): a new control following existing
+  patterns, with no permission or entitlement change.
 - The false-positive guard is structural: only a teardown that interrupts a *visible*
   share signals; intentional unplug while idle is silent.
 

@@ -17,7 +17,8 @@ chosen.
 
 The two halves differ in risk and are independently shippable:
 
-- **Thumbnail** = the one unresolved technical risk in the design (§5.2).
+- **Thumbnail** = the one unresolved technical risk in the design (§5.2). It
+  is the part that needs this spec.
 - **Picker** = pure device-selection logic + a `Picker`. Lower risk.
 
 ## The crux (thumbnail)
