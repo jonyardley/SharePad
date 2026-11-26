@@ -18,8 +18,10 @@
   `ED25519_PRIVATE_KEY=<from your password manager> node scripts/mint-key.mjs appreview@sharepad.co`.
   The repo is public: the key goes into App Store Connect only, never here.
 - **A TestFlight build with the full-bleed icon:** `just pad-upload`, or the
-  **TestFlight (iPad)** workflow. Check the icon on your iPad's home screen: no
-  second rounded edge inside the corners.
+  **TestFlight (iPad)** workflow. Build it from main at #266 or later, so it has
+  the "Screen recording stopped" and "Wi-Fi sharing is off" pills the review
+  notes describe. Check the icon on your iPad's home screen: no second rounded
+  edge inside the corners.
 - **The demo video** (§5) and **screenshots** (§6).
 
 ## 2. App Store Connect, in order
@@ -54,39 +56,39 @@ the listing may not carry calls to action to buy elsewhere (3.1.1(a)), so it
 names the Mac app plainly and never says buy, free, trial, price or licence.
 Other companies' app names stay out of the keywords (guideline 2.3.7).
 
-**Name** (30 max): `SharePad`
-If the name is taken: `SharePad: Draw on Your Mac`
+**Name** (30 max, 8 used): `SharePad`
+If the name is taken (26 used): `SharePad: Draw on Your Mac`
 
-**Subtitle** (30 max): `Draw on your Mac over Wi-Fi`
+**Subtitle** (30 max, 27 used): `Draw on your Mac over Wi-Fi`
 
-**Promotional text** (170 max):
+**Promotional text** (170 max, 121 used):
 ```
-Draw on your iPad and show it in any video call, full size and live. Pair with your Mac once, then just open the app and draw.
+Draw on your iPad and show it in any video call, full size and live. Pair with your Mac once, then open the app and draw.
 ```
 
-**Keywords** (100 bytes max, comma separated, no spaces after commas):
+**Keywords** (100 bytes max, 95 used, comma separated, no spaces after commas):
 ```
 whiteboard,drawing,sketch,pencil,screen share,video call,teaching,tutor,diagram,canvas,wireless
 ```
 
-**Description** (4000 max):
+**Description** (4000 max, 1195 used):
 ```
 Requires SharePad for Mac.
 
-Draw on your iPad and show it in your video call at full size, without a cable. SharePad turns your iPad into a live whiteboard for your Mac: what you draw appears in a clean window on your Mac, ready to pick in any call's "Share window" list.
+Draw on your iPad and show it in your video call at full size, without a cable. What you draw appears in a clean window on your Mac, ready to pick in any call's "Share window" list.
 
 Pair once
-On your Mac, click the SharePad icon in the menu bar and choose Pair an iPad. Scan the code with your iPad. From then on, open SharePad on your iPad and your drawing appears on your Mac whenever both are on the same Wi-Fi.
+On your Mac, click the SharePad icon in the menu bar and choose Pair an iPad…, then scan the code with your iPad. From then on, open SharePad on your iPad and your drawing appears on your Mac whenever both are on the same Wi-Fi.
 
 Only your drawing
-Your Mac shows only the canvas. The tool palette, menus and settings never appear in your call, so it sees a clean page.
+Your Mac shows the canvas and nothing else. The tool palette, menus and settings stay on your iPad and never appear in your call.
 
 Made for drawing live
 - Apple Pencil and finger drawing with the familiar iPad tools
 - Plain, grid or dot paper, in light or dark
-- Save or share your drawing as an image or a PDF
+- Share your drawing as an image or a PDF, or save it to Photos or Files
 
-Private by design
+Private
 Your drawing goes from your iPad to your paired Mac over your own network, encrypted, and nowhere else. There's no account and no server in between, and the app collects no data.
 
 Good to know
@@ -96,28 +98,29 @@ Good to know
 
 ## 4. Review notes
 
-Paste into **App Review Information, Notes** (4000 max). Fill the two blanks.
+Paste into **App Review Information, Notes** (4000 max, 3258 used with
+the blanks unfilled). Fill the two blanks.
 
 ```
-SharePad for iPad is a companion to SharePad for Mac, a menu-bar app that shows an iPad drawing in a window on the Mac so it can be shared in a video call (Zoom, Google Meet and so on). The iPad app streams its own drawing canvas to a paired Mac over the local network. While no Mac is paired, the app opens its pairing sheet at launch. Without a paired Mac, the app is a drawing canvas with a pill that reads "Not paired with a Mac".
+SharePad for iPad is a companion to SharePad for Mac, a menu-bar app that shows an iPad drawing in a window on the Mac so it can be shared in a video call (Zoom, Google Meet and so on). The iPad app streams its own drawing canvas to a paired Mac over the local network. While no Mac is paired, the app opens its pairing sheet at launch; close it and you have a drawing canvas with a pill at the top that reads "Not paired with a Mac".
 
 A demo video of the full flow is attached.
 
 TO TRY IT
-1. Download the Mac app: https://github.com/jonyardley/SharePad/releases/download/review-1.3.0/SharePad.dmg . It runs on macOS 14 or later and starts a 7-day trial on first launch. If the trial has ended on your Mac, click the SharePad icon in the menu bar and enter this licence: email <EMAIL>, key <KEY>
+1. Download the Mac app: https://github.com/jonyardley/SharePad/releases/download/review-1.3.0/SharePad.dmg . It runs on macOS 14 or later and starts a 7-day trial on first launch. If the trial has ended on your Mac, click the SharePad icon in the menu bar, click Enter Licence…, type email <EMAIL> and key <KEY>, then click Activate.
 2. Put the Mac and iPad on the same Wi-Fi network. Networks that block devices from seeing each other (some guest and corporate Wi-Fi) will stop pairing.
-3. On the Mac, click the SharePad icon in the menu bar, then Pair an iPad. A window shows a QR code and a typed code.
-4. On the iPad, open SharePad and allow local network access when asked. While no Mac is paired the pairing sheet opens by itself; otherwise tap "Pair…" on the pill at the top. Tap Scan Code, allow the camera and scan the code, or tap Type the code instead. When the Mac connects, iPadOS asks to record the screen: tap Allow.
+3. On the Mac, click the SharePad icon in the menu bar, then Pair an iPad… under Wireless. A window shows a QR code and a typed code, which expires after 5 minutes.
+4. On the iPad, open SharePad and allow local network access when asked. While no Mac is paired the "Pair with your Mac" sheet opens by itself; otherwise tap "Pair…" on the pill at the top. Tap Scan Code, allow the camera and scan the code, or tap Type the code instead, type it and tap Pair. When the sheet says "Paired with" and your Mac's name, tap Done. When the Mac connects, iPadOS asks to record the screen: tap Allow. The pill then reads "Live on" and your Mac's name.
 5. Draw on the iPad. The drawing appears in the SharePad window on the Mac. Open any video call app on the Mac and share that window to see what the other people in the call see.
 
 PERMISSIONS
-- Screen recording: each time SharePad connects to your Mac, iPadOS asks whether SharePad may record the screen. Nothing is recorded until a paired Mac connects. This is ReplayKit in-app capture: the whole app screen is encoded and sent to the paired Mac, which shows only the canvas area and crops out the tool palette. While a sheet or menu covers the canvas, the app holds the stream and sends no picture. Recording stops when the app goes to the background.
-- Local network: to find the paired Mac over Bonjour.
+- Screen recording: each time SharePad connects to your Mac, iPadOS asks whether SharePad may record the screen. Nothing is recorded until a paired Mac connects. This is ReplayKit in-app capture: the whole app screen is encoded and sent to the paired Mac, which shows only the canvas area and crops out the tool palette. While a sheet or menu covers the canvas, the app holds the stream and sends no picture. Recording stops when the app goes to the background. If you decline, the pill reads "Screen recording not allowed"; if iPadOS stops the recording, it reads "Screen recording stopped". Either way, tap Try Again on the pill to be asked again.
+- Local network: to find the paired Mac over Bonjour. If it is off, the pill reads "Local network is off" with a Settings button.
 - Camera: only to scan the pairing code. Typing the code works without it.
 - Photos: only when you save a drawing to Photos.
 
 DATA
-The app collects no data. There is no account, no analytics and no server: the drawing goes directly from the iPad to the paired Mac over the local network, encrypted with TLS using a key agreed during pairing. Pairing only works with a Mac that showed the code.
+The app collects no data. There is no account, no analytics and no server: the drawing goes directly from the iPad to the paired Mac over the local network, encrypted with TLS using a key agreed during pairing. Pairing only works with a Mac that showed the code. The iPad keeps its pairing identity in the Keychain; if it can't read it, the pill reads "Wi-Fi sharing is off" and the pairing sheet asks you to close SharePad and open it again.
 
 The iPad app is free and has no purchases. The Mac app is sold on the developer's website.
 ```
@@ -131,11 +134,11 @@ Trim, then attach the file (MP4 or MOV) in App Review Information.
 
 | # | Seconds | Shot | Must be visible |
 |---|---|---|---|
-| 1 | 0 to 8 | Mac desktop, SharePad icon in the menu bar; click it | The popover with **Pair an iPad…** |
-| 2 | 8 to 18 | Click **Pair an iPad…** | The pairing window: QR code and typed code |
-| 3 | 18 to 35 | iPad: open SharePad from the home screen for the first time | The local network prompt, and tapping **Allow**; the pairing sheet opening by itself; close it to show the **Not paired with a Mac** pill, then tap **Pair…** |
-| 4 | 35 to 50 | iPad: tap **Scan Code**, allow the camera, scan the QR | The scan landing, then **Paired with** your Mac's name; as the Mac connects, the screen recording prompt, and tapping **Allow** |
-| 5 | 50 to 65 | Draw a simple diagram with the Pencil | The same strokes appearing in the Mac's SharePad window, palette absent on the Mac |
+| 1 | 0 to 8 | Mac desktop, SharePad icon in the menu bar; click it | The popover's **Wireless** section with **Pair an iPad…** |
+| 2 | 8 to 18 | Click **Pair an iPad…** | The **Pair an iPad** window: QR code, typed code and its **Expires in** countdown |
+| 3 | 18 to 35 | iPad: open SharePad from the home screen for the first time | The local network prompt, and tapping **Allow**; the **Pair with your Mac** sheet opening by itself; tap **Close** to show the **Not paired with a Mac** pill, then tap **Pair…** |
+| 4 | 35 to 50 | iPad: tap **Scan Code**, allow the camera, scan the QR | The scan landing, then **Paired with** your Mac's name, then tap **Done**; as the Mac connects, the screen recording prompt, and tapping **Allow** |
+| 5 | 50 to 65 | Draw a simple diagram with the Pencil | The pill reading **Live on** your Mac's name; the same strokes appearing in the Mac's SharePad window, palette absent on the Mac |
 | 6 | 65 to 85 | Mac: start a Zoom or Meet call, Share, pick the SharePad window | The window in the call's share picker, then the shared drawing |
 | 7 | 85 to 90 | iPad: press Home, then reopen | The record prompt again as the Mac reconnects (it asks each time SharePad connects) |
 
@@ -149,10 +152,13 @@ landscape (12.9-inch sizes, 2048 × 2732, are also accepted). One minimum, up to
 ten. Take them on the iPad Pro 13-inch simulator (`just pad-build`, then run it
 in Simulator, Cmd-S) or on a 13-inch iPad.
 
-1. The canvas with a clear diagram, landscape, the pill showing connected.
-2. The pairing sheet with the steps and the scanner (Scan Code tapped).
-3. The paper menu with grid paper chosen.
-4. The save menu (Image and PDF).
+1. The canvas with a clear diagram, landscape, the pill reading **Live on**
+   your Mac's name.
+2. The **Pair with your Mac** sheet with the steps and the scanner (Scan Code
+   tapped).
+3. The **Paper** menu with **Grid** chosen.
+4. The **Share** menu (Image and PDF). It needs a drawing on the canvas; the
+   button is off on an empty one.
 
 Screenshots show the iPad app only. A photo of the Mac in a call belongs on the
 website, not the store page.
