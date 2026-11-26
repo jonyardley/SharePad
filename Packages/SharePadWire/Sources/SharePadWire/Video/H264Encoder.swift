@@ -7,6 +7,7 @@ import VideoToolbox
 // @unchecked: the session is touched only from the caller's queue; the in-flight
 // count is the one value VideoToolbox's thread writes, and it sits behind a lock.
 public final class H264Encoder: @unchecked Sendable {
+    // @unchecked: every field is an immutable value copied out of the VideoToolbox callback.
     public struct EncodedFrame: @unchecked Sendable {
         public let avcc: Data
         public let isKeyframe: Bool

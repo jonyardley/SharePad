@@ -7,6 +7,7 @@ import VideoToolbox
 // @unchecked: driven from the caller's queue; VideoToolbox's thread only reads
 // the callbacks, which are set once before the first decode.
 public final class H264Decoder: @unchecked Sendable {
+    // @unchecked: nothing writes the decoded pixel buffer after VideoToolbox hands it over.
     public struct DecodedFrame: @unchecked Sendable {
         public let pixelBuffer: CVPixelBuffer
         public let sequence: UInt32
