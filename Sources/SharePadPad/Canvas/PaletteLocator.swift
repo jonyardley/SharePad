@@ -1,6 +1,6 @@
 import UIKit
 
-// frameObscured(in:) is null for a movable picker (PKToolPicker.h); see wireless-product.md.
+// frameObscured(in:) is null for a movable picker (PKToolPicker.h); see specs/wireless-product.md.
 @MainActor
 enum PaletteLocator {
     static let paletteClassPrefix = "PKDrawingPaletteView"

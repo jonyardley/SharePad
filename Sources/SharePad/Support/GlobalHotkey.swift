@@ -1,6 +1,6 @@
 import Carbon.HIToolbox
 
-// @unchecked Sendable: Carbon refs are written only in init and deinit (capture.md).
+// @unchecked Sendable: Carbon refs change only in init and deinit; the callback uses a pointer.
 final class GlobalHotkey: @unchecked Sendable {
     /// The fixed window-toggle binding (⌃⌥⌘H). id, key code, modifier mask, and
     /// display string live together so the popover hint can't drift from what's

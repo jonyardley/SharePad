@@ -137,7 +137,7 @@ final class AppModel {
     }
 
     #if DEBUG
-        // `SHAREPAD_SESSION_LIMIT_SECONDS=10 just run` tests the gate without a 5-minute wait.
+        // DEBUG only so the gate is testable without the 5-minute wait (specs/licensing.md).
         private static var debugSessionLimitOverride: TimeInterval? {
             ProcessInfo.processInfo.environment["SHAREPAD_SESSION_LIMIT_SECONDS"]
                 .flatMap(TimeInterval.init)
@@ -323,18 +323,13 @@ extension AppModel {
         private static let debugFeatureReleases: [String] = []
     #endif
 
-    /// A full `start()` reporting `isRunning` isn't proof of frames: a present-but-
-    /// stalled device runs with none (frozen preview). Confirm a frame before treating
-    /// the device as live; a stall routes into `failed` + Retry, same as a start that
-    /// never ran. (#24)
+    /// isRunning isn't proof of frames, so a stalled start routes to failed and Retry (#24).
     private func startAndConfirm(deviceID: String) async -> Bool {
         guard await capture.start(deviceID: deviceID) else { return false }
         return await capture.awaitFrame(timeout: Self.startFrameTimeout)
     }
 
-    /// Re-establish the session after a runtime error or wake. `resume()` keeps the
-    /// connections (preview included) intact; a full `start` is only the fallback.
-    /// One attempt per trigger, no auto-loop.
+    /// One attempt per trigger, no auto-loop; start is the fallback (specs/resilience.md).
     func restart() async {
         guard let deviceID = currentDeviceID, !isReconfiguring else { return }
         isReconfiguring = true
@@ -396,8 +391,7 @@ extension AppModel {
             lastUsed: preferences.lastDeviceID
         ) {
         case .teardown:
-            // Capture visibility *before* hide() clears it: a teardown while the share
-            // window was up is a lost share worth signalling; an idle unplug is silent.
+            // Read before hide() clears it (specs/mid-call-disconnect.md).
             let wasSharing = isWindowVisible
             cancelAutoConnect()
             currentDeviceID = nil
@@ -426,9 +420,7 @@ extension AppModel {
 
     private func beginAutoConnect(device: CaptureDevice) async {
         cancelAutoConnect()
-        // Suspend the prior device's countdown/overlay before connecting. The new
-        // device's budget is decided in armOrResumeTrialSession: a different iPad
-        // starts fresh, the same one resumes, so this must not reset it here.
+        // Suspend, never reset: armOrResumeTrialSession decides the budget (specs/licensing.md).
         if hostedFeed == .usb { suspendTrialSession() }
         currentDeviceID = device.id
         currentDeviceName = device.name
@@ -481,8 +473,7 @@ extension AppModel {
             if autoShowOnConnect, !isWindowVisible {
                 presentWindow()
             } else if isWindowVisible {
-                // Hot-swap: window stayed up, so presentWindow() is skipped, so re-arm the
-                // expired-trial gate for the new device's session explicitly.
+                // Hot-swap skips presentWindow(), so re-arm the gate here (specs/licensing.md).
                 armOrResumeTrialSession()
             }
             return .live

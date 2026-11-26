@@ -27,7 +27,7 @@ extension DiagnosticsReporting where Self == DisabledDiagnosticsReporter {
     }
 }
 
-// @unchecked Sendable: UserDefaults is thread-safe and isSubscribed is main-actor only.
+// @unchecked Sendable: preferences wraps UserDefaults; isSubscribed is main-actor only.
 final class DiagnosticsReporter: NSObject, DiagnosticsReporting, @unchecked Sendable {
     static let shared = DiagnosticsReporter()
 

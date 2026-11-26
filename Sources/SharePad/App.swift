@@ -19,9 +19,7 @@ private struct StatusItemLabel: View {
     var model: AppModel
 
     var body: some View {
-        // Menu-bar items render monochrome (template), so signal state with a symbol swap,
-        // not a colour the menu bar strips. A lost share shows no alarm glyph here: the
-        // iPad is simply gone, so the idle symbol is honest; the popover banner is the notice.
+        // A symbol swap, not a colour; a lost share shows idle (design-system.md).
         Image(systemName: model.isSharing ? "ipad.landscape.badge.play" : "ipad.landscape")
     }
 }
@@ -32,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let updater = SparkleUpdater()
 
     func applicationDidFinishLaunching(_: Notification) {
-        // Hosted unit tests must not trigger the CMIO opt-in or a camera prompt.
+        // XCTest's env var, not a class lookup, keeps tests out of startup (capture.md).
         guard ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil
         else { return }
         model.onEnterLicenseRequested = { [weak model] in

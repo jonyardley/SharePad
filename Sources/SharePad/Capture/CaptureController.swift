@@ -6,7 +6,7 @@ protocol CaptureControlling: FeedSource {
     func resume() async -> Bool
 }
 
-// @unchecked Sendable: session wiring stays on sessionQueue, frame state on sampleQueue.
+// @unchecked Sendable: queue-confined session and frames; layers and frameListener are lets.
 final class CaptureController: CaptureControlling, @unchecked Sendable {
     let previewLayer: AVCaptureVideoPreviewLayer
     let thumbnailDisplayLayer: AVSampleBufferDisplayLayer
@@ -79,9 +79,7 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         }
     }
 
-    /// Wake/runtime recovery: kick the run loop while keeping connections intact, so
-    /// the preview layer resumes. A full teardown re-adds the preview-layer connection,
-    /// which leaves the layer frozen on its last frame, so never do that here.
+    /// Only kick the run loop: a full teardown freezes the preview layer (capture.md).
     func resume() async -> Bool {
         await withCheckedContinuation { continuation in
             sessionQueue.async { [self] in
@@ -100,8 +98,7 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         }
     }
 
-    /// Confirm frames are actually flowing: `resume()` reporting `isRunning` isn't enough:
-    /// a stalled device can be "running" with no frames (frozen preview). (#13)
+    /// isRunning isn't enough. A stalled device can run with no frames (#13).
     func awaitFrame(timeout: TimeInterval) async -> Bool {
         await withCheckedContinuation { continuation in
             sampleQueue.async { [frameListener, sampleQueue] in
@@ -145,10 +142,7 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         }
         session.addConnection(previewConnection)
 
-        // The data output is mandatory, not best-effort: video dimensions, the popover
-        // thumbnail, and the `awaitFrame` watchdog all feed off it. If it can't be wired,
-        // fail here, otherwise the preview runs frameless and the watchdog reports a
-        // false "stalled device" on timeout instead of this real setup failure. (#24)
+        // Mandatory, or the watchdog reports a false stall instead of this failure (#24).
         guard wireDimensionOutput(videoPort: videoPort) else {
             session.commitConfiguration()
             return false
@@ -159,7 +153,7 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         return session.isRunning
     }
 
-    // A data output, not KVO on the port's formatDescription, which aborts the app.
+    // Not KVO on the port's formatDescription, which aborts the app (specs/clean-window.md).
     private func wireDimensionOutput(videoPort: AVCaptureInput.Port) -> Bool {
         guard session.canAddOutput(dataOutput) else { return false }
         dataOutput.alwaysDiscardsLateVideoFrames = true

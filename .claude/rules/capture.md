@@ -8,6 +8,7 @@ paths:
   - "Sources/SharePad/App.swift"
   - "Sources/SharePad/Updater/**"
   - "Sources/SharePad/Support/Permissions.swift"
+  - "Sources/SharePad/Support/GlobalHotkey.swift"
   - "Tests/SharePadTests/AppModelConnectTests.swift"
   - "Tests/SharePadTests/WindowSharingTests.swift"
   - "Tests/SharePadTests/ShareWindowLayerSwapTests.swift"
@@ -42,7 +43,21 @@ Apple docs and forums (`DESIGN.md` §6). The three that must never be missed
   `AVSampleBufferDisplayLayer`, gated to popover-open and throttled to ~15 fps. The
   "two preview layers on one session" question was sidestepped, not tested.
 - **Locked iPad shows black**; sleep/wake can interrupt the session: restart on
-  `runtimeErrorNotification` / interruption end.
+  `runtimeErrorNotification` / interruption end. `CaptureController.resume()` only
+  stops and starts the run loop: a full teardown re-adds the preview-layer
+  connection, which leaves the layer frozen on its last frame.
+- **Rotation resizes the share window but never persists its frame.** Saving the
+  origin there would discard the user's placement on every rotation; only their
+  own move or resize persists. `updateSize` refreshes `appliedFrame` so the move
+  observer doesn't read the resize as a user move.
+- **Licence entry is a real window, not a popover sheet.** A `MenuBarExtra`
+  (`.window`) popover dismisses when focus leaves it, so a `.sheet` from it can't
+  hold keyboard focus and the form vanishes. `LicenseWindow` is a focusable window,
+  like the About panel.
+- **Hosted unit tests skip startup.** `applicationDidFinishLaunching` returns early
+  when `XCTestConfigurationFilePath` is set, so `just test` never triggers the CMIO
+  opt-in or a camera prompt. Checking the env var keeps test-awareness out of the
+  shipping binary's class lookups.
 - **Only the feed window may be shared.** `WindowSharing` sets `sharingType = .none`
   on every window except the feed (tagged via `shareWindowID`), so the About panel /
   popover / Sparkle dialogs can't be picked in a call instead of the iPad. A window
