@@ -1,6 +1,6 @@
 # Appcast analytics (active installs + version adoption)
 
-> Status: spec. Tier 3 (touches the update/distribution model). Decided 2026-06-15.
+> Status: spec (touches the update/distribution model). Decided 2026-06-15.
 
 ## Problem
 

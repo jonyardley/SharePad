@@ -1,8 +1,8 @@
 # Phase 4 — Resilience & lifecycle (spec)
 
-> Tier 3 + domain-sensitivity (capture-session restart + permission flow → highest
-> ceremony). See DESIGN.md §5.3 (state machine), §6 (sleep/wake caveat), §9
-> (Phase 4), §10 (edge cases).
+> Spec: touches the capture-session restart and the permission flow. See
+> DESIGN.md §5.3 (state machine), §6 (sleep/wake caveat), §9 (Phase 4), §10
+> (edge cases).
 
 ## Problem
 

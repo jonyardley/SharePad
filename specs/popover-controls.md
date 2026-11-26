@@ -1,6 +1,6 @@
 # Phase 3 — Popover controls (spec)
 
-> Tier 3 — touches the popover, the window/share model, and the login item. Builds
+> Spec: touches the popover, the window/share model, and the login item. Builds
 > on Phase 2. See DESIGN.md §3 (window behaviour/toggles), §4 (popover surfaces),
 > §9 (Phase 3), §10 (keep-on-top gotcha), §11 (preference-persistence tests).
 

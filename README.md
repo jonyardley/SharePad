@@ -33,7 +33,8 @@ screen**, without the per-call QuickTime faff.
   state machine, the verified AVFoundation/CoreMediaIO capture foundation,
   milestones, edge cases, open questions. Source of truth.
 - **[CLAUDE.md](CLAUDE.md)**: development guidelines: conventions,
-  non-negotiables, gotchas, tier workflow.
+  non-negotiables and review rules, with the traps for each area in
+  `.claude/rules/`.
 
 ## Build
 
