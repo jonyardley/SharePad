@@ -69,6 +69,7 @@ struct ConnectionPill: Equatable {
         pairingUnavailable: Bool = false,
         localNetworkDenied: Bool,
         captureDeclined: Bool,
+        captureInterrupted: Bool = false,
         toolsUnlocated: Bool = false
     ) {
         if pairingUnavailable {
@@ -80,6 +81,12 @@ struct ConnectionPill: Equatable {
         } else if captureDeclined, link.isUp {
             self.init(
                 text: "Screen recording not allowed",
+                tone: .attention,
+                action: .retryCapture
+            )
+        } else if captureInterrupted, link.isUp {
+            self.init(
+                text: "Screen recording stopped",
                 tone: .attention,
                 action: .retryCapture
             )
