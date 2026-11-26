@@ -84,6 +84,7 @@ public final class StreamSender: @unchecked Sendable {
         presentationTime: CMTime,
         captureWallClock: Double
     ) {
+        // nonisolated(unsafe): the caller never writes the buffer after submitting it.
         nonisolated(unsafe) let pixelBuffer = pixelBuffer
         queue.async { [weak self] in
             self?.capture(

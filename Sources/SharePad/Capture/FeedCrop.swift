@@ -75,6 +75,7 @@ struct CropTracker {
 
 // Shows only the sender's canvas rectangle of a decoded feed, so app chrome on the
 // iPad never reaches the call (specs/wireless-product.md §4).
+// @unchecked: `crop` is set only on main, by WirelessReceiver.applyCrop.
 final class CroppedVideoLayer: CALayer, @unchecked Sendable {
     let video: AVSampleBufferDisplayLayer
     private let canvasMask = CALayer()

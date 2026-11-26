@@ -3,6 +3,7 @@ import ImageIO
 import os
 import ReplayKit
 
+// @unchecked: nothing writes the pixel buffer once it is captured; later stages only read it.
 struct CapturedFrame: @unchecked Sendable {
     let pixelBuffer: CVPixelBuffer
     let presentationTime: CMTime
