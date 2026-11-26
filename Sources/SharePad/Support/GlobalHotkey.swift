@@ -1,11 +1,6 @@
 import Carbon.HIToolbox
 
-/// A system-wide hotkey via Carbon's `RegisterEventHotKey`: fires even when another
-/// app is frontmost (the in-call case). Unlike an `NSEvent` global monitor it needs
-/// no Accessibility (TCC) grant and no entitlement, and works for an `LSUIElement`
-/// accessory app. Keep the instance alive — `deinit` unregisters.
-/// @unchecked Sendable: the Carbon refs are written only in init/deinit and the
-/// hotkey is recovered across the C trampoline by pointer, not Sendable checking.
+// @unchecked Sendable: Carbon refs change only in init and deinit; the callback uses a pointer.
 final class GlobalHotkey: @unchecked Sendable {
     /// The fixed window-toggle binding (⌃⌥⌘H). id, key code, modifier mask, and
     /// display string live together so the popover hint can't drift from what's
@@ -37,7 +32,7 @@ final class GlobalHotkey: @unchecked Sendable {
             eventClass: OSType(kEventClassKeyboard),
             eventKind: UInt32(kEventHotKeyPressed)
         )
-        // C trampoline can't capture context — recover the instance from userData.
+        // C trampoline can't capture context, so recover the instance from userData.
         // Carbon dispatches on the main thread, so the MainActor hop is safe.
         let callback: EventHandlerUPP = { _, event, userData in
             guard let userData else { return OSStatus(eventNotHandledErr) }

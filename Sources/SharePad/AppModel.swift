@@ -24,7 +24,7 @@ final class AppModel {
     @ObservationIgnored private var sentHostPause: PauseReason??
 
     /// A one-shot, self-expiring event (not a steady AppState case): the iPad vanished
-    /// while its share window was up, so the user — possibly mid-call — lost their share.
+    /// while its share window was up, so the user, possibly mid-call, lost their share.
     private(set) var shareLost: FeedKind?
 
     var shareLostSignal: Bool {
@@ -50,8 +50,6 @@ final class AppModel {
     var onEnterLicenseRequested: (() -> Void)?
     var onWhatsNewRequested: (() -> Void)?
     private(set) var isWhatsNewDue = false
-    // When set, a post-trial session is counting down to the pause; the watermark
-    // and popover render it live. Nil once paused, licensed, or not sharing.
     private(set) var sessionEndsAt: Date?
 
     var isConnected: Bool {
@@ -102,14 +100,14 @@ final class AppModel {
     private var sessionBudgets: [String: TimeInterval] = [:]
     // The device the currently-armed timer/countdown belongs to. Distinct from
     // `currentDeviceID`, which `switchTo` updates to the new device before suspending
-    // the old session — so the budget write-back must target the *active* device.
+    // the old session, so the budget write-back must target the *active* device.
     private var activeSessionDeviceID: String?
     private(set) var currentDeviceID: String?
     private var isReconfiguring = false
     private var windowHotkey: GlobalHotkey?
 
     // First launch settles (camera grant + iPad trust) *after* discovery sees the
-    // device, so the first start can stall — re-attempt. (specs/first-connect-retry.md)
+    // device, so the first start can stall: re-attempt. (specs/first-connect-retry.md)
     private var connectGeneration = 0
     private(set) var retryTask: Task<Void, Never>?
     private(set) var shareLostDismissTask: Task<Void, Never>?
@@ -117,7 +115,6 @@ final class AppModel {
     private static let defaultSize = CGSize(width: 820, height: 1180)
     private static let frameTimeout: TimeInterval = 1.5
     private static let startFrameTimeout: TimeInterval = 3.0
-    // Provisional — the iPad trust→ready latency is a hardware datum; tune on device.
     static let firstConnectAttempts = 4
     private static let retryDelay: Duration = .milliseconds(1500)
     private static let shareLostDuration: Duration = .seconds(10)
@@ -140,9 +137,7 @@ final class AppModel {
     }
 
     #if DEBUG
-        // `SHAREPAD_SESSION_LIMIT_SECONDS=10 just run` shortens the post-trial pause budget
-        // so the gate is testable without the real 5-minute wait. DEBUG only — the shipping
-        // binary always uses the production 5 minutes.
+        // DEBUG only so the gate is testable without the 5-minute wait (specs/licensing.md).
         private static var debugSessionLimitOverride: TimeInterval? {
             ProcessInfo.processInfo.environment["SHAREPAD_SESSION_LIMIT_SECONDS"]
                 .flatMap(TimeInterval.init)
@@ -328,18 +323,13 @@ extension AppModel {
         private static let debugFeatureReleases: [String] = []
     #endif
 
-    /// A full `start()` reporting `isRunning` isn't proof of frames — a present-but-
-    /// stalled device runs with none (frozen preview). Confirm a frame before treating
-    /// the device as live; a stall routes into `failed` + Retry, same as a start that
-    /// never ran. (#24)
+    /// isRunning isn't proof of frames, so a stalled start routes to failed and Retry (#24).
     private func startAndConfirm(deviceID: String) async -> Bool {
         guard await capture.start(deviceID: deviceID) else { return false }
         return await capture.awaitFrame(timeout: Self.startFrameTimeout)
     }
 
-    /// Re-establish the session after a runtime error or wake. `resume()` keeps the
-    /// connections (preview included) intact; a full `start` is only the fallback.
-    /// One attempt per trigger — no auto-loop.
+    /// One attempt per trigger, no auto-loop; start is the fallback (specs/resilience.md).
     func restart() async {
         guard let deviceID = currentDeviceID, !isReconfiguring else { return }
         isReconfiguring = true
@@ -401,8 +391,7 @@ extension AppModel {
             lastUsed: preferences.lastDeviceID
         ) {
         case .teardown:
-            // Capture visibility *before* hide() clears it — a teardown while the share
-            // window was up is a lost share worth signalling; an idle unplug is silent.
+            // Read before hide() clears it (specs/mid-call-disconnect.md).
             let wasSharing = isWindowVisible
             cancelAutoConnect()
             currentDeviceID = nil
@@ -431,9 +420,7 @@ extension AppModel {
 
     private func beginAutoConnect(device: CaptureDevice) async {
         cancelAutoConnect()
-        // Suspend the prior device's countdown/overlay before connecting. The new
-        // device's budget is decided in armOrResumeTrialSession: a different iPad
-        // starts fresh, the same one resumes — so this must not reset it here.
+        // Suspend, never reset: armOrResumeTrialSession decides the budget (specs/licensing.md).
         if hostedFeed == .usb { suspendTrialSession() }
         currentDeviceID = device.id
         currentDeviceName = device.name
@@ -486,8 +473,7 @@ extension AppModel {
             if autoShowOnConnect, !isWindowVisible {
                 presentWindow()
             } else if isWindowVisible {
-                // Hot-swap: window stayed up, so presentWindow() is skipped — re-arm the
-                // expired-trial gate for the new device's session explicitly.
+                // Hot-swap skips presentWindow(), so re-arm the gate here (specs/licensing.md).
                 armOrResumeTrialSession()
             }
             return .live
@@ -591,8 +577,6 @@ extension AppModel {
         syncWirelessHost()
     }
 
-    // Stops the countdown and overlay display but keeps the remaining budget and the
-    // device it belongs to, so the same iPad resumes on reconnect (Model A).
     private func suspendTrialSession() {
         sessionTimer?.cancel()
         sessionTimer = nil

@@ -1,7 +1,6 @@
 import CryptoKit
 import Foundation
 
-/// Why a licence key did or did not activate, so the UI can guide the buyer.
 enum LicenseCheck: Equatable {
     case valid
     case malformedKey

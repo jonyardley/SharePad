@@ -112,10 +112,7 @@ final class ShareWindowController: ShareWindowControlling {
         }
     #endif
 
-    /// Driven by iPad rotation, not the user — so adapt the live window (keeping its
-    /// centre) but don't persist. Overwriting the saved origin here would discard the
-    /// user's chosen placement on every rotation; only their own move/resize persists.
-    /// `appliedFrame` is refreshed so the move observer doesn't treat this as a user move.
+    /// Rotation resizes the live window but never persists its frame (capture.md).
     func updateSize(_ size: CGSize) {
         guard let window else { return }
         let oldFrame = window.frame
@@ -223,9 +220,7 @@ final class ShareWindowController: ShareWindowControlling {
     }
 }
 
-// The trial overlay lives *inside* the window's SwiftUI root (a ZStack over the
-// preview) rather than as a foreign NSHostingView subview — the latter doesn't
-// reliably composite above the layer-backed preview. Driven by an @Observable flag.
+// Inside the SwiftUI root, not an NSHostingView subview, so it composites (capture.md).
 @MainActor
 @Observable
 final class ShareOverlayModel {
