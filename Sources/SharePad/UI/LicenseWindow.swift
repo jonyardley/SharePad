@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 // A MenuBarExtra (.window) popover dismisses the moment focus leaves it, so a
-// `.sheet` presented from it can't hold keyboard focus — text fields can't be
+// `.sheet` presented from it can't hold keyboard focus: text fields can't be
 // edited and the form vanishes. Licence entry therefore lives in a real, focusable
 // window (same approach as the About panel), independent of the popover.
 @MainActor

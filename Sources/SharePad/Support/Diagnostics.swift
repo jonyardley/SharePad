@@ -13,11 +13,9 @@ enum DiagnosticEvent: String {
 
 protocol DiagnosticsReporting: Sendable {
     func report(_ event: DiagnosticEvent)
-    /// Add or remove the MetricKit subscription to match the current opt-in state.
     @MainActor func refreshSubscription()
 }
 
-/// The default in tests and wherever telemetry is off by construction: does nothing.
 struct DisabledDiagnosticsReporter: DiagnosticsReporting {
     func report(_: DiagnosticEvent) {}
     func refreshSubscription() {}
@@ -29,13 +27,7 @@ extension DiagnosticsReporting where Self == DisabledDiagnosticsReporter {
     }
 }
 
-/// First-party, opt-in crash/diagnostic reporting (specs/telemetry.md). Off unless
-/// the user turns it on; sends anonymous JSON to the telemetry Worker, never any
-/// content, licence, or device identifier.
-///
-/// @unchecked Sendable: `preferences` is a value type over the thread-safe
-/// `UserDefaults`; `isSubscribed` is touched only from the main actor
-/// (`refreshSubscription`); `send` is stateless and fire-and-forget.
+// @unchecked Sendable: UserDefaults is thread-safe and isSubscribed is main-actor only.
 final class DiagnosticsReporter: NSObject, DiagnosticsReporting, @unchecked Sendable {
     static let shared = DiagnosticsReporter()
 

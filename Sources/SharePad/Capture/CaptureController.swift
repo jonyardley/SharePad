@@ -6,11 +6,7 @@ protocol CaptureControlling: FeedSource {
     func resume() async -> Bool
 }
 
-/// @unchecked Sendable: `session` and the output/connection wiring are mutated only
-/// on `sessionQueue`; `frameListener`'s state is touched only on `sampleQueue`;
-/// `previewLayer`, `thumbnailDisplayLayer`, and `frameListener` are immutable references
-/// (created on main, fed only off-main); the continuations are Sendable and
-/// `sessionObservers` is set up once in `init`.
+// @unchecked Sendable: session wiring stays on sessionQueue, frame state on sampleQueue.
 final class CaptureController: CaptureControlling, @unchecked Sendable {
     let previewLayer: AVCaptureVideoPreviewLayer
     let thumbnailDisplayLayer: AVSampleBufferDisplayLayer
@@ -85,7 +81,7 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
 
     /// Wake/runtime recovery: kick the run loop while keeping connections intact, so
     /// the preview layer resumes. A full teardown re-adds the preview-layer connection,
-    /// which leaves the layer frozen on its last frame — so never do that here.
+    /// which leaves the layer frozen on its last frame, so never do that here.
     func resume() async -> Bool {
         await withCheckedContinuation { continuation in
             sessionQueue.async { [self] in
@@ -96,7 +92,7 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         }
     }
 
-    /// Gate the popover thumbnail's frame fan-out — the window's preview connection is
+    /// Gate the popover thumbnail's frame fan-out; the window's preview connection is
     /// unaffected. Hops to the sample queue so the flag is touched where frames arrive.
     func setThumbnailActive(_ active: Bool) {
         sampleQueue.async { [frameListener] in
@@ -104,8 +100,8 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         }
     }
 
-    /// Confirm frames are actually flowing: `resume()` reporting `isRunning` isn't enough
-    /// — a stalled device can be "running" with no frames (frozen preview). (#13)
+    /// Confirm frames are actually flowing: `resume()` reporting `isRunning` isn't enough:
+    /// a stalled device can be "running" with no frames (frozen preview). (#13)
     func awaitFrame(timeout: TimeInterval) async -> Bool {
         await withCheckedContinuation { continuation in
             sampleQueue.async { [frameListener, sampleQueue] in
@@ -151,7 +147,7 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
 
         // The data output is mandatory, not best-effort: video dimensions, the popover
         // thumbnail, and the `awaitFrame` watchdog all feed off it. If it can't be wired,
-        // fail here — otherwise the preview runs frameless and the watchdog reports a
+        // fail here, otherwise the preview runs frameless and the watchdog reports a
         // false "stalled device" on timeout instead of this real setup failure. (#24)
         guard wireDimensionOutput(videoPort: videoPort) else {
             session.commitConfiguration()
@@ -163,11 +159,7 @@ final class CaptureController: CaptureControlling, @unchecked Sendable {
         return session.isRunning
     }
 
-    /// The iPad's video dimensions flip on rotation. KVO on the port's
-    /// `formatDescription` aborts the app (AVCaptureInputPort raises
-    /// valueForUndefinedKey inside its KVO notification), so dimensions come from a
-    /// video-only data output instead — still no audio, so no mic prompt. The same
-    /// output's frames also feed the popover thumbnail (gated by `setThumbnailActive`).
+    // A data output, not KVO on the port's formatDescription, which aborts the app.
     private func wireDimensionOutput(videoPort: AVCaptureInput.Port) -> Bool {
         guard session.canAddOutput(dataOutput) else { return false }
         dataOutput.alwaysDiscardsLateVideoFrames = true

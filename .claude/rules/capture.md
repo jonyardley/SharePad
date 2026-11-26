@@ -45,9 +45,23 @@ Apple docs and forums (`DESIGN.md` §6). The three that must never be missed
   `runtimeErrorNotification` / interruption end.
 - **Only the feed window may be shared.** `WindowSharing` sets `sharingType = .none`
   on every window except the feed (tagged via `shareWindowID`), so the About panel /
-  popover / Sparkle dialogs can't be picked in a call instead of the iPad. The guard
-  re-sweeps on `NSWindow.didBecomeKeyNotification`, so a new window type that becomes
-  shareable *without ever becoming key* would slip through: sweep it explicitly.
+  popover / Sparkle dialogs can't be picked in a call instead of the iPad. A window
+  is shareable before it becomes key, so the guard sweeps on two triggers:
+  `NSWindow.didBecomeKeyNotification`, and a change in `NSApp.windows.count` on the
+  app update tick (silent while idle, so idle CPU holds). Both observers use the
+  synchronous `addObserver(forName:queue:.main, using:)` form, not an `AsyncStream`
+  Task hop, so the sweep runs in the same runloop tick the notification posts,
+  before a share picker re-snapshots the window list; the AsyncStream form let
+  Sparkle's in-process "Update Available" dialog race in. Known gaps: a close and
+  open within one tick leaves the count unchanged and is missed, and Sparkle's
+  Downloader and Installer XPC services and `Updater.app` run in other processes,
+  out of reach. A new window type shown without focus that dodges both triggers
+  must be swept explicitly.
+- **The window toggle hotkey uses Carbon's `RegisterEventHotKey`**
+  (`GlobalHotkey`). It fires while another app is frontmost (the in-call case),
+  and unlike an `NSEvent` global monitor it needs no Accessibility grant or
+  entitlement and works for the `LSUIElement` accessory app. Keep the instance
+  alive: `deinit` unregisters.
 - **The trial overlay is part of the share window's SwiftUI root**: a `ZStack`
   over `PreviewView`, toggled by an `@Observable ShareOverlayModel` flag
   (`ShareWindowController`). It is deliberately *not* a foreign `NSHostingView`

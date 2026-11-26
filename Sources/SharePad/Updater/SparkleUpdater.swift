@@ -10,11 +10,7 @@ final class SparkleUpdater: NSObject, SoftwareUpdating {
     init(reporter: DiagnosticsReporting = DiagnosticsReporter.shared) {
         self.reporter = reporter
         super.init()
-        // self is the updater delegate so a dead feed, failed download or bad
-        // signature becomes observable (specs/telemetry.md). Sparkle still owns
-        // all user-facing update UI; this only adds a failure signal.
-        // startingUpdater: false so allocation is side-effect-free under XCTest;
-        // start() runs from applicationDidFinishLaunching, past the test guard.
+        // Not started here so XCTest hosting stays side-effect-free (App.swift test guard).
         controller = SPUStandardUpdaterController(
             startingUpdater: false, updaterDelegate: self, userDriverDelegate: nil
         )

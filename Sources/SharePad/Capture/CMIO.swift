@@ -1,7 +1,7 @@
 import CoreMediaIO
 
 enum CMIO {
-    /// Without this, a connected iPad is invisible to discovery — and it fails
+    /// Without this, a connected iPad is invisible to discovery, and it fails
     /// silently. Set once at startup, before discovery. Process-global. (DESIGN.md §6.1)
     static func allowScreenCaptureDevices() {
         var address = CMIOObjectPropertyAddress(
