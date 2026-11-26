@@ -1,6 +1,6 @@
 # Unified stats dashboard
 
-> Status: spec. Tier 3 (net-new capability). Decided 2026-06-15.
+> Status: spec (net-new capability). Decided 2026-06-15.
 
 ## Problem
 

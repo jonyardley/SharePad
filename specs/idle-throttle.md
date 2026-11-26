@@ -16,7 +16,7 @@
 >
 > ---
 >
-> *Original design (Tier 3; was: needs Plan mode + on-iPad measurement before coding):*
+> *Original design (spec; was: needs Plan mode + on-iPad measurement before coding):*
 
 ## Problem
 

@@ -1,7 +1,7 @@
 # Phase 3 follow-up — Live popover preview + device picker (spec)
 
-> Tier 3 — touches the **capture pipeline** (a second render path off the one
-> session), so the domain-sensitivity override applies. Closes
+> Spec: touches the **capture pipeline** (a second render path off the one
+> session). Closes
 > [#10](https://github.com/jonyardley/SharePad/issues/10). Builds on Phase 3
 > (popover controls). See DESIGN.md §3–§4 (popover = live preview + controls),
 > §5.2 (two-preview-layer question + fan-out fallback), §10 (multiple muxed
@@ -17,7 +17,7 @@ chosen.
 
 The two halves differ in risk and are independently shippable:
 
-- **Thumbnail** = the one unresolved technical risk in the design (§5.2). Tier 3.
+- **Thumbnail** = the one unresolved technical risk in the design (§5.2).
 - **Picker** = pure device-selection logic + a `Picker`. Lower risk.
 
 ## The crux (thumbnail)

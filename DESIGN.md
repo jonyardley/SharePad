@@ -318,7 +318,7 @@ ipad-share/
   project.yml                 # xcodegen
   justfile                    # gen / build / run / fmt / lint
   DESIGN.md  CLAUDE.md
-  specs/                      # per-feature specs if/when needed (Tier 3)
+  specs/                      # per-feature specs for architectural changes
   Sources/SharePad/
     App.swift                 # @main, MenuBarExtra, LSUIElement wiring
     AppModel.swift            # @Observable @MainActor state machine

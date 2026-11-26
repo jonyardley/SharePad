@@ -1,6 +1,6 @@
 # Wireless sharing (product spec)
 
-> Status: **draft, Tier 3. W0 and W2a done** (`Packages/SharePadWire`, spike rebuilt on
+> Status: **draft spec. W0 and W2a done** (`Packages/SharePadWire`, spike rebuilt on
 > it; measured on home Wi-Fi 2026-10-02). The latency tail is accepted for v1 as a
 > known gap ([#160](https://github.com/jonyardley/SharePad/issues/160)). **W1 and W2b
 > built**; their hardware check on an iPad mini passed 2026-10-03, bar two items

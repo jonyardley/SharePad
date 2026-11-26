@@ -1,7 +1,7 @@
 # Distribution & Release — Spec
 
-> Tier 3, **domain-sensitive** (touches entitlements + the capture runtime —
-> CLAUDE.md says these go up a tier and must be verified on the iPad). Status:
+> A spec that touches entitlements and the capture runtime, so it must be
+> verified on the iPad. Status:
 > **proposed**, not yet implemented. Plan mode follows approval.
 >
 > Sibling: **`specs/licensing.md`** (GPLv3 + sell-the-build monetisation) sits *on

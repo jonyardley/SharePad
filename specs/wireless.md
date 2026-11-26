@@ -1,6 +1,6 @@
 # Wireless sharing (research spec)
 
-> Status: research spec. Tier 3 (touches the capture/window model). Spike
+> Status: research spec (touches the capture/window model). Spike
 > verdict **GO** (2026-10-01, see "Spike result"). The product spec is
 > [`specs/wireless-product.md`](wireless-product.md).
 
@@ -43,9 +43,9 @@ Apple](https://developer.apple.com/documentation/avfoundation/cameras_and_media_
 
 So "keep everything, drop the cable" is not on the table. Any wireless path
 means a different capture source feeding the same window/share-model — which
-is exactly the domain-sensitivity trigger CLAUDE.md calls out (capture
-pipeline + permission flow) and why this is a Tier 3 spec rather than a
-Tier 2 plan.
+is exactly the kind of change CLAUDE.md asks a spec for (capture
+pipeline + permission flow), which is why this is a spec and not only a
+plan.
 
 ## Options considered
 
@@ -222,7 +222,7 @@ fast, cheap answer.
   *and* strokes look and feel usable for live drawing during the qualitative
   pass (no visible stepping on fast strokes, no distracting lag between hand
   motion and line appearance) *and* jitter is low enough that the feel is
-  consistent, not a lottery. GO means: write a proper Tier 3 implementation
+  consistent, not a lottery. GO means: write a proper implementation
   spec for the companion app and treat it as new-product-surface work
   (roadmap, App Store listing, support), not a quick add-on.
 - **KILL** if latency sits meaningfully above the ~90 ms desk-research

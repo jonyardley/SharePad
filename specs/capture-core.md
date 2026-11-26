@@ -1,7 +1,7 @@
 # Phase 1 — Capture core (spec)
 
-> Tier 3 spec — touches the capture pipeline, the CMIO opt-in, and camera
-> permission, so it's domain-sensitive. Builds on the **verified foundation in
+> Spec: touches the capture pipeline, the CMIO opt-in, and camera
+> permission. Builds on the **verified foundation in
 > [DESIGN.md §5–§6](../DESIGN.md)** — read those first; this spec does not restate
 > them.
 

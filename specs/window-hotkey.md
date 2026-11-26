@@ -1,6 +1,6 @@
 # Window toggle hotkey
 
-> Status: implemented. Tier 3 (net-new capability touching the window/share model).
+> Status: implemented (net-new capability touching the window/share model).
 
 ## Problem
 
