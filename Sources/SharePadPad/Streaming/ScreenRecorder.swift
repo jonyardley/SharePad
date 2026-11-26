@@ -22,10 +22,11 @@ protocol ScreenRecording: AnyObject {
 }
 
 @MainActor
-private final class CaptureRun {
+final class CaptureRun {
     private let onEnded: @MainActor @Sendable () -> Void
     private var started = false
     private var finished = false
+    private var stoppedBeforeStart = false
 
     init(onEnded: @escaping @MainActor @Sendable () -> Void) {
         self.onEnded = onEnded
@@ -33,10 +34,15 @@ private final class CaptureRun {
 
     func didStart(_ succeeded: Bool) {
         started = succeeded
+        if succeeded, stoppedBeforeStart { recordingStopped() }
     }
 
     func recordingStopped() {
-        guard started, !finished else { return }
+        guard !finished else { return }
+        guard started else {
+            stoppedBeforeStart = true
+            return
+        }
         finished = true
         onEnded()
     }
@@ -71,8 +77,8 @@ final class ScreenRecorder: ScreenRecording {
         recorder.startCapture(
             handler: Self.frameHandler(onFrame),
             completionHandler: Self.completion(log: log) { succeeded in
-                run.didStart(succeeded)
                 completion(succeeded)
+                run.didStart(succeeded)
             }
         )
     }

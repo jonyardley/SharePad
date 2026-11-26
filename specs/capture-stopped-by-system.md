@@ -18,10 +18,12 @@ Non-Negotiable 6.
   When it turns false after the capture reported started, and the app did not
   ask to stop, it calls a new `onEnded` callback on the main actor. `stop`
   drops the observation before it calls `stopCapture`, so an app-requested stop
-  never reports as ended.
+  never reports as ended. A stop that arrives before the start completion is
+  kept and reported straight after a successful start.
 - `StreamingRules` gets `Event.captureEnded`. From `running` or `starting` it
-  goes to `idle` and sets `captureInterrupted`; in `idle` or `stopping` it is
-  ignored. While the flag is set, capture does not start again on its own.
+  sets `captureInterrupted` and stops the capture (`stopping`, then `idle` once
+  ReplayKit confirms), so the observation and frame handler are torn down; in
+  `idle` or `stopping` it is ignored. While the flag is set, capture does not start again on its own.
   Try Again (`retryCapture`) and going to the background clear it.
 - The pill reads "Screen recording stopped", attention tone, with Try Again,
   while the link is up. Pairing, Wi-Fi sharing off and local network off still
@@ -43,3 +45,9 @@ Non-Negotiable 6.
    Checked on hardware as a step in #265: while sharing to the Mac, start a
    screen recording from Control Centre. The pill should change to "Screen
    recording stopped", and Try Again should bring the Mac picture back.
+2. The `isRecording` signal is unconfirmed for a phone or FaceTime call and for
+   another app taking the recorder. Both are checked in #265. If it stays
+   silent for either, the fallback is a frame-stall timer in `StreamingRules`,
+   or `RPScreenRecorderDelegate`.
+3. If Try Again is tapped while a call still holds the recorder, the start
+   fails and the pill reads "Screen recording not allowed". Acceptable for now.

@@ -130,18 +130,25 @@ final class StreamingRulesTests: XCTestCase {
 
     func testRecordingEndedBySystemStopsWithoutRestarting() {
         var rules = liveAndCapturing()
-        XCTAssertEqual(rules.reduce(.captureEnded), [])
+        XCTAssertEqual(rules.reduce(.captureEnded), [.stopCapture])
+        XCTAssertEqual(rules.capture, .stopping)
+        XCTAssertTrue(rules.captureInterrupted)
+        XCTAssertEqual(rules.reduce(.captureStopped), [])
         XCTAssertEqual(rules.capture, .idle)
         XCTAssertTrue(rules.captureInterrupted)
         XCTAssertEqual(rules.reduce(.linkUp(true)), [])
         XCTAssertEqual(rules.reduce(.scene(.active)), [])
     }
 
-    func testRecordingEndedWhileStartingStopsWithoutRestarting() {
+    func testRecordingEndedWhileStartingStopsALateStart() {
         var rules = StreamingRules()
         _ = rules.reduce(.scene(.active))
         _ = rules.reduce(.linkUp(true))
-        XCTAssertEqual(rules.reduce(.captureEnded), [])
+        XCTAssertEqual(rules.reduce(.captureEnded), [.stopCapture])
+        XCTAssertEqual(rules.capture, .stopping)
+        XCTAssertTrue(rules.captureInterrupted)
+        XCTAssertEqual(rules.reduce(.captureStarted), [.stopCapture])
+        XCTAssertEqual(rules.reduce(.captureStopped), [])
         XCTAssertEqual(rules.capture, .idle)
         XCTAssertTrue(rules.captureInterrupted)
     }
@@ -161,8 +168,18 @@ final class StreamingRulesTests: XCTestCase {
     func testRetryAfterRecordingEndedStartsAgain() {
         var rules = liveAndCapturing()
         _ = rules.reduce(.captureEnded)
+        _ = rules.reduce(.captureStopped)
         XCTAssertEqual(rules.reduce(.retryCapture), [.startCapture])
         XCTAssertFalse(rules.captureInterrupted)
+        XCTAssertEqual(rules.capture, .starting)
+    }
+
+    func testRetryWhileTheEndedRecordingStopsStartsOnceStopped() {
+        var rules = liveAndCapturing()
+        _ = rules.reduce(.captureEnded)
+        XCTAssertEqual(rules.reduce(.retryCapture), [])
+        XCTAssertFalse(rules.captureInterrupted)
+        XCTAssertEqual(rules.reduce(.captureStopped), [.startCapture])
         XCTAssertEqual(rules.capture, .starting)
     }
 
@@ -171,6 +188,7 @@ final class StreamingRulesTests: XCTestCase {
         _ = rules.reduce(.captureEnded)
         XCTAssertEqual(rules.reduce(.scene(.background)), [.stopLink])
         XCTAssertFalse(rules.captureInterrupted)
+        XCTAssertEqual(rules.reduce(.captureStopped), [])
         _ = rules.reduce(.scene(.active))
         XCTAssertEqual(rules.reduce(.linkUp(true)), [.startCapture])
     }

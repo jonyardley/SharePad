@@ -138,9 +138,9 @@ struct StreamingRules: Equatable {
     // A restart asks to record again (specs/wireless-product.md §11, item 2), so wait for a tap.
     private mutating func captureEnded() -> [Effect] {
         guard capture == .running || capture == .starting else { return [] }
-        capture = .idle
+        capture = .stopping
         captureInterrupted = true
-        return []
+        return [.stopCapture]
     }
 
     private mutating func holdElapsed(_ id: Int) -> [Effect] {
