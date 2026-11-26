@@ -6,9 +6,15 @@ final class ConnectionPillTests: XCTestCase {
     private func pill(
         _ link: LinkStatus,
         denied: Bool = false,
-        declined: Bool = false
+        declined: Bool = false,
+        interrupted: Bool = false
     ) -> ConnectionPill {
-        ConnectionPill(link: link, localNetworkDenied: denied, captureDeclined: declined)
+        ConnectionPill(
+            link: link,
+            localNetworkDenied: denied,
+            captureDeclined: declined,
+            captureInterrupted: interrupted
+        )
     }
 
     func testLiveNamesTheMac() {
@@ -41,6 +47,33 @@ final class ConnectionPillTests: XCTestCase {
     func testDeclinedRecordingOffersARetryOnlyWhileConnected() {
         XCTAssertEqual(pill(.live("Studio"), declined: true).action, .retryCapture)
         XCTAssertNil(pill(.looking(nil), declined: true).action)
+    }
+
+    func testStoppedRecordingOffersARetryOnlyWhileConnected() {
+        XCTAssertEqual(
+            pill(.live("Studio"), interrupted: true),
+            ConnectionPill(
+                text: "Screen recording stopped",
+                tone: .attention,
+                action: .retryCapture
+            )
+        )
+        XCTAssertEqual(pill(.looking("Studio"), interrupted: true).text, "Looking for Studio…")
+    }
+
+    func testLocalNetworkAndPairingOutrankAStoppedRecording() {
+        XCTAssertEqual(
+            pill(.live("Studio"), denied: true, interrupted: true).text,
+            "Local network is off"
+        )
+        let unpaired = ConnectionPill(
+            link: .live("Studio"),
+            pairing: .unpaired,
+            localNetworkDenied: false,
+            captureDeclined: false,
+            captureInterrupted: true
+        )
+        XCTAssertEqual(unpaired.text, "Not paired with a Mac")
     }
 
     func testNotPairedWinsAndOffersPairing() {

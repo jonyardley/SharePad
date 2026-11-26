@@ -46,6 +46,7 @@ final class PadModel {
             pairingUnavailable: !pairings.canPair,
             localNetworkDenied: localNetworkDenied,
             captureDeclined: rules.captureDeclined,
+            captureInterrupted: rules.captureInterrupted,
             toolsUnlocated: toolsUnlocated
         )
     }
@@ -218,9 +219,13 @@ final class PadModel {
         case .stopLink:
             link?.stop()
         case .startCapture:
-            recorder.start(onFrame: frameSink()) { [weak self] started in
-                self?.apply(started ? .captureStarted : .captureFailed)
-            }
+            recorder.start(
+                onFrame: frameSink(),
+                onEnded: { [weak self] in self?.apply(.captureEnded) },
+                completion: { [weak self] started in
+                    self?.apply(started ? .captureStarted : .captureFailed)
+                }
+            )
         case .stopCapture:
             recorder.stop { [weak self] in self?.apply(.captureStopped) }
         case let .scheduleHold(id, delay):

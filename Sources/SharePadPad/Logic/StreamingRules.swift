@@ -24,6 +24,7 @@ struct StreamingRules: Equatable {
         case captureStarted
         case captureFailed
         case captureStopped
+        case captureEnded
         case holdElapsed(Int)
         case retryCapture
     }
@@ -41,6 +42,7 @@ struct StreamingRules: Equatable {
     private(set) var isLinkUp = false
     private(set) var capture = Capture.idle
     private(set) var captureDeclined = false
+    private(set) var captureInterrupted = false
     private var holdID = 0
     private var isHolding = false
 
@@ -56,6 +58,8 @@ struct StreamingRules: Equatable {
             captureFailed()
         case .captureStopped:
             captureStopped()
+        case .captureEnded:
+            captureEnded()
         case let .holdElapsed(id):
             holdElapsed(id)
         case .retryCapture:
@@ -78,6 +82,7 @@ struct StreamingRules: Equatable {
         case .background:
             isForeground = false
             captureDeclined = false
+            captureInterrupted = false
             cancelHold()
             var effects: [Effect] = []
             if isLinkRunning {
@@ -130,6 +135,14 @@ struct StreamingRules: Equatable {
         return startCaptureIfWanted()
     }
 
+    // A restart asks to record again (specs/wireless-product.md §11, item 2), so wait for a tap.
+    private mutating func captureEnded() -> [Effect] {
+        guard capture == .running || capture == .starting else { return [] }
+        capture = .idle
+        captureInterrupted = true
+        return []
+    }
+
     private mutating func holdElapsed(_ id: Int) -> [Effect] {
         guard isHolding, id == holdID else { return [] }
         isHolding = false
@@ -139,11 +152,13 @@ struct StreamingRules: Equatable {
 
     private mutating func retryCapture() -> [Effect] {
         captureDeclined = false
+        captureInterrupted = false
         return startCaptureIfWanted()
     }
 
     private mutating func startCaptureIfWanted() -> [Effect] {
-        guard isForeground, isLinkUp, capture == .idle, !captureDeclined else { return [] }
+        guard isForeground, isLinkUp, capture == .idle, !captureDeclined, !captureInterrupted
+        else { return [] }
         capture = .starting
         return [.startCapture]
     }
