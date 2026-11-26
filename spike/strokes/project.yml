@@ -1,0 +1,37 @@
+# Throwaway stroke-streaming spike (#217 onwards, milestone "Wireless: stroke
+# streaming spike"). Separate from the shipping project.yml on purpose: nothing
+# here should ever end up in either app's target graph.
+name: StrokeSpike
+
+options:
+  minimumXcodeGenVersion: "2.40.0"
+  bundleIdPrefix: com.jonyardley.sharepadspike
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+
+configs:
+  Debug: debug
+  Release: release
+
+settings:
+  base:
+    # Swift 5 language mode on purpose, as in spike/wireless: measurement code.
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+
+targets:
+  StrokeSpikePad:
+    type: application
+    platform: iOS
+    sources:
+      - Pad
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jonyardley.sharepadspike.strokes
+        GENERATE_INFOPLIST_FILE: "NO"
+        INFOPLIST_FILE: Pad/Info.plist
+        TARGETED_DEVICE_FAMILY: "2"
+        CODE_SIGN_STYLE: Automatic
+        SUPPORTS_MACCATALYST: "NO"

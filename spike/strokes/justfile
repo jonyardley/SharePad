@@ -1,0 +1,44 @@
+# Stroke streaming spike (#217 onwards). Throwaway: nothing here ships.
+# Run from spike/strokes.
+
+set shell := ["bash", "-uc"]
+
+bundle := "com.jonyardley.sharepadspike.strokes"
+
+default:
+    @just --list
+
+# Generate the iPad Xcode project
+gen:
+    xcodegen generate
+
+# Compile-check the iPad app without signing
+pad-build: gen
+    xcodebuild -project StrokeSpike.xcodeproj -scheme StrokeSpikePad \
+        -destination 'generic/platform=iOS' -configuration Debug \
+        CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build | tail -3
+
+# Install and launch on a connected iPad (name from: xcrun devicectl list devices). Needs SHAREPAD_TEAM_ID
+pad-run device: gen
+    xcodebuild -project StrokeSpike.xcodeproj -scheme StrokeSpikePad \
+        -destination "platform=iOS,name={{device}}" -configuration Debug \
+        -derivedDataPath build/pad -allowProvisioningUpdates \
+        DEVELOPMENT_TEAM="${SHAREPAD_TEAM_ID:?set SHAREPAD_TEAM_ID}" build | tail -3
+    xcrun devicectl device install app --device "{{device}}" build/pad/Build/Products/Debug-iphoneos/StrokeSpikePad.app
+    xcrun devicectl device process launch --device "{{device}}" {{bundle}}
+
+# Copy every recorded session off the iPad into runs/
+pull device:
+    mkdir -p runs
+    xcrun devicectl device copy from --device "{{device}}" --domain-type appDataContainer \
+        --domain-identifier {{bundle}} --source Documents --destination runs
+
+# Mac renders and diffs for one session folder, e.g. runs/session-2026-10-10T09-00-00Z
+render session:
+    cd Render && swift build -c release
+    Render/.build/release/stroke-render "{{session}}"
+
+# Every ink draws on this Mac (no iPad needed)
+selftest out="/tmp/stroke-selftest":
+    cd Render && swift build -c release
+    Render/.build/release/stroke-render --selftest "{{out}}"
