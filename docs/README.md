@@ -38,8 +38,8 @@ DMG from the public **`appcast.xml`** (falling back to the GitHub releases page 
 that fetch fails). The price appears many times across the site copy and the
 `schema.org` `Offer` block, so it is **not hand-edited here**. The price-bearing
 pages (`index.html`, `thanks-*.html`, `terms.html`,
-`share-ipad-on-zoom-google-meet-teams.html`) are **generated from the templates in
-`site/`**, with the value set once in `site/site.config.json`. Change the price
+`share-ipad-on-zoom-google-meet-teams.html`) and the pairing link page
+(`pair.html`) are **generated from the templates in `site/`**, with the value set once in `site/site.config.json`. Change the price
 there, run `just build-site`, and commit the regenerated `docs/`; CI fails if they
 drift. The **Stripe** price is separate and must be changed in the dashboard too.
 The product is a **one-time payment with automatic updates for life** (via Sparkle),
