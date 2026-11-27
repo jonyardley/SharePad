@@ -6,9 +6,15 @@ final class ConnectionPillTests: XCTestCase {
     private func pill(
         _ link: LinkStatus,
         denied: Bool = false,
-        declined: Bool = false
+        declined: Bool = false,
+        interrupted: Bool = false
     ) -> ConnectionPill {
-        ConnectionPill(link: link, localNetworkDenied: denied, captureDeclined: declined)
+        ConnectionPill(
+            link: link,
+            localNetworkDenied: denied,
+            captureDeclined: declined,
+            captureInterrupted: interrupted
+        )
     }
 
     func testLiveNamesTheMac() {
@@ -43,6 +49,33 @@ final class ConnectionPillTests: XCTestCase {
         XCTAssertNil(pill(.looking(nil), declined: true).action)
     }
 
+    func testStoppedRecordingOffersARetryOnlyWhileConnected() {
+        XCTAssertEqual(
+            pill(.live("Studio"), interrupted: true),
+            ConnectionPill(
+                text: "Screen recording stopped",
+                tone: .attention,
+                action: .retryCapture
+            )
+        )
+        XCTAssertEqual(pill(.looking("Studio"), interrupted: true).text, "Looking for Studio…")
+    }
+
+    func testLocalNetworkAndPairingOutrankAStoppedRecording() {
+        XCTAssertEqual(
+            pill(.live("Studio"), denied: true, interrupted: true).text,
+            "Local network is off"
+        )
+        let unpaired = ConnectionPill(
+            link: .live("Studio"),
+            pairing: .unpaired,
+            localNetworkDenied: false,
+            captureDeclined: false,
+            captureInterrupted: true
+        )
+        XCTAssertEqual(unpaired.text, "Not paired with a Mac")
+    }
+
     func testNotPairedWinsAndOffersPairing() {
         let unpaired = ConnectionPill(
             link: .looking(nil),
@@ -54,6 +87,22 @@ final class ConnectionPillTests: XCTestCase {
             unpaired,
             ConnectionPill(text: "Not paired with a Mac", tone: .attention, action: .pair)
         )
+    }
+
+    func testAnUnreadableKeychainWinsWithNoAction() {
+        for pairing in [PairingState.unpaired, .paired, .broken("Studio")] {
+            let off = ConnectionPill(
+                link: .looking("Studio"),
+                pairing: pairing,
+                pairingUnavailable: true,
+                localNetworkDenied: true,
+                captureDeclined: false
+            )
+            XCTAssertEqual(
+                off,
+                ConnectionPill(text: "Wi-Fi sharing is off", tone: .attention)
+            )
+        }
     }
 
     func testABrokenPairingNamesTheMacUntilALinkIsUp() {

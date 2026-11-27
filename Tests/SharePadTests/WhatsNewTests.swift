@@ -152,7 +152,6 @@ final class WhatsNewTests: XCTestCase {
         XCTAssertTrue(PairingCodeDisplay.pairing(iPad: "iPad").hasLiveCode)
         XCTAssertFalse(PairingCodeDisplay.expired.hasLiveCode)
         XCTAssertFalse(PairingCodeDisplay.paired(iPad: "iPad").hasLiveCode)
-        XCTAssertTrue(PairingCodeDisplay.paired(iPad: "iPad").isPaired)
     }
 
     private func display(
@@ -168,5 +167,41 @@ final class WhatsNewTests: XCTestCase {
             lastSeen: "1.2.0", isFreshInstall: false, current: "1.3.0",
             featureReleases: WhatsNew.featureReleases
         ))
+    }
+
+    // ── Buttons ──
+
+    func testWhatsNewOffersPairingUntilAnIPadIsPaired() throws {
+        let url = try XCTUnwrap(URL(string: "https://sharepad.co/pair#code"))
+        let invitation = PairingInvitation(
+            typedCode: "K7QM-4XRT",
+            link: url,
+            expiresAt: Date(timeIntervalSince1970: 300)
+        )
+        let unpaired: [PairingProgress] = [
+            .closed,
+            .offering(invitation),
+            .pairing(invitation, iPad: "Jon’s iPad"),
+            .expired,
+            .interrupted,
+        ]
+        for progress in unpaired {
+            XCTAssertEqual(
+                WhatsNew.Buttons(wirelessAvailable: true, pairing: progress),
+                .pairOrNotNow,
+                "\(progress)"
+            )
+        }
+    }
+
+    func testWhatsNewSaysDoneOncePaired() {
+        XCTAssertEqual(
+            WhatsNew.Buttons(wirelessAvailable: true, pairing: .paired(iPad: "Jon’s iPad")),
+            .done
+        )
+    }
+
+    func testWhatsNewSaysDoneWithoutWireless() {
+        XCTAssertEqual(WhatsNew.Buttons(wirelessAvailable: false, pairing: .closed), .done)
     }
 }

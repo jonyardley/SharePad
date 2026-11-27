@@ -81,6 +81,7 @@
 
         func start(
             onFrame: @escaping @Sendable (CapturedFrame) -> Void,
+            onEnded _: @escaping @MainActor @Sendable () -> Void,
             completion: @escaping @MainActor @Sendable (Bool) -> Void
         ) {
             self.onFrame = onFrame

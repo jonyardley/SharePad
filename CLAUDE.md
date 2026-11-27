@@ -1,135 +1,79 @@
-# SharePad — Development Guidelines
+# SharePad development guidelines
 
-> Last reviewed: 2026-06-16.
->
-> **Status: Phases 0–5 all shipped** (incl. #7 window-frame persistence and #10
-> popover live thumbnail + device picker) **plus the 7-day trial + Ed25519
-> licence-key gate** (app + worker + Stripe/Cloudflare deployment, live 2026-06-14
-> — see `CHANGELOG.md` 1.1.0). **v1.2.0 is the current public release; the product
-> is feature-complete and now in the marketing/launch phase.** The full pipeline
-> exists — CMIO opt-in, `.muxed` capture, borderless aspect-locked share window,
-> popover, automatic connect/disconnect/wake lifecycle, and the trial-gated in-app
-> purchase flow. What remains is publicity, maintenance, and follow-ups. The module
-> map below is the *actual* layout. The design spec is the source of truth for
-> *what* we're building and *why*; this file is *how* we build it. Read `DESIGN.md`
-> first.
+> The current public release is the one `gh release list --limit 3` marks
+> Latest, or the newest `v*` tag (`git tag -l 'v*' --sort=-v:refname | head -1`).
+> The top section of `CHANGELOG.md` may not be released yet, and `review-*` tags
+> are App Review pre-releases. The folders on disk are the layout; `DESIGN.md`
+> §8 is headed as the target.
 
-## Project Overview
+## Project overview
 
-SharePad is a macOS **menu-bar app** that turns a USB-connected iPad into a
-clean, aspect-locked, always-ready **window** you share in any video call's
-"Share window" picker. Plug in the iPad → the window appears automatically → pick
-it in the call. The point is to delete the per-call QuickTime ritual. Primary use
-case: live drawing / whiteboarding shown as full shared content (not a webcam
-tile).
+SharePad is a macOS menu-bar app that turns a USB-connected iPad into a clean,
+aspect-locked, always-ready window you share in any video call's "Share window"
+picker. Plug in the iPad, the window appears automatically, and the per-call
+QuickTime ritual is gone. Primary use: live drawing and whiteboarding shown as
+full shared content, not a webcam tile.
 
-**Approach: window-share, not virtual camera.** For drawing, *display size* beats
-*selection convenience*, and a virtual camera renders as a small webcam tile. See
-[`DESIGN.md` §2](DESIGN.md#2-approach--rejected-alternatives) for the full
-trade-off. Do not start a CoreMediaIO camera-extension without re-opening that
-decision.
-
-## Project Structure
-
-```text
-project.yml                 # xcodegen — Xcode project is GENERATED, not committed
-justfile                    # task runner (gen / build / run / fmt / lint)
-DESIGN.md                   # comprehensive design spec (source of truth)
-CLAUDE.md                   # this file
-specs/                      # per-feature specs, Tier 3 only (see Workflow)
-Sources/SharePad/         # app code (see DESIGN.md §8 for the module map)
-Tests/SharePadTests/      # pure-logic tests (reducer, preferences)
-Packages/SharePadWire/      # local Swift package: wireless wire format, codec, link, pairing + rules
-Sources/SharePadPad/        # iPad companion app (specs/wireless-product.md §4), GPLv3 + App Store permission
-Tests/SharePadPadTests/     # iPad pure-logic tests (start/stop rules, crop, frame gate, persistence)
-spike/wireless/             # throwaway wireless spike, now built on SharePadWire
-workers/licenses/           # Cloudflare Worker: licence key issuance (Stripe, trial gate)
-workers/purchase-email/     # Cloudflare Worker: post-purchase licence + download email (Resend)
-workers/appcast/            # Cloudflare Worker: appcast logging-proxy (active-install + version stats)
-workers/stats/              # Cloudflare Worker: unified stats dashboard at stats.sharepad.co
-workers/telemetry/          # Cloudflare Worker: opt-in crash/diagnostic sink at telemetry.sharepad.co
-```
-
-## Tech Stack
-
-- **Swift** 5.9+ (Swift 6 mode if it stays clean), **macOS 14.0** deployment target
-- **UI**: SwiftUI `MenuBarExtra` (style `.window`) for the menu bar + popover;
-  AppKit `NSWindow` for the borderless share window
-- **Capture**: AVFoundation (`AVCaptureSession`, `AVCaptureVideoPreviewLayer`)
-- **Device visibility**: CoreMediaIO (`kCMIOHardwarePropertyAllowScreenCaptureDevices`)
-- **Login item**: `SMAppService.mainApp`
-- **Tooling**: xcodegen, just, swiftformat, swiftlint, gitleaks (secret scan)
-- **Third-party dependencies: none.** First-party frameworks only. Adding a
-  dependency is a flagged decision, not a default.
+The approach is window-share, not virtual camera: for drawing, display size
+beats selection convenience, and a virtual camera renders as a small webcam
+tile ([`DESIGN.md` §2](DESIGN.md#2-approach--rejected-alternatives)). Don't
+start a CoreMediaIO camera extension without reopening that decision.
 
 ## Commands
 
 ```bash
-just gen           # xcodegen generate — run after editing project.yml
+just gen           # xcodegen generate, run after editing project.yml
 just build         # xcodebuild, debug
 just run           # build + launch the app
-just open          # open the generated project in Xcode
-just test          # run the unit tests
-just wire-test     # run the SharePadWire package tests
-just pad-build     # build the iPad app for the iOS Simulator (PAD_SIMULATOR picks a device id)
-just pad-test      # run the iPad app's unit tests on the iOS Simulator
-just pad-run NAME  # install + launch the Debug iPad app on a device (needs SHAREPAD_TEAM_ID)
-just pad-archive   # Release iPad archive for TestFlight, then verify-pad (needs SHAREPAD_TEAM_ID)
-just pad-upload    # archive + upload to App Store Connect / TestFlight (specs/distribution.md §12)
-just verify-pad    # the archived iPad app has its icon, privacy manifest and Info.plist keys
-just pad-probe NAME SOURCE  # Debug iPad app on a capture source (hierarchy, layer, replayKit) with the probe CSVs on
-just pad-probe-pull NAME    # copy the probe CSVs to spike/canvas-render/runs (specs/canvas-render-spike.md)
+just test          # Mac unit tests
+just wire-test     # SharePadWire package tests
+just pad-test      # iPad unit tests on the iOS Simulator
 just fmt           # swiftformat .   (must pass before commit)
 just lint          # swiftlint + swiftformat --lint (must pass before push)
-just scan          # gitleaks secret scan over full history (same check CI runs)
-just downloads     # GitHub Release download counts (DMG installs + appcast update-checks)
-just appcast-stats # active installs + version adoption from the appcast Worker (Analytics Engine)
-just telemetry-stats # crash/hang/error counts from the telemetry Worker (opt-in; Analytics Engine)
-just install-hooks # enable the pre-commit and pre-push secret scans (run once per clone/worktree)
-just release-build # Release build, Hardened Runtime, ad-hoc (for local on-iPad checks)
-just release       # full pipeline: build → Developer ID sign → notarize → DMG (needs creds)
+just pre-review    # lint, Mac and wire tests, iPad tests if touched (must pass before review)
 ```
 
-Release signing/notarization is env-driven; see `specs/distribution.md`.
+The `justfile` holds the rest (`just --list`). The Xcode project is generated
+by xcodegen and git-ignored: edit `project.yml`, never the `.xcodeproj`. A diff
+that hand-edits the project file is a blocker.
 
 First-time setup:
 
 ```bash
 brew install xcodegen just swiftformat swiftlint gitleaks
-just install-hooks   # enable the pre-commit and pre-push secret scans
+just install-hooks   # pre-commit and pre-push secret scans, once per clone or worktree
 just gen && just run
 ```
 
-The Xcode project is **generated by xcodegen and git-ignored** — edit
-`project.yml`, never the `.xcodeproj`. A diff that hand-edits the project file is
-a blocker.
+Set `SHAREPAD_TEAM_ID` locally or every rebuild shows a keychain prompt (#177,
+detail in `.claude/rules/licensing-distribution.md`).
 
 ## Architecture (Non-Negotiables)
 
-These are the rules that keep a small app from rotting. Break one and the
-capture/UI boundary blurs.
-
 1. **One session, one owner.** Exactly one `AVCaptureSession`, owned by
-   `CaptureController`. Views and the popover **observe** it (attach preview
-   layers / read published state) — they never create, mutate, or start it.
+   `CaptureController`. Views and the popover observe it (attach preview
+   layers, read published state); they never create, mutate or start it.
 2. **State lives in `AppModel`; views are dumb.** App state (lifecycle, device,
    permission, toggles) lives in one `@Observable @MainActor` `AppModel`. Views
-   render it and send intents. **No capture/AV logic and no decisions in views** —
-   if you're writing an `if` about device or permission state in a SwiftUI body,
-   it belongs in the state reducer.
+   render it and send intents. No capture or AV logic and no decisions in
+   views: an `if` about device or permission state in a SwiftUI body belongs in
+   the state reducer.
 3. **The state machine is a pure, tested reducer.** `(permission, device list,
-   session status) → AppState` is a pure function with no AVFoundation imports, so
-   it's unit-testable without hardware. `CaptureController` is **protocol-fronted**
-   so `AppModel` runs against a fake in tests.
-4. **CMIO opt-in once, early.** Set `kCMIOHardwarePropertyAllowScreenCaptureDevices`
-   exactly once at startup, before discovery. It's process-global — don't toggle it
-   per session.
+   session status) → AppState` is a pure function with no AVFoundation imports,
+   so it is unit-testable without hardware. `CaptureController` is
+   protocol-fronted so `AppModel` runs against a fake in tests.
+4. **CMIO opt-in once, early.** Set
+   `kCMIOHardwarePropertyAllowScreenCaptureDevices = 1` exactly once at
+   startup, before discovery. It is process-global, so never toggle it per
+   session. Without it discovery returns nothing, silently: check it first when
+   the device list is empty.
 5. **Video-only by construction.** Add the muxed input with
-   `addInputWithNoConnections` and wire only the **video** connection. This keeps
-   scope tight *and* avoids an unexplained Microphone permission prompt.
+   `addInputWithNoConnections` and wire only the video connection. This keeps
+   scope tight and avoids the Microphone TCC dialog that adding the muxed input
+   naively triggers.
 6. **Surface, don't swallow.** Every error state (`permissionDenied`, `failed`,
-   device-vanished) has a **UI surface** in the popover — never a silent dead
-   state. Optimistic UI (e.g. "window shown") must reconcile with the actual
+   device-vanished) has a UI surface in the popover, never a silent dead
+   state. Optimistic UI (such as "window shown") must reconcile with the actual
    session status, not assume success.
 
 ### State boundary
@@ -139,282 +83,112 @@ capture/UI boundary blurs.
 | `AVCaptureSession` + active device | `CaptureController` (single owner) |
 | Lifecycle / device / permission state | `AppModel` (`@Observable`) reducer |
 | Window frame, keep-on-top, launch-at-login | `UserDefaults` (`Preferences`) |
-| Live video frames | `AVCaptureVideoPreviewLayer` (GPU) — **never** app state |
+| Live video frames | `AVCaptureVideoPreviewLayer` (GPU), never app state |
 
-## Permissions & Entitlements
+## Permissions and entitlements
 
-- **Camera** only: `NSCameraUsageDescription` + `AVCaptureDevice.requestAccess(for: .video)`.
-  Microphone is deliberately avoided (Non-Negotiable 5).
-- **No App Sandbox in v1** — it blocks the CMIO screen-capture opt-in. The app
-  ships un-sandboxed for personal use; this is why distribution is deferred. Don't
-  enable the sandbox without revisiting `DESIGN.md` §6 caveats.
+- Camera only: `NSCameraUsageDescription` +
+  `AVCaptureDevice.requestAccess(for: .video)`. Microphone is deliberately
+  avoided (Non-Negotiable 5).
+- No App Sandbox: it blocks the CMIO screen-capture opt-in, so enabling it gives
+  an empty device list with no obvious cause. Ship un-sandboxed, which is why
+  the Mac app is a Developer ID notarised direct download, not an App Store app
+  (`specs/distribution.md`). Don't enable the sandbox without revisiting the
+  `DESIGN.md` §6 caveats.
 
-## Design System
+## Code style
 
-It's a tiny utility, so the system is light — but still tokenised, not littered
-with literals.
-
-- **Spacing & radius are tokens, not literals.** Put padding/inset/corner values
-  in a `Theme` enum (e.g. `Theme.Spacing.row`, `Theme.Radius.card`). Don't sprinkle
-  `.padding(16)` / `cornerRadius: 12`. Genuine one-offs (a fixed control height)
-  stay literal — don't force those into the scale.
-- **Colours via semantic names**, not raw values. Prefer system materials
-  (`.regularMaterial`, `NSVisualEffectView`) so the popover/window match macOS.
-- The status item has two states — **idle** (`ipad.landscape`) and **live**
-  (`ipad.landscape.badge.play`). A share lost mid-call shows only in the popover
-  banner (`specs/mid-call-disconnect.md`; the alert symbol went in #115). It's a
-  symbol swap, not a tint: the menu bar renders items monochrome and strips colour.
-
-## Code Style
-
-- Swift; `swiftformat` + `swiftlint` must pass (fmt before commit, lint before push).
-- **No force-unwrap (`!`), no `try!`, no `as!`** without a one-line written
-  justification — same bar as a Rust `unwrap()`. AVFoundation and CMIO calls
+- Run `just fmt` and `just lint` locally, not through CI round trips.
+- No force-unwrap (`!`), `try!` or `as!` without a one-line written
+  justification, the same bar as a Rust `unwrap()`. AVFoundation and CMIO calls
   return real errors; handle and surface them.
-- Prefer first-party frameworks; a new third-party dependency is a flagged decision.
-- `@MainActor` for UI/state; capture callbacks run off-main, then hop back to
-  mutate `AppModel`.
-
-### Comments
-
-Default to **no comments**. Self-explanatory code with well-named identifiers
-beats commented code. A reader who knows Swift/AVFoundation should answer "what
-does this do?" from the code alone.
-
-A comment is justified ONLY if it's one of these **three buckets**. Everything
-else gets deleted.
-
-1. **Section headers in a large file** — single-line dividers like
-   `// ── Capture session ──`. Never more than one line.
-2. **Unusual / non-obvious WHY** — a hidden constraint, subtle invariant, a
-   framework quirk that would surprise a reader (the CMIO opt-in and the muxed
-   `addInputWithNoConnections` trick are exactly this). Cite the reason: a doc
-   link, a forum thread, a `BUG:` tag — not a vague restatement.
-3. **Hacky / tactical code that needs rework** — flag it and tie it to a tracked
-   issue: `// HACK(#N): …` / `// FIXME(#N): …`. A bare `// TODO` with no issue is
-   not acceptable.
-
-`///` doc comments get the **same** treatment. Do **not** write comments that
-restate WHAT the code does, narrate self-evident structure, or reference the
-current task/PR. Two-line cap as a smell test: if it's longer, ask "can this be a
-function name, a type, or a `DESIGN.md` entry?" — usually yes.
+- Prefer first-party frameworks. Sparkle is the one third-party dependency
+  (`DESIGN.md` §7, pulled in by `project.yml`); adding another is a flagged
+  decision.
+- `@MainActor` for UI and state; capture callbacks run off-main, then hop back
+  to mutate `AppModel`.
+- Comments follow the comment rule in `~/.claude/CLAUDE.md` (Writing, everywhere).
 
 ## Testing
 
-**Default: ship tests with new pure logic.** The honest split (see
-[`DESIGN.md` §11](DESIGN.md#11-testing-strategy)):
+Ship tests with new pure logic ([`DESIGN.md` §11](DESIGN.md#11-testing-strategy)):
 
-- **Unit-test the pure layer**: the `AppState` reducer, preference persistence,
-  aspect math, device-selection. Drive `AppModel` with a fake `CaptureController`.
-- **Capture is manual.** AVFoundation can't be meaningfully unit-tested without an
-  iPad. Each phase in `DESIGN.md` §9 has a "verify by" line — that's the manual
-  checklist.
-- **"Done" for a capture phase means the manual checklist was run**, with the iPad,
-  in a real meeting app — not "tests pass". Don't claim a capture feature works
-  from a green unit suite. If you can't reach hardware, say so explicitly and list
-  what needs user verification.
+- Unit-test the pure layer: the `AppState` reducer, preference persistence,
+  aspect math, device selection.
+- Capture is manual: AVFoundation can't be meaningfully unit-tested without an
+  iPad. Each `DESIGN.md` §9 phase has a "verify by" line, the manual checklist.
+- Done for a capture phase means the manual checklist was run, with the iPad,
+  in a real meeting app; a green unit suite never proves it. If you can't
+  reach hardware, say so and list what needs user verification.
 
-## Project-specific gotchas
+## Specs
 
-Bear-traps, mostly verified against Apple docs/forums (`DESIGN.md` §6). Skim
-before touching capture.
+A change to the capture pipeline (CMIO opt-in and session setup included), the
+state machine, permissions, entitlements, the window and share model, or a new
+top-level capability gets a spec in `specs/<feature>.md` (problem, approach,
+key decisions, open questions) and waits for go, whatever its size.
+Everything else follows the plan rule in `~/.claude/CLAUDE.md` (Work).
 
-- **The iPad is invisible without the CMIO opt-in.** No
-  `kCMIOHardwarePropertyAllowScreenCaptureDevices = 1` → discovery returns nothing,
-  silently. Set it once at startup before discovering. This is the #1 "why is the
-  device list empty" trap.
-- **The iPad is a `.muxed` device, not `.video`.** Discover with `mediaType: .muxed`
-  (and `deviceType: .external`, macOS 14+; was `.externalUnknown`). A `.video`
-  discovery won't find it.
-- **Devices appear asynchronously** after the opt-in. **KVO the DiscoverySession's
-  `devices`** — reading it once at launch races and finds nothing. This same KVO
-  drives the automatic connect/disconnect.
-- **First launch settles late.** Camera permission + the iPad "Trust" handshake
-  finish *after* the iPad shows up to discovery, so the very first start can stall —
-  and the device readying up afterward is a *property* change, not a `devices`-array
-  change, so KVO won't re-fire. `AppModel` runs a **bounded auto-retry** over a few
-  seconds so it self-heals (no unplug/replug). Don't "fix" this by latching `failed`
-  on the first stalled start. (`specs/first-connect-retry.md`)
-- **Muxed input → surprise mic prompt.** Adding the muxed input naively triggers a
-  Microphone TCC dialog. Use `addInputWithNoConnections` + wire only the video
-  connection (Non-Negotiable 5).
-- **App Sandbox breaks the opt-in.** Ship un-sandboxed (v1). Enabling the sandbox =
-  empty device list with no obvious cause.
-- **The appcast feed is the `appcast.sharepad.co` Worker, not gh-pages directly.**
-  `SUFeedURL` points at the logging-proxy Worker (`specs/appcast-analytics.md`); it
-  serves the gh-pages appcast unchanged and records install/version stats. **The
-  Worker must be deployed and serving before any build carrying that feed URL ships**
-  — otherwise new installs check a dead feed and can't auto-update. Changing
-  `SUFeedURL` again strands existing installs on the old URL until they update, so
-  treat it as permanent.
-- **Normal window + browser meeting apps.** The chosen "normal window" (not pinned)
-  shares fine in **Zoom desktop** even when occluded, but **browser Meet/Teams only
-  transmit a *visible* window** — a buried window shares blank. The popover's
-  *Keep window on top* toggle (gear menu) is the escape hatch. Remember this when "the share is
-  black" gets reported.
-- **The popover thumbnail renders off the data output, not a second preview layer**
-  (#10). The window owns the one `AVCaptureVideoPreviewLayer`; the popover gets a
-  fan-out of the existing `AVCaptureVideoDataOutput` into an
-  `AVSampleBufferDisplayLayer`, gated to popover-open and throttled to ~15 fps. The
-  "two preview layers on one session" question was sidestepped, not tested.
-- **Locked iPad shows black**; sleep/wake can interrupt the session — restart on
-  `runtimeErrorNotification` / interruption end.
-- **Only the feed window may be shared.** `WindowSharing` sets `sharingType = .none`
-  on every window except the feed (tagged via `shareWindowID`), so the About panel /
-  popover / Sparkle dialogs can't be picked in a call instead of the iPad. The guard
-  re-sweeps on `NSWindow.didBecomeKeyNotification`, so a new window type that becomes
-  shareable *without ever becoming key* would slip through — sweep it explicitly.
-- **Licence keys are Ed25519 signatures** of the normalized buyer email (base64url);
-  the app validates fully offline against the public key embedded in
-  `Licensing/License.swift` — `LicenseValidatorTests.testProductionKeyIsConfigured`
-  guards against shipping a *malformed/empty* embedded key (it can't catch a
-  well-formed key that doesn't pair with the worker's private key — only the
-  deploy-time E2E proves the pairing). The signing private key lives only in the
-  Cloudflare Worker (and Jon's password manager), never in the repo.
-- **The trial overlay is part of the share window's SwiftUI root** — a `ZStack`
-  over `PreviewView`, toggled by an `@Observable ShareOverlayModel` flag
-  (`ShareWindowController`). It is deliberately *not* a foreign `NSHostingView`
-  subview added on top of the hosting view: that does **not** reliably composite
-  above the layer-backed preview (the overlay silently never renders). Keep new
-  share-window chrome inside this root, not as added subviews.
-- **The iPad app streams only to paired Macs** (`specs/wireless-pairing-ui.md`).
-  `PairedLink` runs `StreamSender` in paired mode: it dials only Bonjour services
-  whose TXT `id` matches a pairing, with that pairing's key, and authenticates
-  before its hello. Install ids on both ends come from `localDeviceID()` in the
-  Keychain, never `identifierForVendor` or a per-launch UUID; `LinkGate` closes a
-  link whose hello id differs from the paired one.
-- **iPad frames leave only with a known canvas rectangle.** `CaptureContext` drops
-  any frame without a layout or while a sheet or popover covers the canvas. New
-  chrome that draws over the canvas must register an `Overlay` with the model.
-- **Wireless ships in every Mac build from 1.3.0** (#192; the Debug-only gate of
-  `specs/wireless-pairing-ui.md` decision 1 lifted with the iPad app's release).
-  `NSLocalNetworkUsageDescription` and `NSBonjourServices` are in the target's
-  `info:` in `project.yml`, and `just verify-app` fails any product missing either:
-  without them the listener can't ask for local network access and no iPad finds
-  the Mac. Any v* tag cut from main ships wireless to every user.
-- **The Mac listener's keys are fixed when it is made.** `ListenerPlan` decides
-  whether to listen (a code on offer, or something paired with **Allow wireless
-  iPads** on) and with which keys; any change replaces the `NWListener`.
-  Connections it already accepted carry on, so Forget must close them explicitly
-  (`PairingBook`'s `dropConnections`).
-- **The pairing window must never be shareable.** `PairingPanel` sets
-  `sharingType = .none` before the window is first ordered on screen, then sweeps
-  `WindowSharing`; its QR is a live pairing code.
-- **Set `SHAREPAD_TEAM_ID` for Mac Debug builds too** (#177). The pairing store uses
-  the file-based keychain, whose access list is tied to the app's signature. Ad hoc
-  builds are a new app each time, so every rebuild shows the "wants to use your
-  confidential information" prompt. With the team id set, `just build`, `run` and
-  `test` sign with the Apple Development certificate and the prompt stops (after one
-  Always Allow). Unset, as in CI, they stay ad hoc. Builds from inside Xcode stay
-  ad hoc. Release signing is untouched: its requirement pins the bundle id and team,
-  so Sparkle updates keep matching.
-- **Local network denial has no API on macOS** (TN3179). The only signal is the
-  listener's Bonjour registration waiting with `kDNSServiceErr_PolicyDenied`
-  (`LocalNetworkProbe`); the receiver takes the latest listener state as the
-  truth (that wait means denied, `.ready` clears it). Unconfirmed on macOS 15
-  hardware until the W1 manual check. macOS can't reset an app's Local Network
-  choice, so never trigger the prompt on a machine whose answer you don't own.
-- **Telemetry is opt-in and off by default** (`specs/telemetry.md`). The privacy
-  page promises nothing leaves the machine bar the update check, so
-  `Preferences.diagnosticsEnabled` defaults false and `DiagnosticsReporter` sends
-  only when the user turns it on. It is first-party MetricKit (crashes/hangs) plus
-  five named non-fatals, never any content, licence, or device id. Never flip the
-  default to on without a privacy-page change and a deliberate decision.
-- **What's new shows only for versions in `WhatsNew.featureReleases`**
-  (`specs/wireless-product.md` §9). A fresh install is `firstLaunchDate == nil`,
-  not a missing `lastSeenVersion` (no install before W5a has one). It waits while
-  the share window is up, then shows on a hide or once a lost-share notice clears.
-  To see it in a Debug build: `open --env SHAREPAD_FEATURE_RELEASE=1.0.0` plus an
-  older `lastSeenVersion` in the defaults. 1.3.0 is listed as the wireless release
-  in every build.
-- **A starting cable never takes the window from a receiving Wi-Fi feed**
-  (`AppState.activeFeed`, `specs/wireless-product.md` §10, W4). That includes a USB
-  restart on wake. W4b's `pause` now stops that flap: while the cable holds the
-  window the Wi-Fi feed is paused and stops counting as receiving
-  (`AppState.wirelessPause`, which also says why: cable or trial), and its picture
-  is cleared, so unplugging shows a moment of black before a fresh keyframe, never
-  an old drawing.
-- **Wireless TLS-PSK is TLS 1.2 only, and the suite must be pinned**
-  (`specs/wireless-product.md` §6, open question 3). Network.framework's default
-  PSK suite has no forward secrecy, so `LinkSecurity` pins ECDHE-PSK and a loopback
-  test asserts it. The listener also cannot see which PSK a client used: trust a
-  peer's id only after `LinkAuthentication.verify` and `LinkGate`, never from the
-  hello alone.
+## Code review
 
-## Workflow
+The `requesting-code-review` skill is SharePad's reviewer. It is user-level
+(`~/.claude/skills/`), not in this repo; where it is missing, the global
+fallback is `/code-review` at medium. The rest of review is in
+`~/.claude/CLAUDE.md` ("Subagents, review and lane size").
 
-Match ceremony to scope. Default to less; escalate when the work demands it.
-
-### Tier 1 — Just do it
-Copy/text tweaks, lint fixes, renames, single-file refactors, dependency-free
-config tweaks. No spec, no plan. Make it, verify, ship.
-
-### Tier 2 — Plan mode (default for feature work)
-A new view/control following existing patterns, a new toggle, a self-contained
-piece of a phase. Plan mode, then implement. No spec doc.
-
-### Tier 3 — Lightweight spec (architectural only)
-Anything touching the **capture pipeline**, the **state machine**, permissions, or
-the window/share model; or a net-new top-level capability (e.g. ever revisiting
-the virtual-camera path). Add/extend a doc in `specs/<feature>.md` (problem,
-approach, key decisions, open questions), then Plan mode, then implement. The
-phases in `DESIGN.md` §9 are Tier 3 units — each gets Plan mode before code.
-
-### Domain-sensitivity override
-Changes to the **CMIO opt-in, capture session setup, permission flow, or
-entitlements** go up at least one tier regardless of size — these are the
-load-bearing, easy-to-silently-break parts.
-
-### Decision rule
-If unsure between tiers, go one lighter; drift up if scope expands.
-
-### Code review (Superpowers)
-
-Code review runs through the **Superpowers** plugin
-([obra/superpowers](https://github.com/obra/superpowers)) — not by hand.
-
-- **Before merging any PR that contains code** (Tier 2+), run
-  `superpowers:requesting-code-review`. It dispatches a fresh subagent to review
-  the diff against the plan and reports issues by severity. Tell it
-  **"comment-policy violations are Blockers, not Nits"** (see Code Style →
-  Comments).
-- Then run `superpowers:receiving-code-review` to work the findings — reach
-  "I agree" before implementing. Apply Blockers and important findings inline;
-  open a tracked issue for anything deferred and link it in the PR.
-- **Tier 1** trivia (typos, dep bumps, single-line config) and **docs-only** PRs
-  may skip review, but still run `just fmt` / `just lint`.
-- **Install once per machine:**
-  `/plugin install superpowers@claude-plugins-official` (the official marketplace
-  tracks obra's repo — the real plugin). Newly installed skills load on the **next
-  session**; no other setup. If `/plugin` isn't available in your environment,
-  install via your plugin manager and start a fresh session.
-
-**Scope it to review (and optionally TDD) — not the whole methodology.**
-Superpowers also ships auto-triggering skills for brainstorming, writing-plans,
-subagent-driven-development, executing-plans, and finishing-a-development-branch.
-Those collapse the tier workflow above into one-size-fits-all ceremony — **don't
-let them drive.** Use `requesting-code-review` / `receiving-code-review`
-deliberately; `superpowers:test-driven-development` is welcome for the pure-logic
-state reducer (non-UI Tier 2+). When invoking one Superpowers skill, tell it to
-skip the others.
+- The gate is `just pre-review`: it must pass locally before the reviewer
+  runs. Tell the reviewer "comment-policy violations are Blockers, not Nits"
+  (the comment rule in `~/.claude/CLAUDE.md`).
+- Open a tracked issue for anything deferred and link it in the pull request.
+- Self-hosted runner: `testflight.yml` runs on the `sharepad-m4` Mac.
+- **Sensitive surfaces**, which always get the second reviewer: wireless
+  pairing and network trust
+  (`Packages/SharePadWire/Sources/SharePadWire/Pairing/`, including the
+  Keychain install ids in `PairingStore.swift` and `LinkGate`, plus
+  `Rules/PairedDialCycle.swift` and `Rules/ListenerPlan.swift`), licence key
+  validation (`Sources/SharePad/Licensing/`), the entitlements files
+  (`Sources/*/*.entitlements`) and the permission flow
+  (`Sources/SharePad/Support/Permissions.swift`).
+- Small and docs-only pull requests get the review too, before leaving draft.
+- **Agent files pin no model or effort.** Agents in `.claude/agents/` (today
+  only `test-runner.md`, a mechanical row agent) leave both out of their
+  frontmatter; the dispatcher names them on the call, from the global table.
 
 ## Always
 
-1. **Read [`DESIGN.md`](DESIGN.md) first** — it's the source of truth for scope and
-   the verified technical foundation. If a request contradicts it, flag the
-   conflict before coding.
-2. Work on a feature branch, never `main` — `main` is seeded; all work is
-   feature-branch → PR.
-3. Run `just fmt` before commit and `just lint` before push — locally, not via CI
-   roundtrips.
-4. **Before merging a code PR, run the Superpowers code review** (see the Code
-   review section). Don't merge an unreviewed code change.
-5. For any capture/permission/window change: **verify on the actual iPad in a real
-   meeting app** before calling it done (see Testing).
+1. Read [`DESIGN.md`](DESIGN.md) first: it is the source of truth for what we
+   build and why, and the verified technical foundation. If a request
+   contradicts it, flag the conflict before coding.
+2. Work on a feature branch and open a pull request, never on `main` (it is
+   seeded).
+3. For any capture, permission or window change, verify on the actual iPad in
+   a real meeting app before calling it done.
 
 ## After completing work
 
-1. Update `DESIGN.md` if the design/decisions changed (esp. the open-questions and
-   milestones sections).
-2. Update this file if architecture, commands, or gotchas changed.
+1. Update `DESIGN.md` if the design or decisions changed (especially the open
+   questions and milestones sections).
+2. Update this file if architecture or commands changed, and the matching file
+   in `.claude/rules/` if a trap changed.
 3. Resolve or re-flag any open question the work touched.
+
+## Where the rest lives
+
+Traps and the design system live in `.claude/rules/`:
+
+- `capture.md`: capture and the share window (Mac `Capture/`, `Windows/`, `UI/`).
+- `wireless-pairing.md`: Wi-Fi feed, pairing, network trust (`SharePadWire`,
+  both apps' wireless code).
+- `licensing-distribution.md`: licence keys, appcast feed, Debug signing
+  (licensing, updater, workers, CI).
+- `telemetry-whats-new.md`: opt-in diagnostics and What's new (`Diagnostics`,
+  `WhatsNew`).
+- `design-system.md`: spacing, colour and status item (both apps' `UI/`).
+
+They load when a session whose folder is the worktree opens a matching file
+with the Read tool. A session in main reading a worktree's files gets none,
+and a shell read loads none: then read them by hand. Helpers usually get them
+but can't count on it, so a brief that relies on a trap names its rule file.
+Every rule binds either way.
+
+Release signing and notarisation are env-driven: `specs/distribution.md`.

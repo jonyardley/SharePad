@@ -38,8 +38,8 @@ because "the share just dropped" is an event, not a state the app rests in.
 
 ## Key decisions
 
-- Tier 2 (a new control following existing patterns; **no** permission/entitlement
-  change, so no domain-sensitivity tier bump).
+- Plan-level change (no spec required): a new control following existing
+  patterns, with no permission or entitlement change.
 - The false-positive guard is structural: only a teardown that interrupts a *visible*
   share signals; intentional unplug while idle is silent.
 

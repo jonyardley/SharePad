@@ -19,6 +19,7 @@ enum WhatsNewWindow {
         }
         let hosting = NSHostingController(
             rootView: WhatsNewView(
+                model: model,
                 pairing: pairing,
                 onDismiss: { [weak win] in win?.close() },
                 onPair: { [weak win] in
@@ -68,6 +69,7 @@ private final class WhatsNewPanel: NSWindow {
 }
 
 struct WhatsNewView: View {
+    let model: AppModel
     let pairing: (any PairingOffering)?
     let onDismiss: () -> Void
     let onPair: () -> Void
@@ -95,12 +97,13 @@ struct WhatsNewView: View {
                 .foregroundStyle(.secondary)
             HStack {
                 Spacer()
-                if let pairing, !pairing.display(at: .now).isPaired {
+                switch model.whatsNewButtons {
+                case .pairOrNotNow:
                     Button("Not Now", action: onDismiss)
                         .keyboardShortcut(.cancelAction)
                     Button("Pair an iPad…", action: onPair)
                         .keyboardShortcut(.defaultAction)
-                } else {
+                case .done:
                     Button("Done", action: onDismiss)
                         .keyboardShortcut(.defaultAction)
                 }

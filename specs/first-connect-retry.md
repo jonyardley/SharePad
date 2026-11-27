@@ -1,7 +1,7 @@
 # First-connect retry through the permission/trust settling window (spec)
 
-> Tier 3 + domain-sensitivity (state machine + permission flow + capture lifecycle →
-> highest ceremony). Builds on the #13 `resume()` watchdog and #24 start-confirm.
+> Spec: touches the state machine, the permission flow and the capture lifecycle.
+> Builds on the #13 `resume()` watchdog and #24 start-confirm.
 > See DESIGN.md §5.3 (state machine), §6 (CMIO opt-in / trust caveats), §9 (Phase
 > 4/5), §11 (testing). Tracks
 > [#58](https://github.com/jonyardley/SharePad/issues/58); implemented in

@@ -10,9 +10,6 @@ enum SessionCountdown {
     }
 }
 
-// A corner watermark on the shared feed counting down to the trial pause. It lives in
-// the share window's SwiftUI root (see ShareRootView) so it composites over the
-// layer-backed preview, which a foreign NSHostingView subview wouldn't reliably do.
 struct TrialCountdownWatermark: View {
     let endsAt: Date
 

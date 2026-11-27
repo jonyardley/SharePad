@@ -1,6 +1,6 @@
 # Phase 2 — Clean window (spec)
 
-> Tier 3 — touches the window/share model. Builds on Phase 1. See DESIGN.md §3
+> Spec: touches the window and share model. Builds on Phase 1. See DESIGN.md §3
 > (window behaviour/chrome), §9 (Phase 2), §10 (share-visibility gotcha).
 
 ## Problem

@@ -4,11 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>SharePad: Share your iPad on any call, in an instant</title>
-<meta name="description" content="Turn your iPad into a live whiteboard and share it in any call. Connect it to your Mac with a cable or over Wi-Fi and it’s right there in the share list, without the faff. Free 7-day trial, then a one-time {{price}} licence." />
+<meta name="description" content="Turn your iPad into a live whiteboard and share it in any call. Connect it to your Mac with a cable or over Wi-Fi and it’s right there in the share list. Free 7-day trial, then a one-time {{price}} licence." />
 <link rel="canonical" href="https://sharepad.co/" />
 
 <meta property="og:title" content="SharePad: Share your iPad on any call, in an instant" />
-<meta property="og:description" content="Share your thinking, not just your screen. Turn your iPad into a live whiteboard you can share in any video call. Connect it to your Mac with a cable or over Wi-Fi and it’s there in the share list. Free for 7 days, then {{price}} once." />
+<meta property="og:description" content="Draw on your iPad. Share it in any call. Connect it to your Mac with a cable or over Wi-Fi and it’s there in a clean window, shown full size. Free for 7 days, then {{price}} once." />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="SharePad" />
 <meta property="og:image" content="https://sharepad.co/assets/demo.jpg" />
@@ -19,7 +19,7 @@
 
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="SharePad: Share your iPad on any call, in an instant" />
-<meta name="twitter:description" content="Share your thinking, not just your screen. Turn your iPad into a live whiteboard you can share in any video call, without the faff. Free for 7 days, then {{price}} once." />
+<meta name="twitter:description" content="Draw on your iPad. Share it in any call. Connect it to your Mac with a cable or over Wi-Fi and it’s ready to share, full size. Free for 7 days, then {{price}} once." />
 <meta name="twitter:image" content="https://sharepad.co/assets/demo.jpg" />
 <meta name="twitter:image:alt" content="The SharePad window sharing a connected iPad into a Google Meet call at full size." />
 
@@ -61,7 +61,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
   @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
-  section[id], a[id] { scroll-margin-top: 88px; }
+  section[id], a[id], details[id] { scroll-margin-top: 88px; }
   :focus-visible { outline: 2px solid var(--periwinkle); outline-offset: 3px; border-radius: 4px; }
   a, .btn { -webkit-tap-highlight-color: transparent; }
   h1, h2, h3 { text-wrap: balance; }
@@ -389,8 +389,8 @@
   "operatingSystem": "macOS 14.0 or later",
   "url": "https://sharepad.co/",
   "downloadUrl": "https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg",
-  "slogan": "Share your thinking, not just your screen.",
-  "description": "SharePad turns a USB-connected iPad into a clean, aspect-locked window on your Mac that you can share in any video call. Plug in your iPad and it appears in the Share window list of Zoom, Google Meet and Teams, ideal for live drawing and visual thinking. Free for 7 days, then a one-time {{price}} licence that works offline with no account.",
+  "slogan": "Draw on your iPad. Share it in any call.",
+  "description": "SharePad shows your iPad in a clean window on your Mac, shaped to fit the iPad, that you can share in any video call. Connect your iPad with a cable, or over Wi-Fi with the free SharePad for iPad app, and the window appears in the Share window list of Zoom, Google Meet and Teams, ready for live drawing and whiteboarding. Free for 7 days, then a one-time {{price}} licence that works offline with no account.",
   "image": "https://sharepad.co/assets/demo.jpg",
   "sameAs": "https://github.com/jonyardley/SharePad",
   "offers": {
@@ -414,7 +414,7 @@
       "name": "How much does SharePad cost, and are updates included?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "SharePad is {{price}}, a one-time payment, not a subscription. That includes automatic updates for life, so every future version is free once you’ve bought it. Prefer to build it yourself? The full source is on GitHub under the GPLv3, free of charge."
+        "text": "SharePad is {{price}}, paid once, with no subscription. That includes automatic updates for life, so every future version is free once you’ve bought it. The iPad app is free. One licence covers both. Prefer to build it yourself? The full source is on GitHub under the GPLv3, free of charge."
       }
     },
     {
@@ -422,7 +422,7 @@
       "name": "What happens after the trial?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "For the first 7 days everything works, with nothing held back. After that SharePad still opens and shows your iPad, but sharing runs for up to 5 minutes and then pauses until you add your licence. Choose “Enter Licence…” from the menu bar and sharing carries on straight away, offline."
+        "text": "For the first 7 days everything works. After that SharePad still opens and shows your iPad, but sharing runs for up to 5 minutes and then pauses until you add your licence. Choose “Enter Licence…” from the menu bar and sharing carries on straight away, offline."
       }
     },
     {
@@ -438,7 +438,7 @@
       "name": "How does it show the iPad?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "As a proper window, not a virtual camera. A virtual camera shows up as a small webcam tile in a call; SharePad gives you a shared window at full size, which is what you want for live drawing and whiteboarding. It’s a live feed rendered straight to your screen on the GPU, using the same capture path QuickTime and OBS use, so it stays responsive for drawing and writing."
+        "text": "As a proper window, not a virtual camera. A virtual camera shows up as a small webcam tile in a call; SharePad gives you a shared window at full size, which is what you want for live drawing and whiteboarding. It’s a live feed rendered straight to your screen on the GPU, so it stays responsive for drawing and writing. Over the cable, it uses the same capture path QuickTime and OBS use."
       }
     },
     {
@@ -454,7 +454,7 @@
       "name": "What do I need, and why not the App Store?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "A Mac running macOS 14 (Sonoma) or later, and either a USB cable to connect your iPad or, to draw without the cable, the free SharePad app for iPad on the same Wi-Fi network as your Mac. SharePad isn’t on the Mac App Store because macOS only treats a plugged-in iPad as a camera for apps that run outside Apple’s sandbox, and App Store apps must be sandboxed. It’s still signed and notarised by Apple, so it opens with a normal double-click. You just download it directly rather than from the store."
+        "text": "A Mac running macOS 14 (Sonoma) or later, and either a USB cable to connect your iPad or, to draw without the cable, the free SharePad app for iPad (iPadOS 17 or later) on the same Wi-Fi network as your Mac. SharePad for Mac isn’t on the Mac App Store because macOS only treats a plugged-in iPad as a camera for apps that run outside Apple’s sandbox, and App Store apps must be sandboxed. It’s still signed and notarised by Apple, so it opens with a normal double-click. You just download it directly rather than from the store."
       }
     },
     {
@@ -470,7 +470,7 @@
       "name": "The shared window is black, what can I do?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Two usual causes: the iPad is locked (a locked iPad shows black, so unlock it), or you haven’t tapped “Trust This Computer” on the iPad yet. Also, browser-based Google Meet and Teams only transmit a window that’s actually visible. If it’s hidden behind other windows the share goes blank, so switch on “Keep Window on Top” in SharePad’s gear menu (the gear in the menu-bar popover)."
+        "text": "Two usual causes: the iPad is locked (a locked iPad shows black, so unlock it), or you haven’t tapped “Trust This Computer” on the iPad yet. Also, browser-based Google Meet and Teams only transmit a window that’s actually visible. If it’s hidden behind other windows the share goes blank, so switch on “Keep Window on Top” in SharePad’s gear menu (the gear in the menu-bar popover). Over Wi-Fi, keep SharePad open on the iPad, because it only sends your drawing while it’s open, and tap Allow when the iPad asks to record the screen."
       }
     },
     {
@@ -495,6 +495,14 @@
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Yes. SharePad shows your iPad in a window on your Mac. There’s no account, no sign-in and no tracking. SharePad goes online to check for updates, and sends crash reports if you switch them on in the app (they’re off until you do). What you draw or share never leaves your Mac. Without the cable, your drawing goes straight from your iPad to your Mac on your local network, encrypted, and never through a server. The privacy policy has the details."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Need help?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Email hello@sharepad.co and you’ll hear back from a person. Bugs and ideas are welcome as GitHub issues."
       }
     }
   ]
@@ -533,13 +541,12 @@
   <div class="wrap hero-grid">
     <div class="hero-copy">
       <h1 class="title reveal d2">
-        Share your<br />
-        <span class="accent longshadow">thinking</span>,<br />
-        not just your screen.
+        Draw on your <span class="accent longshadow">iPad</span>.<br />
+        Share it in any call.
       </h1>
       <p class="lede reveal d3">
         Turn the iPad into a <b>live whiteboard</b> using your favourite drawing or
-        writing app. Connect it to your Mac with a cable or over Wi&#8209;Fi and share in any call, without the faff.
+        writing app. Connect it to your Mac with a cable or over Wi&#8209;Fi and share it in any call.
       </p>
       <div class="hero-cta reveal d4">
         <div class="mac-note">
@@ -636,7 +643,7 @@
     </div>
     <figure class="menubar-demo">
       <img src="assets/popover.png" loading="lazy" alt="The SharePad menu-bar popover, showing a live preview of the connected iPad, the device name, a Hide window button, and toggles for auto-show on connect, keep window on top, and launch at login." />
-      <figcaption><b>The whole app lives in your menu bar</b>: a live preview of exactly what you’re sharing, with show/hide and keep-on-top controls a click away.</figcaption>
+      <figcaption><b>The whole app lives in your menu bar</b>: a live preview of exactly what you’re sharing, with the window a click away.</figcaption>
     </figure>
   </div>
 </section>
@@ -659,15 +666,15 @@
   <div class="wrap">
     <div class="section-head">
       <div class="kicker">Before you download</div>
-      <h2>How it ships, honestly.</h2>
-      <p>SharePad isn’t on the Mac App Store, so you download it straight from here.</p>
+      <h2>How you get it.</h2>
+      <p>SharePad for Mac isn’t on the Mac App Store, so you download it straight from here. SharePad for iPad is free on the App Store.</p>
     </div>
     <div class="panel note" style="max-width:720px">
       <ul>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>Try everything free for a week</b>, no card and no account. After that, {{price}} keeps it yours for good.</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>{{price}}, paid once.</b> No subscription and no account, just a one-off payment, with automatic updates for life.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>{{price}}, paid once.</b> No subscription, no account, and automatic updates for life. The iPad app is free. One licence covers both.</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Every build is <b>signed and notarised by Apple</b>, so it opens with a normal double-click.</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>It runs outside Apple’s sandbox, because that’s the only way macOS will treat a plugged-in iPad as a camera. That’s also why it can’t be on the App Store.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>It runs outside Apple’s sandbox, because that’s the only way macOS will treat a plugged-in iPad as a camera, and that’s why the Mac app can’t be on the App Store.</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>The code is <a href="https://github.com/jonyardley/SharePad" style="color:var(--indigo);font-weight:600">open</a>, so you can read what it does.</span></li>
       </ul>
     </div>
@@ -684,12 +691,12 @@
       <details class="faq-item">
         <summary>How much does SharePad cost, and are updates included?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">SharePad is <b>{{price}}, a one-time payment</b>, not a subscription. That includes <b>automatic updates for life</b>, so every future version is free once you’ve bought it. Prefer to build it yourself? The full source is on <a href="https://github.com/jonyardley/SharePad">GitHub</a> under the GPLv3, free of charge.</div>
+        <div class="faq-body">SharePad is <b>{{price}}, paid once</b>, with no subscription. That includes <b>automatic updates for life</b>, so every future version is free once you’ve bought it. The iPad app is free. One licence covers both. Prefer to build it yourself? The full source is on <a href="https://github.com/jonyardley/SharePad">GitHub</a> under the GPLv3, free of charge.</div>
       </details>
       <details class="faq-item">
         <summary>What happens after the trial?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">For the first 7 days everything works, with nothing held back. After that SharePad still opens and shows your iPad, but sharing runs for up to 5 minutes and then pauses until you add your licence. Choose “Enter Licence…” from the menu bar and sharing carries on straight away, offline.</div>
+        <div class="faq-body">For the first 7 days everything works. After that SharePad still opens and shows your iPad, but sharing runs for up to 5 minutes and then pauses until you add your licence. Choose “Enter Licence…” from the menu bar and sharing carries on straight away, offline.</div>
       </details>
       <details class="faq-item">
         <summary>How do I share my iPad screen on Zoom, Google Meet or Teams?
@@ -699,7 +706,7 @@
       <details class="faq-item">
         <summary>How does it show the iPad?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">As a proper window, not a virtual camera. A virtual camera shows up as a small webcam tile in a call; SharePad gives you a shared window at full size, which is what you want for live drawing and whiteboarding. It’s a live feed rendered straight to your screen on the GPU, using the same capture path QuickTime and OBS use, so it stays responsive for drawing and writing.</div>
+        <div class="faq-body">As a proper window, not a virtual camera. A virtual camera shows up as a small webcam tile in a call; SharePad gives you a shared window at full size, which is what you want for live drawing and whiteboarding. It’s a live feed rendered straight to your screen on the GPU, so it stays responsive for drawing and writing. Over the cable, it uses the same capture path QuickTime and OBS use.</div>
       </details>
       <details class="faq-item">
         <summary>Which drawing apps and pens work?
@@ -709,7 +716,7 @@
       <details class="faq-item">
         <summary>What do I need, and why not the App Store?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">A Mac running macOS 14 (Sonoma) or later, and either a USB cable to connect your iPad or, to draw without the cable, the free SharePad app for iPad on the same Wi-Fi network as your Mac. SharePad isn’t on the Mac App Store because macOS only treats a plugged-in iPad as a camera for apps that run outside Apple’s sandbox, and App Store apps must be sandboxed. It’s still <a href="https://github.com/jonyardley/SharePad">signed and notarised</a> by Apple, so it opens with a normal double-click. You just download it directly rather than from the store.</div>
+        <div class="faq-body">A Mac running macOS 14 (Sonoma) or later, and either a USB cable to connect your iPad or, to draw without the cable, the free SharePad app for iPad (iPadOS 17 or later) on the same Wi-Fi network as your Mac. SharePad for Mac isn’t on the Mac App Store because macOS only treats a plugged-in iPad as a camera for apps that run outside Apple’s sandbox, and App Store apps must be sandboxed. It’s still <a href="https://github.com/jonyardley/SharePad">signed and notarised</a> by Apple, so it opens with a normal double-click. You just download it directly rather than from the store.</div>
       </details>
       <details class="faq-item">
         <summary>Do I need a cable, or does it work wirelessly?
@@ -719,7 +726,7 @@
       <details class="faq-item">
         <summary>The shared window is black, what can I do?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
-        <div class="faq-body">Two usual causes: the iPad is locked (a locked iPad shows black, so unlock it), or you haven’t tapped “Trust This Computer” on the iPad yet. Also, browser-based Google Meet and Teams only transmit a window that’s actually visible. If it’s hidden behind other windows the share goes blank, so switch on “Keep Window on Top” in SharePad’s gear menu (the gear in the menu-bar popover).</div>
+        <div class="faq-body">Two usual causes: the iPad is locked (a locked iPad shows black, so unlock it), or you haven’t tapped “Trust This Computer” on the iPad yet. Also, browser-based Google Meet and Teams only transmit a window that’s actually visible. If it’s hidden behind other windows the share goes blank, so switch on “Keep Window on Top” in SharePad’s gear menu (the gear in the menu-bar popover). Over Wi-Fi, keep SharePad open on the iPad, because it only sends your drawing while it’s open, and tap Allow when the iPad asks to record the screen.</div>
       </details>
       <details class="faq-item">
         <summary>Does it share the iPad’s sound too?
@@ -736,6 +743,11 @@
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
         <div class="faq-body">Yes. SharePad shows your iPad in a window on your Mac. There’s no account, no sign-in and no tracking. SharePad goes online to check for updates, and sends crash reports if you switch them on in the app (they’re off until you do). What you draw or share never leaves your Mac. Without the cable, your drawing goes straight from your iPad to your Mac on your local network, encrypted, and never through a server. The <a href="privacy.html">privacy policy</a> has the details.</div>
       </details>
+      <details class="faq-item" id="support">
+        <summary>Need help?
+          <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
+        <div class="faq-body">Email <a href="mailto:hello@sharepad.co">hello@sharepad.co</a> and you’ll hear back from a person. Bugs and ideas are welcome as <a href="https://github.com/jonyardley/SharePad/issues">GitHub issues</a>.</div>
+      </details>
     </div>
   </div>
 </section>
@@ -745,7 +757,7 @@
     <div class="final-card">
       <img src="assets/icon-256.png" alt="SharePad icon" />
       <h2>Make every call more visual.</h2>
-      <p>Plug in, pick the window, and draw.</p>
+      <p>Connect your iPad, pick the window, and draw.</p>
       <div class="final-actions">
         <div class="mac-note">
           <p><b>SharePad runs on your Mac.</b> Open this page on your Mac to download it, or copy the link for later.</p>
@@ -804,6 +816,17 @@
       }
     });
   });
+
+  var openHashedFaq = function () {
+    var id = location.hash.slice(1);
+    var item = id && document.getElementById(id);
+    if (!item || item.tagName !== "DETAILS") return;
+    item.open = true;
+    item.scrollIntoView({ block: "start" });
+  };
+  if (document.readyState === "complete") openHashedFaq();
+  else window.addEventListener("load", openHashedFaq);
+  window.addEventListener("hashchange", openHashedFaq);
 </script>
 
 <!-- Cloudflare Web Analytics -->

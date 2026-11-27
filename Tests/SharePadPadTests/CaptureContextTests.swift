@@ -21,6 +21,80 @@ final class CaptureContextTests: XCTestCase {
         XCTAssertEqual(decision, .init(allowed: false, crop: nil))
     }
 
+    func testASecondLayoutHoldsFramesUntilTheRecropInterval() throws {
+        let context = CaptureContext()
+        context.setLayout(layout(), at: 0)
+        let changedAt: TimeInterval = 10
+        context.setLayout(
+            layout(canvas: CGRect(x: 0, y: 0, width: 400, height: 150)),
+            at: changedAt
+        )
+        let crop = CanvasRect(x: 0, y: 0, width: 40, height: 15)
+
+        XCTAssertEqual(
+            try context.decide(
+                for: frame(isCanvasOnly: false),
+                at: changedAt + FrameGate.recrop - 0.01
+            ),
+            .init(allowed: false, crop: crop)
+        )
+        XCTAssertEqual(
+            try context.decide(
+                for: frame(isCanvasOnly: false),
+                at: changedAt + FrameGate.recrop + 0.01
+            ),
+            .init(allowed: true, crop: crop)
+        )
+    }
+
+    func testTheFirstLayoutSendsFramesAtOnce() throws {
+        let context = CaptureContext()
+        context.setLayout(layout(), at: 10)
+        XCTAssertTrue(try context.decide(for: frame(isCanvasOnly: false), at: 10).allowed)
+    }
+
+    func testALayoutThatKeepsTheShareableAreaDoesNotHoldFrames() throws {
+        let context = CaptureContext()
+        let canvas = CGRect(x: 0, y: 0, width: 400, height: 250)
+        context.setLayout(layout(canvas: canvas), at: 0)
+        context.setLayout(
+            layout(canvas: canvas, obstructions: [CGRect(x: 0, y: 260, width: 400, height: 40)]),
+            at: 10
+        )
+        XCTAssertTrue(try context.decide(for: frame(isCanvasOnly: false), at: 10).allowed)
+    }
+
+    func testAScreenFrameWithALayoutIsHeldWhileAnOverlayIsShown() throws {
+        let context = CaptureContext()
+        context.setLayout(layout(), at: 0)
+        context.overlay(.settings, shown: true, at: 0)
+        XCTAssertEqual(
+            try context.decide(for: frame(isCanvasOnly: false), at: 1),
+            .init(allowed: false, crop: .whole(width: 40, height: 30))
+        )
+    }
+
+    func testALayoutWithNoShareableAreaIsHeld() throws {
+        let context = CaptureContext()
+        let canvas = CGRect(x: 0, y: 0, width: 400, height: 300)
+        context.setLayout(layout(canvas: canvas, obstructions: [canvas]), at: 0)
+        XCTAssertEqual(
+            try context.decide(for: frame(isCanvasOnly: false), at: 1),
+            .init(allowed: false, crop: nil)
+        )
+    }
+
+    private func layout(
+        canvas: CGRect = CGRect(x: 0, y: 0, width: 400, height: 300),
+        obstructions: [CGRect] = []
+    ) -> CanvasLayout {
+        CanvasLayout(
+            canvas: canvas,
+            window: CGSize(width: 400, height: 300),
+            obstructions: obstructions
+        )
+    }
+
     private func frame(isCanvasOnly: Bool) throws -> CapturedFrame {
         var buffer: CVPixelBuffer?
         CVPixelBufferCreate(nil, 40, 30, kCVPixelFormatType_32BGRA, nil, &buffer)

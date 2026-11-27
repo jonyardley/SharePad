@@ -1,8 +1,8 @@
 # #24 — Confirm frames after a full `start()` (spec)
 
-> Tier 3 + domain-sensitivity (touches the capture restart / state machine → highest
-> ceremony). Closes [#24](https://github.com/jonyardley/SharePad/issues/24). Builds on
-> the #13 `resume()` watchdog. See DESIGN.md §5.3 (state machine), §6 (sleep/wake),
+> Spec: touches the capture restart and the state machine. Closes
+> [#24](https://github.com/jonyardley/SharePad/issues/24). Builds on the #13
+> `resume()` watchdog. See DESIGN.md §5.3 (state machine), §6 (sleep/wake),
 > §9 (Phase 4/5), §11 (testing).
 
 ## Problem

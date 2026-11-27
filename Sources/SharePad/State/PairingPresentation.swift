@@ -135,9 +135,4 @@ enum PairingCodeDisplay: Equatable {
         case .waiting, .paired, .expired: false
         }
     }
-
-    var isPaired: Bool {
-        if case .paired = self { return true }
-        return false
-    }
 }

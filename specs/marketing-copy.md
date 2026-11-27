@@ -12,12 +12,12 @@ Honest, plain, and understated — confident without hype. It explains *how it
 actually works* and trusts the reader. Section headings are short statements, not
 slogans. Examples straight from the live site:
 
-- "Share your thinking, not just your screen."
+- "Draw on your iPad. Share it in any call."
 - "Turn the iPad into a live whiteboard using your favourite drawing or writing
-  app. Connect it to your Mac and share in any call, without the faff."
-- "Ready the moment you plug in." · "Nothing leaves your Mac." · "How it ships,
-  honestly." · "Questions, answered." · "Make every call more visual."
-- "£2.99 once · no subscription · macOS 14+"
+  app. Connect it to your Mac with a cable or over Wi-Fi and share it in any call."
+- "Ready the moment you plug in, or without the cable." "Your drawing never leaves
+  your desk." "How you get it." "Questions, answered." "Make every call more visual."
+- "Then £2.99 once, no subscription, macOS 14 or later"
 
 > **Constraint:** the 7-day trial is entirely client-side, with no account or
 > email capture (that's the privacy promise — the app never sends your data). So
@@ -31,39 +31,44 @@ slogans. Examples straight from the live site:
 Reproduced here as the reference. Edit the HTML for any change; keep this in step.
 
 - **Title:** SharePad: Share your iPad on any call, in an instant
-- **Hero:** Share your thinking, not just your screen.
+- **Hero:** Draw on your iPad. Share it in any call.
   - Turn the iPad into a live whiteboard using your favourite drawing or writing
-    app. Connect it to your Mac and share in any call, without the faff.
-  - CTA pair: **Download — free for 7 days** and **Buy a licence — £2.99**.
-  - Free for 7 days, then £2.99 once · no subscription · macOS 14+
+    app. Connect it to your Mac with a cable or over Wi-Fi and share it in any call.
+  - CTA pair: **Try free for 7 days** and **Buy for £2.99**.
+  - Free for 7 days, then £2.99 once, no subscription, macOS 14 or later
 - **See it in action.** On the left, the SharePad window. On the right, that same
   window shared into Google Meet at full size.
-- **Ready the moment you plug in.** SharePad lives in your menu bar and finds your
-  iPad as soon as it connects to your Mac.
-  1. **Plug in the iPad** — Connect it over USB. There's nothing to install on the iPad.
-  2. **The window appears** — A clean window opens automatically, matched to your
-     iPad's shape so nothing looks squished. Show or hide it whenever you like.
-  3. **Share it in the call** — Pick it from the "Share window" list in Zoom, Meet
-     or Teams, open your favourite app, and you're ready to go.
-- **Nothing leaves your Mac.** SharePad just shows the iPad in a window on your
-  machine. No account, no sign-in, no in-app tracking or analytics. The only time
-  it reaches the internet is an automatic check for a new version, never to send
-  your data or anything about what you share.
-- **How it ships, honestly.** SharePad isn't on the Mac App Store, so you download
-  it straight from here.
-  - £2.99, paid once. No subscription and no account, just a one-off payment, with
-    automatic updates for life.
+- **Ready the moment you plug in, or without the cable.** SharePad lives in your
+  menu bar and finds your iPad as soon as it connects to your Mac, by cable or over
+  Wi-Fi. Two cards side by side:
+  - **With a cable:** plug the iPad into your Mac; the window appears by itself;
+    share it in your call. Any drawing app works.
+  - **Over Wi-Fi:** get SharePad for iPad, free; scan the code on your Mac, once;
+    open it and draw in the SharePad canvas. Apple's App Store badge sits under the
+    steps.
+- **Your drawing never leaves your desk.** No account, no sign-in, no tracking.
+  SharePad goes online to check for updates, and sends crash reports only if you
+  switch them on. Over Wi-Fi, your drawing goes straight from your iPad to your Mac
+  on your local network, encrypted, and never through a server.
+- **How you get it.** SharePad for Mac isn't on the Mac App Store, so you download
+  it straight from here. SharePad for iPad is free on the App Store.
+  - £2.99, paid once. No subscription, no account, and automatic updates for life.
+    The iPad app is free. One licence covers both.
   - Every build is signed and notarised by Apple, so it opens with a normal double-click.
   - It runs outside Apple's sandbox, because that's the only way macOS will treat a
-    plugged-in iPad as a camera. That's also why it can't be on the App Store.
+    plugged-in iPad as a camera, and that's why the Mac app can't be on the App Store.
   - The code is open, so you can read what it does.
-- **Questions, answered.** Full FAQ lives in the HTML — that's canonical. It covers
-  cost/updates, how to share in Zoom/Meet/Teams, nothing-to-install, "is it a
-  virtual camera?", Apple Pencil/drawing apps, requirements, why-not-App-Store,
-  lag, the black-window fixes, audio, notifications, and privacy.
-- **Make every call more visual.** Plug in, pick the window, and draw.
-  £2.99 · one-time payment · updates for life · no subscription
-- **Footer:** SharePad · Privacy · Terms & refunds · GitHub
+- **Questions, answered.** The full FAQ lives in the HTML, which is canonical. It
+  covers cost and updates, the trial, sharing in Zoom, Meet and Teams, how it shows
+  the iPad, drawing apps (any app over the cable, the SharePad canvas over Wi-Fi),
+  requirements and why not the App Store, cable or Wi-Fi, the black-window fixes,
+  audio, notifications, privacy and support.
+- **Make every call more visual.** Connect your iPad, pick the window, and draw.
+- **Footer:** Guide, Privacy, Terms & refunds, GitHub
+
+The iPad app and its App Store listing follow the wording rules in
+`specs/wireless-product.md` §9: they never mention price, "free", trial or licence.
+The website may say the iPad app is free.
 
 ### Trial gate copy — live since 2026-06-14
 The 7-day trial + licence gate shipped, and the site now carries this copy (added,
@@ -84,20 +89,27 @@ not rewritten, in the same voice):
 - **Settings:** enable customer receipt emails; set a recognisable public business
   name and a support email.
 
-### Product description (checkout — already live, on voice)
-Share your thinking, not just your screen. SharePad turns your iPad into a live
+### Product description (checkout, live)
+
+Still says "over USB". On launch day change it in the Stripe dashboard to "Connect
+it to your Mac with a cable or over Wi-Fi, and a clean window opens automatically."
+
+Draw on your iPad. Share it in any call. SharePad turns your iPad into a live
 whiteboard you can share in any call. Connect to your Mac over USB, and a clean
 window opens automatically. Select from the "Share window" list in Zoom, Meet or
 Teams and your favourite drawing app is ready to share. No mid-call faff. A
 one-time payment with automatic updates for life, and no subscription.
 
 ### Thank-you page (`docs/thanks-*.html`)
-- **Heading:** Thanks — you're all set.
+- **Heading:** Thanks, you're all set.
 - **Body:** Your licence is on its way to your email. To switch it on: open
-  SharePad from the menu bar, choose "Enter licence...", and paste the email you
+  SharePad from the menu bar, choose "Enter Licence…", and paste the email you
   used here along with your key. It takes effect straight away and works offline.
-  Lost your key later? You can get it again anytime — no account needed, and no
-  need to buy again.
+  Lost your key later? You can get it again anytime, with no account needed and
+  no need to buy again.
+- **Setup steps:** open the DMG; enter your licence ("Enter Licence…"); plug in
+  your iPad over USB and tap Trust, or get the free SharePad app for iPad and choose
+  "Pair an iPad…" from the menu bar; pick the SharePad window in your call.
 - **CTA:** Download SharePad (for anyone who hasn't already)
 
 ### Recover page (`/recover`)
@@ -118,9 +130,9 @@ the **download link + the licence key**. The HTML lives in `purchaseEmailHtml`.
     switch Macs. Keep this email; the link below always points at the latest
     version." + a **Download SharePad** button, then the signed/notarised install note.
   - **Your licence:** Email + Key, then "In SharePad's menu bar, choose 'Enter
-    licence...' and paste both. It takes effect straight away and works offline —
+    Licence…' and paste both. It takes effect straight away and works offline, as
     SharePad never checks in with a server." + "Lost your key later? Get it again
-    anytime at {recover_url} with the email above — no account, no sign-in."
+    anytime at {recover_url} with the email above, with no account and no sign-in."
   - Footer: open source (GPLv3), updates for life, "reply to this email" for help.
 
 ---

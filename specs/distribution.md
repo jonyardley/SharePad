@@ -1,7 +1,7 @@
 # Distribution & Release — Spec
 
-> Tier 3, **domain-sensitive** (touches entitlements + the capture runtime —
-> CLAUDE.md says these go up a tier and must be verified on the iPad). Status:
+> A spec that touches entitlements and the capture runtime, so it must be
+> verified on the iPad. Status:
 > **proposed**, not yet implemented. Plan mode follows approval.
 >
 > Sibling: **`specs/licensing.md`** (GPLv3 + sell-the-build monetisation) sits *on
@@ -195,8 +195,7 @@ release carries wireless (#192).
   timestamp (`20261003.1530`) so each upload is higher than the last;
   `PAD_BUILD_NUMBER` overrides it (two uploads in the same minute would clash).
 - **What an upload is refused without:** an opaque 1024 app icon
-  (`Sources/SharePadPad/Assets.xcassets`, made from the Mac artwork; a proper
-  full-bleed design is a W5 item) and `PrivacyInfo.xcprivacy` declaring
+  (`Sources/SharePadPad/Assets.xcassets`, the Mac artwork made full bleed in W5) and `PrivacyInfo.xcprivacy` declaring
   `UserDefaults` (CA92.1) and `systemUptime` (35F9.1). `just verify-pad` checks
   both in the archive, plus the usage strings and the encryption key.
 - **Encryption:** `ITSAppUsesNonExemptEncryption` is false. The link uses

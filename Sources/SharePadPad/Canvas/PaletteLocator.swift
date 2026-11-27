@@ -1,10 +1,6 @@
 import UIKit
 
-// PKToolPicker.frameObscured(in:) is CGRectNull whenever the picker is movable
-// (PKToolPicker.h), and the iPadOS 26 palette always is. The palette is drawn in
-// process, as PKDrawingPaletteView inside UITextEffectsWindow (logged on iPadOS 27,
-// 2026-10-02), so its frame is read from there. If the class is ever renamed, nothing
-// is found and ToolsPlacement holds frames instead of leaking the palette.
+// frameObscured(in:) is null for a movable picker (PKToolPicker.h); see specs/wireless-product.md.
 @MainActor
 enum PaletteLocator {
     static let paletteClassPrefix = "PKDrawingPaletteView"

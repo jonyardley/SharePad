@@ -6,18 +6,7 @@ enum WindowSharing {
 
     private static var lastWindowCount = 0
 
-    /// Exclude every non-feed window from screen sharing so only the iPad feed is
-    /// pickable in a call. A window is shareable (`sharingType` defaults `.readOnly`)
-    /// before it becomes key, so two triggers run: `didBecomeKey` (on focus) and a
-    /// window-count-growth check on the app update tick — which is silent while idle, so
-    /// it doesn't regress idle CPU — to catch a window shown without focus. The observers
-    /// use the synchronous `addObserver(forName:queue:.main, using:)` form, NOT an
-    /// `AsyncStream` Task hop, so the sweep fires in the same runloop tick the notification
-    /// posts — before any share picker re-snapshots the window list. The earlier
-    /// AsyncStream form let Sparkle's in-process "Update Available" dialog race in.
-    /// Residual gaps: (a) a net-zero close+open within one tick is missed; (b) Sparkle's
-    /// Downloader/Installer XPC services and `Updater.app` run in separate processes —
-    /// out of `NSApp.windows` reach regardless.
+    // Synchronous, not an AsyncStream hop, so no picker sees an unswept window (capture.md).
     static func startGuarding() {
         excludeAuxiliaryWindows()
         lastWindowCount = NSApp.windows.count

@@ -1,10 +1,7 @@
 import AppKit
 import SwiftUI
 
-// A MenuBarExtra (.window) popover dismisses the moment focus leaves it, so a
-// `.sheet` presented from it can't hold keyboard focus — text fields can't be
-// edited and the form vanishes. Licence entry therefore lives in a real, focusable
-// window (same approach as the About panel), independent of the popover.
+// A popover's .sheet can't hold keyboard focus, so licence entry is a real window (capture.md).
 @MainActor
 enum LicenseWindow {
     private static var window: NSWindow?
@@ -72,7 +69,7 @@ struct LicenseEntryView: View {
                     .foregroundStyle(.red)
             }
             HStack {
-                if License.recoverURL != nil {
+                if model.canRecover {
                     Button("Lost your key?") { model.openRecoverPage() }
                         .buttonStyle(.link)
                 }

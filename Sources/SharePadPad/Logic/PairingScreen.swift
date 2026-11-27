@@ -51,14 +51,23 @@ struct PairingScreenContent: Equatable {
         "Scan the code it shows.",
     ]
     static let recordPromptNote =
-        "Each time you open SharePad, your iPad asks to record the screen. Tap Allow."
+        "Each time SharePad connects to your Mac, your iPad asks to record the screen. Tap Allow."
+    static let keychainUnreadable =
+        "This iPad couldn’t read its Keychain, so Wi-Fi sharing is off. "
+            + "Close SharePad and open it again."
 
     let status: String?
     let isWorking: Bool
     let isPaired: Bool
     let showsMacAppNote: Bool
+    let canStartPairing: Bool
 
-    init(phase: PadPairing.Phase, saveFailed: Bool, hasPairings: Bool) {
+    init(
+        phase: PadPairing.Phase,
+        saveFailed: Bool,
+        hasPairings: Bool,
+        pairingUnavailable: Bool = false
+    ) {
         showsMacAppNote = !hasPairings
         isPaired = if case .paired = phase {
             true
@@ -71,7 +80,10 @@ struct PairingScreenContent: Equatable {
         case .idle, .paired, .failed:
             isWorking = false
         }
-        status = Self.status(phase, saveFailed: saveFailed)
+        canStartPairing = !pairingUnavailable && !isWorking
+        status = pairingUnavailable
+            ? Self.keychainUnreadable
+            : Self.status(phase, saveFailed: saveFailed)
     }
 
     private static func status(_ phase: PadPairing.Phase, saveFailed: Bool) -> String? {
