@@ -4,11 +4,11 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>SharePad: Share your iPad on any call, in an instant</title>
-<meta name="description" content="Turn your iPad into a live whiteboard and share it in any call. Connect it to your Mac with a cable or over Wi-Fi and it’s right there in the share list. Free 7-day trial, then a one-time {{price}} licence." />
+<meta name="description" content="Turn your iPad into a live whiteboard and share it in any call. Plug it into your Mac, or draw over Wi-Fi with the free SharePad for iPad app. The Mac app is free for 7 days, then a one-time {{price}} licence." />
 <link rel="canonical" href="https://sharepad.co/" />
 
 <meta property="og:title" content="SharePad: Share your iPad on any call, in an instant" />
-<meta property="og:description" content="Draw on your iPad. Share it in any call. Connect it to your Mac with a cable or over Wi-Fi and it’s there in a clean window, shown full size. Free for 7 days, then {{price}} once." />
+<meta property="og:description" content="Draw on your iPad. Share it in any call. Plug it into your Mac, or draw over Wi-Fi with the free iPad app, and it’s there in a clean window, full size. Free for 7 days, then {{price}} once." />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="SharePad" />
 <meta property="og:image" content="https://sharepad.co/assets/demo.jpg" />
@@ -19,7 +19,7 @@
 
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="SharePad: Share your iPad on any call, in an instant" />
-<meta name="twitter:description" content="Draw on your iPad. Share it in any call. Connect it to your Mac with a cable or over Wi-Fi and it’s ready to share, full size. Free for 7 days, then {{price}} once." />
+<meta name="twitter:description" content="Draw on your iPad. Share it in any call. Plug it into your Mac, or draw over Wi-Fi with the free iPad app, and it’s ready to share, full size. Free for 7 days, then {{price}} once." />
 <meta name="twitter:image" content="https://sharepad.co/assets/demo.jpg" />
 <meta name="twitter:image:alt" content="The SharePad window sharing a connected iPad into a Google Meet call at full size." />
 
@@ -61,7 +61,7 @@
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { -webkit-text-size-adjust: 100%; }
   @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
-  section[id], a[id], details[id] { scroll-margin-top: 88px; }
+  section[id], a[id], details[id], .route[id] { scroll-margin-top: 88px; }
   :focus-visible { outline: 2px solid var(--periwinkle); outline-offset: 3px; border-radius: 4px; }
   a, .btn { -webkit-tap-highlight-color: transparent; }
   h1, h2, h3 { text-wrap: balance; }
@@ -156,47 +156,77 @@
 
   .hero-grid { display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 48px; align-items: center; }
 
-  /* iPad-window mockup, echoing the icon glyph */
-  .stage { position: relative; display: flex; justify-content: center; align-items: center; min-height: 360px; }
+  /* Hero pill */
+  .hero-pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 6px 16px 6px 6px; margin-bottom: 26px; border-radius: 999px;
+    background: var(--card); border: 1px solid rgba(91,107,232,0.30);
+    box-shadow: 0 8px 20px -12px rgba(62,76,179,0.5);
+    font-size: 0.95rem; font-weight: 600; color: var(--ink);
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .hero-pill:hover { border-color: rgba(91,107,232,0.55); box-shadow: 0 12px 26px -12px rgba(62,76,179,0.6); }
+  .hero-pill .tag { background: var(--indigo); color: #fff; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+  .hero-pill .arrow { color: var(--indigo); }
+
+  /* iPad app call to action, shown on handhelds only */
+  .ipad-cta { display: none; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-bottom: 22px; }
+  .ipad-cta a { display: block; padding: 4px 0; }
+  .ipad-cta img { display: block; height: 52px; width: auto; }
+  .ipad-cta .req-line { margin: 0; }
+  .handheld .ipad-cta { display: flex; }
+
+  /* Wi-Fi scene: iPad canvas, Wi-Fi, Mac window in a call */
+  .stage { position: relative; display: flex; flex-direction: column; align-items: center; }
   .stage::before {
-    content: ""; position: absolute; inset: -8% -4%;
-    background: radial-gradient(closest-side, rgba(91,107,232,0.28), transparent 72%);
+    content: ""; position: absolute; inset: -6% -4% 30%;
+    background: radial-gradient(closest-side, rgba(91,107,232,0.26), transparent 72%);
     filter: blur(8px); z-index: 0;
   }
-  .device {
-    position: relative; z-index: 1;
-    width: 100%; max-width: 440px; aspect-ratio: 4 / 3;
-    border-radius: var(--radius-lg);
-    background: linear-gradient(150deg, var(--sky-pale), var(--sky) 55%, #6f9fe0);
-    border: 10px solid #fff;
-    box-shadow:
-      24px 24px 0 -2px rgba(65,79,182,0.18),   /* flat long-shadow nod */
-      0 30px 70px rgba(40,48,120,0.34);
-    overflow: hidden;
+  .scene { position: relative; z-index: 1; width: 100%; max-width: 460px; aspect-ratio: 11 / 7; }
+  .tablet {
+    position: absolute; left: 0; top: 6%; width: 58%; aspect-ratio: 4 / 3;
+    border-radius: 20px; border: 9px solid #1c2150; background: #FBFBFE; overflow: hidden;
+    box-shadow: 18px 18px 0 -2px rgba(65,79,182,0.16), 0 26px 50px -20px rgba(28,33,80,0.55);
   }
-  .device .glare { position: absolute; inset: 0; background: linear-gradient(120deg, rgba(255,255,255,0.42), transparent 42%); }
-  .device .scribble { position: absolute; inset: 0; }
-  .device .live {
-    position: absolute; top: 14px; left: 14px; z-index: 2;
-    display: inline-flex; align-items: center; gap: 7px;
-    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
-    color: #fff; background: rgba(28,34,90,0.55); backdrop-filter: blur(6px);
-    padding: 6px 11px; border-radius: 999px;
+  .tablet .tools { position: absolute; top: 0; left: 0; right: 0; height: 16%; background: #EEF0FA; display: flex; gap: 6%; align-items: center; justify-content: center; }
+  .tablet .tools i { width: 7%; aspect-ratio: 1; border-radius: 50%; background: var(--sky); }
+  .tablet .tools i:nth-child(2) { background: var(--indigo); }
+  .tablet .tools i:nth-child(3) { background: #E2554A; }
+  .tablet svg { position: absolute; left: 0; right: 0; bottom: 0; top: 16%; width: 100%; height: 84%; }
+  .mac {
+    position: absolute; right: 0; bottom: 0; width: 55%; aspect-ratio: 16 / 10.5;
+    border-radius: 12px; background: #1c2150; padding: 6px;
+    box-shadow: 18px 18px 0 -2px rgba(65,79,182,0.16), 0 26px 50px -20px rgba(28,33,80,0.55);
   }
-  .device .live .pulse { width: 8px; height: 8px; border-radius: 50%; background: #ff5b6b; box-shadow: 0 0 0 0 rgba(255,91,107,0.7); animation: pulse 1.8s infinite; }
-  @keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(255,91,107,0.7)} 70%{box-shadow:0 0 0 10px rgba(255,91,107,0)} 100%{box-shadow:0 0 0 0 rgba(255,91,107,0)} }
+  .mac .win { position: relative; width: 100%; height: 100%; border-radius: 7px; overflow: hidden; background: linear-gradient(150deg, var(--sky-pale), var(--sky) 60%, #6f9fe0); }
+  .mac .win svg { position: absolute; inset: 10%; width: 80%; height: 80%; }
+  .mac .call {
+    position: absolute; left: 8px; bottom: 7px; display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.66rem; font-weight: 700; color: #fff; background: rgba(28,34,90,0.72);
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .mac .call i { width: 6px; height: 6px; border-radius: 50%; background: #ff5b6b; }
+  .wifi { position: absolute; left: 61%; top: 3%; width: 18%; color: var(--periwinkle); }
+  .wifi .arc { animation: wave 2.4s ease-in-out infinite; }
+  .wifi .arc.a2 { animation-delay: .3s; }
+  @keyframes wave { 0%,100% { opacity: .35; } 50% { opacity: 1; } }
 
-  .float-chip {
-    position: absolute; z-index: 3; background: var(--card);
-    border: 1px solid var(--line); border-radius: 14px;
-    padding: 11px 14px; font-size: 0.86rem; font-weight: 600;
-    box-shadow: 0 14px 30px rgba(40,48,120,0.18);
-    display: flex; align-items: center; gap: 9px;
+  /* Get the iPad app card */
+  .get-card {
+    position: relative; z-index: 2; width: 100%; max-width: 460px; margin-top: 18px;
+    display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 18px; align-items: center;
+    background: var(--card); border: 1px solid rgba(91,107,232,0.30); border-radius: var(--radius-lg);
+    padding: 18px 20px; box-shadow: 0 22px 44px -22px rgba(62,76,179,0.55);
   }
-  .float-chip .ic { width: 26px; height: 26px; border-radius: 8px; display: grid; place-items: center; color: #fff; background: linear-gradient(135deg, var(--periwinkle-2), var(--indigo)); }
-  .float-chip.tl { top: 6%; left: -6%; animation: floaty 6s ease-in-out infinite; }
-  .float-chip.br { bottom: 4%; right: -7%; animation: floaty 6s ease-in-out infinite 1.6s; }
-  @keyframes floaty { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  .get-card .qr { display: block; width: 108px; height: 108px; padding: 6px; border-radius: 12px; background: #fff; border: 1px solid var(--line); }
+  .get-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+  .get-copy .k { font-size: 0.8rem; font-weight: 700; color: var(--indigo); }
+  .get-copy h2 { font-size: 1.25rem; letter-spacing: -0.015em; line-height: 1.15; }
+  .get-copy p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
+  .get-copy .badge-link { display: block; padding: 11px 0 0; }
+  .get-copy .badge-link img { display: block; height: 44px; width: auto; }
+  .handheld .get-card { display: none; }
 
   /* Reveal on load */
   .reveal { opacity: 0; transform: translateY(18px); animation: rise .9s cubic-bezier(.2,.8,.2,1) forwards; }
@@ -204,7 +234,7 @@
   @keyframes rise { to { opacity: 1; transform: none; } }
   @media (prefers-reduced-motion: reduce) {
     .reveal{animation:none;opacity:1;transform:none}
-    .float-chip{animation:none}.device .live .pulse{animation:none}
+    .wifi .arc{animation:none;opacity:1}
   }
 
   /* ── Proof / demo ── */
@@ -373,8 +403,8 @@
     .routes, .privacy-grid, .features, .honest { grid-template-columns: 1fr; }
     .nav-links .muted { display: none; }
     header.hero { padding: 60px 0 20px; }
-    .float-chip.tl { left: 2%; } .float-chip.br { right: 2%; }
     .final-card { padding: 56px 22px; }
+    .stage { width: 100%; max-width: 460px; justify-self: center; }
     .final-actions { flex-direction: column; align-items: stretch; }
     .final-card .btn { width: 100%; justify-content: center; }
   }
@@ -451,7 +481,7 @@
     },
     {
       "@type": "Question",
-      "name": "What do I need, and why not the App Store?",
+      "name": "What do I need, and why isn’t the Mac app on the App Store?",
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "A Mac running macOS 14 (Sonoma) or later, and either a USB cable to connect your iPad or, to draw without the cable, the free SharePad app for iPad (iPadOS 17 or later) on the same Wi-Fi network as your Mac. SharePad for Mac isn’t on the Mac App Store because macOS only treats a plugged-in iPad as a camera for apps that run outside Apple’s sandbox, and App Store apps must be sandboxed. It’s still signed and notarised by Apple, so it opens with a normal double-click. You just download it directly rather than from the store."
@@ -540,6 +570,7 @@
 <header class="hero">
   <div class="wrap hero-grid">
     <div class="hero-copy">
+      <a class="hero-pill reveal d1" href="#wifi"><span class="tag">New</span>Draw without the cable <span class="arrow" aria-hidden="true">→</span></a>
       <h1 class="title reveal d2">
         Draw on your <span class="accent longshadow">iPad</span>.<br />
         Share it in any call.
@@ -548,6 +579,10 @@
         Turn the iPad into a <b>live whiteboard</b>. Plug it into your Mac and use any
         drawing app, or go without the cable and draw in SharePad for iPad over Wi-Fi.
       </p>
+      <div class="ipad-cta reveal d4">
+        <a href="{{appStoreUrl}}"><img src="assets/app-store-badge.svg" width="156" height="52" alt="Download SharePad for iPad on the App Store" /></a>
+        <span class="req-line"><span><b>SharePad for iPad is free</b> · iPadOS 17 or later</span></span>
+      </div>
       <div class="hero-cta reveal d4">
         <div class="mac-note">
           <p><b>SharePad runs on your Mac.</b> Open this page on your Mac to download it, or copy the link for later.</p>
@@ -571,22 +606,27 @@
     </div>
 
     <div class="stage reveal d5">
-      <div class="float-chip tl">
-        <span class="ic"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2v6M15 2v6M7 8h10v3a5 5 0 0 1-10 0z"/><path d="M12 16v6"/></svg></span>
-        Connect your iPad
+      <div class="scene" role="img" aria-label="An iPad drawing in the SharePad canvas sends the drawing over Wi-Fi to a SharePad window on a Mac, shared in a call. The call sees only the drawing, and the iPad’s tools stay on the iPad.">
+        <div class="tablet" aria-hidden="true">
+          <div class="tools"><i></i><i></i><i></i></div>
+          <svg viewBox="0 0 300 190" fill="none"><path d="M30 140 C 70 50, 120 60, 140 120 S 220 170, 260 70" stroke="#2C3690" stroke-width="6" stroke-linecap="round"/><path d="M60 60 q 40 -26 80 0" stroke="#E2554A" stroke-width="5" stroke-linecap="round"/></svg>
+        </div>
+        <svg class="wifi" aria-hidden="true" viewBox="0 0 60 40" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path class="arc" d="M6 16 a34 34 0 0 1 48 0"/><path class="arc a2" d="M15 25 a21 21 0 0 1 30 0"/><circle cx="30" cy="34" r="3" fill="currentColor" stroke="none"/></svg>
+        <div class="mac" aria-hidden="true">
+          <div class="win">
+            <svg viewBox="0 0 300 190" fill="none" preserveAspectRatio="none"><path d="M30 140 C 70 50, 120 60, 140 120 S 220 170, 260 70" stroke="#2C3690" stroke-width="7" stroke-linecap="round"/><path d="M60 60 q 40 -26 80 0" stroke="#E2554A" stroke-width="6" stroke-linecap="round"/></svg>
+            <span class="call"><i></i>In your call</span>
+          </div>
+        </div>
       </div>
-      <div class="device">
-        <div class="live"><span class="pulse"></span> Sharing</div>
-        <div class="glare"></div>
-        <svg class="scribble" viewBox="0 0 440 330" preserveAspectRatio="none" fill="none">
-          <path d="M40 230 C 90 120, 150 120, 190 210 S 300 300, 360 150" stroke="#27357f" stroke-width="7" stroke-linecap="round" opacity="0.85"/>
-          <path d="M70 100 q 60 -40 120 0" stroke="#ffffff" stroke-width="6" stroke-linecap="round" opacity="0.85"/>
-          <circle cx="330" cy="235" r="22" stroke="#27357f" stroke-width="7" opacity="0.6"/>
-        </svg>
-      </div>
-      <div class="float-chip br">
-        <span class="ic"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="14" rx="2"/><path d="M8 21h8M12 18v3"/></svg></span>
-        Pick “SharePad” in your call
+      <div class="get-card">
+        <img class="qr" src="assets/app-store-qr.svg" width="108" height="108" alt="QR code for SharePad for iPad on the App Store" />
+        <div class="get-copy">
+          <span class="k">New, and free</span>
+          <h2>SharePad for iPad</h2>
+          <p>Point your iPad’s camera at the code to get it.</p>
+          <a class="badge-link" href="{{appStoreUrl}}"><img src="assets/app-store-badge.svg" width="132" height="44" alt="Download SharePad for iPad on the App Store" /></a>
+        </div>
       </div>
     </div>
   </div>
@@ -628,7 +668,7 @@
           <li><span class="rnum">3</span><span>Share it in your call. Any drawing app works.</span></li>
         </ol>
       </div>
-      <div class="route">
+      <div class="route" id="wifi">
         <div class="route-head">
           <svg class="route-glyph" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9a15 15 0 0 1 20 0"/><path d="M5.5 12.5a10 10 0 0 1 13 0"/><path d="M9 16a5 5 0 0 1 6 0"/><circle cx="12" cy="19.5" r="1"/></svg>
           <h3>Over <span class="nowrap">Wi-Fi</span></h3>
@@ -667,12 +707,12 @@
     <div class="section-head">
       <div class="kicker">Before you download</div>
       <h2>How you get it.</h2>
-      <p>SharePad for Mac isn’t on the Mac App Store, so you download it straight from here. SharePad for iPad is free on the App Store.</p>
+      <p>SharePad for Mac isn’t on the Mac App Store, so you download it straight from here. SharePad for iPad is on the App Store.</p>
     </div>
     <div class="panel note" style="max-width:720px">
       <ul>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>Try everything free for a week</b>, no card and no account. After that, {{price}} keeps it yours for good.</span></li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>{{price}}, paid once.</b> No subscription, no account, and automatic updates for life. The iPad app is free. One licence covers both.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>Try everything free for a week</b>, with no card and no account.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span><b>Then {{price}}, paid once.</b> No subscription, and automatic updates for life. The iPad app is free, and one licence covers both.</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>Every build is <b>signed and notarised by Apple</b>, so it opens with a normal double-click.</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>It runs outside Apple’s sandbox, because that’s the only way macOS will treat a plugged-in iPad as a camera, and that’s why the Mac app can’t be on the App Store.</span></li>
         <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg><span>The code is <a href="https://github.com/jonyardley/SharePad" style="color:var(--indigo);font-weight:600">open</a>, so you can read what it does.</span></li>
@@ -714,7 +754,7 @@
         <div class="faq-body">Over the cable, any of them. SharePad shows your iPad’s whole screen, so you can use Procreate, GoodNotes, Freeform, Notability, Apple Notes, whatever you already draw or write in. There’s nothing to integrate, and your Apple Pencil strokes appear live in the call as you make them. Over Wi-Fi, you draw in the SharePad app’s own canvas.</div>
       </details>
       <details class="faq-item">
-        <summary>What do I need, and why not the App Store?
+        <summary>What do I need, and why isn’t the Mac app on the App Store?
           <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></summary>
         <div class="faq-body">A Mac running macOS 14 (Sonoma) or later, and either a USB cable to connect your iPad or, to draw without the cable, the free SharePad app for iPad (iPadOS 17 or later) on the same Wi-Fi network as your Mac. SharePad for Mac isn’t on the Mac App Store because macOS only treats a plugged-in iPad as a camera for apps that run outside Apple’s sandbox, and App Store apps must be sandboxed. It’s still <a href="https://github.com/jonyardley/SharePad">signed and notarised</a> by Apple, so it opens with a normal double-click. You just download it directly rather than from the store.</div>
       </details>

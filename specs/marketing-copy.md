@@ -1,14 +1,14 @@
-# SharePad — Marketing & Lifecycle Copy
+# SharePad marketing and lifecycle copy
 
 > **The live site (`docs/index.html`) is the canonical voice and the source of
 > truth.** This doc mirrors its tone and extends the same voice to the surfaces
-> the site doesn't cover — Stripe, the thank-you page, and the licence email.
+> the site doesn't cover: Stripe, the thank-you page, and the licence email.
 > When the wording on the site changes, this doc follows it, not the other way
 > round. No emojis. British spelling.
 
 ## Voice
 
-Honest, plain, and understated — confident without hype. It explains *how it
+Honest, plain, and understated, confident without hype. It explains *how it
 actually works* and trusts the reader. Section headings are short statements, not
 slogans. Examples straight from the live site:
 
@@ -20,22 +20,29 @@ slogans. Examples straight from the live site:
 - "Then £2.99 once · no subscription · macOS 14 or later"
 
 > **Constraint:** the 7-day trial is entirely client-side, with no account or
-> email capture (that's the privacy promise — the app never sends your data). So
+> email capture (that's the privacy promise: the app never sends your data). So
 > there is **no way to email trial users**. Email begins at the receipt, after
 > purchase.
 
----
-
-## 1. Marketing site — `docs/index.html` (canonical; this is the live copy)
+## 1. Marketing site, `docs/index.html` (canonical; this is the live copy)
 
 Reproduced here as the reference. Edit the HTML for any change; keep this in step.
 
 - **Title:** SharePad: Share your iPad on any call, in an instant
-- **Hero:** Draw on your iPad. Share it in any call.
+- **Hero:** a **New** pill, "Draw without the cable", that jumps to the Wi-Fi
+  card in How it works, then: Draw on your iPad. Share it in any call.
   - Turn the iPad into a live whiteboard. Plug it into your Mac and use any drawing
     app, or go without the cable and draw in SharePad for iPad over Wi-Fi.
   - CTA pair: **Try free for 7 days** and **Buy for £2.99**.
-  - Free for 7 days, then £2.99 once · no subscription · macOS 14 or later
+  - Then £2.99 once · no subscription · macOS 14 or later (on a phone or iPad:
+    "Free for 7 days, then…")
+  - Beside it, the Wi-Fi scene (an iPad drawing in the SharePad canvas, a Wi-Fi
+    mark, a Mac window "In your call") over a card: a QR code, "New, and free",
+    **SharePad for iPad**, "Point your iPad's camera at the code to get it." and
+    Apple's App Store badge.
+  - On a phone or iPad the QR card is hidden. The App Store badge comes first, with
+    "SharePad for iPad is free · iPadOS 17 or later", and a note says SharePad runs
+    on your Mac in place of the download button.
 - **See it in action.** On the left, the SharePad window. On the right, that same
   window shared into Google Meet at full size.
 - **Ready the moment you plug in, or without the cable.** SharePad lives in your
@@ -51,9 +58,10 @@ Reproduced here as the reference. Edit the HTML for any change; keep this in ste
   switch them on. Over Wi-Fi, your drawing goes straight from your iPad to your Mac
   on your local network, encrypted, and never through a server.
 - **How you get it.** SharePad for Mac isn't on the Mac App Store, so you download
-  it straight from here. SharePad for iPad is free on the App Store.
-  - £2.99, paid once. No subscription, no account, and automatic updates for life.
-    The iPad app is free. One licence covers both.
+  it straight from here. SharePad for iPad is on the App Store.
+  - Try everything free for a week, with no card and no account.
+  - Then £2.99, paid once. No subscription, and automatic updates for life. The
+    iPad app is free, and one licence covers both.
   - Every build is signed and notarised by Apple, so it opens with a normal double-click.
   - It runs outside Apple's sandbox, because that's the only way macOS will treat a
     plugged-in iPad as a camera, and that's why the Mac app can't be on the App Store.
@@ -70,21 +78,19 @@ The iPad app and its App Store listing follow the wording rules in
 `specs/wireless-product.md` §9: they never mention price, "free", trial or licence.
 The website may say the iPad app is free.
 
-### Trial gate copy — live since 2026-06-14
-The 7-day trial + licence gate shipped, and the site now carries this copy (added,
-not rewritten, in the same voice):
-- Hero CTA pair: **Download — free for 7 days** and **Buy a licence — £2.99**.
-- One honest line near the pricing: "Try everything free for a week, no card and no
-  account. After that, £2.99 keeps it yours for good."
-- One FAQ entry, in the site's voice: *"What happens after the trial?"* — "The app
-  keeps working; sharing just pauses now and then until you add your licence."
-
----
+### Trial gate copy, live since 2026-06-14
+The 7-day trial and licence gate shipped, and the site carries this copy:
+- Hero CTA pair: **Try free for 7 days** and **Buy for £2.99**.
+- One honest line near the pricing: "Try everything free for a week, with no card
+  and no account."
+- One FAQ entry, *"What happens after the trial?"*: after 7 days SharePad still
+  opens and shows your iPad, but sharing runs for up to 5 minutes and then pauses
+  until you add your licence with "Enter Licence…"
 
 ## 2. Stripe
 
 - **Product name:** SharePad
-- **Statement descriptor:** `SHAREPAD` (recognisable on a bank statement — otherwise
+- **Statement descriptor:** `SHAREPAD` (recognisable on a bank statement; otherwise
   it shows "Yardley Software").
 - **Settings:** enable customer receipt emails; set a recognisable public business
   name and a support email.
@@ -118,9 +124,7 @@ one-time payment with automatic updates for life, and no subscription.
 - Already bought SharePad? You don't need to buy again. Enter the email you used at
   checkout and we'll send your key straight back. (No account, no sign-in.)
 
----
-
-## 3. Purchase email — `workers/purchase-email/src/worker.js`
+## 3. Purchase email, `workers/purchase-email/src/worker.js`
 
 One email, sent exactly-once by the Stripe webhook on `checkout.session.completed`:
 the **download link + the licence key**. The HTML lives in `purchaseEmailHtml`.
@@ -137,17 +141,15 @@ the **download link + the licence key**. The HTML lives in `purchaseEmailHtml`.
     anytime at {recover_url} with the email above, with no account and no sign-in."
   - Footer: open source (GPLv3), updates for life, "reply to this email" for help.
 
----
-
 ## 4. Wiring notes
 
 - **The purchase email** is sent by the `sharepad-purchase-email` webhook worker,
   exactly-once per paid checkout. It needs `STRIPE_WEBHOOK_SECRET`, `RESEND_API_KEY`,
   and `ED25519_PRIVATE_KEY` (same value as the licences worker). Deploy it *with* the
-  gated app release — until then, a no-gate buyer would get a key they can't yet use.
+  gated app release. Until then, a no-gate buyer would get a key they can't yet use.
 - **`sharepad-licenses`** worker: `/recover` (self-service re-derivation, which
-  **emails** the key to the buyer's address — the page above promises exactly that,
-  "we'll send your key straight back" — see `specs/recover-email-delivery.md`) and
+  **emails** the key to the buyer's address, as the page above promises with
+  "we'll send your key straight back"; see `specs/recover-email-delivery.md`) and
   an optional `/key` page that renders the key inline.
 - **Existing buyers** (from the no-gate era): mint with `workers/licenses/scripts/mint-key.mjs`
   and send by hand using the §3 shape.
