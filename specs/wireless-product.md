@@ -578,7 +578,7 @@ Rules:
 | iPad | First-run pairing, step 0 | "You also need SharePad on your Mac: sharepad.co" as plain text |
 | iPad | Pairing screen, under the steps | "Each time SharePad connects to your Mac, your iPad asks to record the screen. Tap Allow." (§11, item 2) |
 | Web | `sharepad.co/pair` (app installed or not) | The same line about the record prompt |
-| iPad | Settings sheet, About | A Help row opening `sharepad.co/#support`, and the footer "Works with SharePad for Mac, from sharepad.co." as plain text |
+| iPad | Settings sheet, About | A Help row opening `sharepad.co/help.html`, and the footer "Works with SharePad for Mac, from sharepad.co." as plain text |
 | App Store | iPad listing, first line of the description | "Requires SharePad for Mac." |
 
 **iPad wording rules (App Store guidelines 3.1.1 and 3.1.1(a)).** Nothing is
@@ -586,9 +586,10 @@ sold or unlocked on the iPad, so it needs no in-app purchase (3.1.1). Outside
 the US storefront, the app may not carry calls to action for purchasing
 elsewhere (3.1.1(a)). So the iPad app names the Mac app and sharepad.co as plain
 text and never says "buy", "free", "trial" or "licence". Two rows in Settings
-open the site, both pages Apple expects an app to reach: Help opens the support
-answer (the App Store Connect support address) and Privacy opens the privacy
-policy. Neither row names the Mac app or a price. The review notes explain the
+open the site: Help opens the iPad help page (also the App Store Connect support
+address) and Privacy opens the privacy policy, which Apple requires in the app.
+Neither page shows a price or a purchase link, and the help page must stay that
+way. The review notes explain the
 companion relationship and include a demo video.
 
 ### Copy rules

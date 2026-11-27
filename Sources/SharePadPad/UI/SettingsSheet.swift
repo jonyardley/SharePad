@@ -36,7 +36,7 @@ struct SettingsSheet: View {
                     }
                 }
                 Section {
-                    LinkRow(title: "Help", address: "https://sharepad.co/#support")
+                    LinkRow(title: "Help", address: "https://sharepad.co/help.html")
                     LinkRow(title: "Privacy", address: "https://sharepad.co/privacy.html")
                     LabeledContent("Version", value: model.appVersion)
                 } header: {
