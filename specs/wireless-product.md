@@ -588,9 +588,9 @@ elsewhere (3.1.1(a)). So the iPad app names the Mac app and sharepad.co as plain
 text and never says "buy", "free", "trial" or "licence". Two rows in Settings
 open the site: Help opens the iPad help page (also the App Store Connect support
 address) and Privacy opens the privacy policy, which Apple requires in the app.
-Neither page shows a price or a purchase link, and the help page must stay that
-way. The review notes explain the
-companion relationship and include a demo video.
+The help page shows no price and links to no page that does, and must stay that
+way. The review notes explain the companion relationship and include a demo
+video.
 
 ### Copy rules
 
