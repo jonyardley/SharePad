@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Renders the price-bearing templates in site/ into docs/, substituting {{tokens}}
+// Renders the templates in site/ into docs/, substituting {{tokens}}
 // from site/site.config.json. docs/ is the deploy source (pages.yml rsyncs it to
 // gh-pages), so the rendered files are committed; CI re-runs this and fails on drift.
 // Change the price in site/site.config.json, run `just build-site`, commit.

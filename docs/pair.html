@@ -5,7 +5,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Pair your iPad · SharePad</title>
-<meta name="description" content="This link pairs an iPad with SharePad on a Mac. SharePad for iPad is coming to the App Store soon." />
+<meta name="description" content="Get SharePad for iPad, then scan the code on your Mac to pair your iPad and share your drawing over Wi-Fi." />
 <meta name="robots" content="noindex" />
 <meta name="referrer" content="no-referrer" />
 <link rel="canonical" href="https://sharepad.co/pair" />
@@ -68,6 +68,9 @@
   .card .icon { width: 88px; height: 88px; border-radius: 22px; box-shadow: 0 10px 28px rgba(46,56,144,0.28); margin-bottom: 22px; }
   h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 6vw, 2.4rem); letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 12px; }
   .lede { color: var(--ink-soft); font-size: 1.05rem; margin-bottom: 26px; }
+  /* Apple's badge guidelines: at least 40px tall on screen, with clear space of a quarter of its height. */
+  .badge { display: inline-block; padding: 13px; }
+  .badge img { display: block; height: 50px; width: auto; }
   .nowrap { white-space: nowrap; }
   .step { margin-top: 30px; padding-top: 26px; border-top: 1px solid var(--line); }
   .step h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; letter-spacing: -0.01em; margin-bottom: 6px; }
@@ -88,7 +91,7 @@
     <article class="card">
       <img class="icon" src="/assets/icon-256.png" alt="SharePad icon" />
       <h1>Pair your iPad</h1>
-      <p class="lede">This link pairs an iPad with SharePad on a Mac, so you can share your iPad over <span class="nowrap">Wi-Fi</span> without the cable.</p>
+      <p class="lede">This link pairs an iPad with SharePad on a Mac, so you can share your drawing over <span class="nowrap">Wi-Fi</span> without the cable.</p>
 
       <div class="step">
         <h2>Scan from the iPad app</h2>
@@ -101,8 +104,10 @@
       </div>
 
       <div class="step">
-        <h2>Not in the App Store yet</h2>
-        <p>SharePad for iPad is coming to the App Store soon.</p>
+        <h2>Get SharePad for iPad</h2>
+        <p>No iPad app yet? It’s free on the App Store and needs iPadOS 17 or later.</p>
+        <a class="badge" href="https://apps.apple.com/app/idAPPLE_ID_PENDING"><img src="/assets/app-store-badge.svg" width="150" height="50" alt="Download on the App Store" /></a>
+        <p>Back on your Mac, scan the code again.</p>
       </div>
     </article>
     <p class="aside">You also need SharePad on your Mac. <a href="/">Get it at sharepad.co</a></p>

@@ -9,23 +9,24 @@
   <em>SharePad on the left; the same window shared into Google Meet at full size on the right.</em>
 </p>
 
-A macOS **menu-bar app** that shows a USB-connected iPad in a clean window you
-can share in any video call. Draw in your favourite app and everyone sees it full
-size. Connect the iPad to your Mac and its window is already waiting in the
-"Share window" list of Zoom, Meet and Teams. **Draw on your iPad. Share it in any
-call.** No per-call QuickTime faff.
+A macOS **menu-bar app** that shows your iPad in a clean window you can share in
+any video call. **Draw on your iPad. Share it in any call.** Plug the iPad in and
+draw in any app, or go without the cable and draw in the SharePad canvas with the
+free SharePad for iPad app. Either way the window is already waiting in the
+"Share window" list of Zoom, Meet and Teams, and everyone sees it full size. No
+QuickTime steps before every call.
 
 <p align="center">
   <img src="docs/assets/popover.png" alt="The SharePad menu-bar popover: a live preview of the connected iPad, the device name, a Hide Window button, and toggles for show window on connect, keep window on top, and launch at login" width="280">
   <br />
-  <em>The menu-bar popover: a live preview and every control in one place.</em>
+  <em>The menu-bar popover, with a live preview of the iPad.</em>
 </p>
 
 > Download it from [sharepad.co](https://sharepad.co) and try it free for 7 days.
 > After that it's **£2.99 once**: no subscription, no account, and the licence works
 > offline. Already bought it? Click "Lost your key?" in the app and I'll email it
-> again. Or build it yourself (GPLv3, instructions below). It isn't on the App Store
-> because the App Store sandbox stops macOS treating the iPad as a camera.
+> again. Or build it yourself (GPLv3, instructions below). The Mac app isn't on the App
+> Store because the App Store sandbox stops macOS treating the iPad as a camera.
 
 ## Docs
 

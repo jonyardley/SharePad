@@ -21,6 +21,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Refuse placeholder App Store link or QR
+        run: |
+          if grep -rlE 'APPLE_ID_PENDING|QR_PLACEHOLDER' docs/; then
+            echo "::error::App Store link or QR is still a placeholder in the files above"
+            exit 1
+          fi
+
       - name: Push docs/ to gh-pages
         run: |
           set -euo pipefail
