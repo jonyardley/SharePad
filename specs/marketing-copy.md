@@ -13,11 +13,11 @@ actually works* and trusts the reader. Section headings are short statements, no
 slogans. Examples straight from the live site:
 
 - "Draw on your iPad. Share it in any call."
-- "Turn the iPad into a live whiteboard using your favourite drawing or writing
-  app. Connect it to your Mac with a cable or over Wi-Fi and share it in any call."
+- "Turn the iPad into a live whiteboard. Plug it into your Mac and use any drawing
+  app, or go without the cable and draw in SharePad for iPad over Wi-Fi."
 - "Ready the moment you plug in, or without the cable." "Your drawing never leaves
   your desk." "How you get it." "Questions, answered." "Make every call more visual."
-- "Then £2.99 once, no subscription, macOS 14 or later"
+- "Then £2.99 once · no subscription · macOS 14 or later"
 
 > **Constraint:** the 7-day trial is entirely client-side, with no account or
 > email capture (that's the privacy promise — the app never sends your data). So
@@ -32,10 +32,10 @@ Reproduced here as the reference. Edit the HTML for any change; keep this in ste
 
 - **Title:** SharePad: Share your iPad on any call, in an instant
 - **Hero:** Draw on your iPad. Share it in any call.
-  - Turn the iPad into a live whiteboard using your favourite drawing or writing
-    app. Connect it to your Mac with a cable or over Wi-Fi and share it in any call.
+  - Turn the iPad into a live whiteboard. Plug it into your Mac and use any drawing
+    app, or go without the cable and draw in SharePad for iPad over Wi-Fi.
   - CTA pair: **Try free for 7 days** and **Buy for £2.99**.
-  - Free for 7 days, then £2.99 once, no subscription, macOS 14 or later
+  - Free for 7 days, then £2.99 once · no subscription · macOS 14 or later
 - **See it in action.** On the left, the SharePad window. On the right, that same
   window shared into Google Meet at full size.
 - **Ready the moment you plug in, or without the cable.** SharePad lives in your
@@ -64,7 +64,7 @@ Reproduced here as the reference. Edit the HTML for any change; keep this in ste
   requirements and why not the App Store, cable or Wi-Fi, the black-window fixes,
   audio, notifications, privacy and support.
 - **Make every call more visual.** Connect your iPad, pick the window, and draw.
-- **Footer:** Guide, Privacy, Terms & refunds, GitHub
+- **Footer:** Guide · Privacy · Terms & refunds · GitHub ↗
 
 The iPad app and its App Store listing follow the wording rules in
 `specs/wireless-product.md` §9: they never mention price, "free", trial or licence.
@@ -93,6 +93,8 @@ not rewritten, in the same voice):
 
 Still says "over USB". On launch day change it in the Stripe dashboard to "Connect
 it to your Mac with a cable or over Wi-Fi, and a clean window opens automatically."
+Change "your favourite drawing app is ready to share" to "your iPad is ready to
+share" too, since over Wi-Fi only the SharePad canvas is shown.
 
 Draw on your iPad. Share it in any call. SharePad turns your iPad into a live
 whiteboard you can share in any call. Connect to your Mac over USB, and a clean

@@ -11,8 +11,8 @@
 
 A macOS **menu-bar app** that shows your iPad in a clean window you can share in
 any video call. Connect it with a cable, or over Wi-Fi with the free SharePad for
-iPad app. Draw in your favourite app and everyone sees it full
-size. Connect the iPad to your Mac and its window is already waiting in the
+iPad app. Draw in any app over the cable, or in the SharePad canvas
+over Wi-Fi, and everyone sees it full size. Connect the iPad to your Mac and its window is already waiting in the
 "Share window" list of Zoom, Meet and Teams. **Draw on your iPad. Share it in any
 call.** No per-call QuickTime faff.
 
