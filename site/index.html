@@ -168,13 +168,17 @@
   .hero-pill:hover { border-color: rgba(91,107,232,0.55); box-shadow: 0 12px 26px -12px rgba(62,76,179,0.6); }
   .hero-pill .tag { background: var(--indigo); color: #fff; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
   .hero-pill .arrow { color: var(--indigo); }
+  .vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-  /* iPad app call to action, shown on handhelds only */
+  /* iPad app call to action: first on an iPad, secondary on a phone */
   .ipad-cta { display: none; flex-wrap: wrap; align-items: center; gap: 12px 16px; margin-bottom: 22px; }
   .ipad-cta a { display: block; padding: 4px 0; }
   .ipad-cta img { display: block; height: 52px; width: auto; }
   .ipad-cta .req-line { margin: 0; }
-  .handheld .ipad-cta { display: flex; }
+  .ipad .ipad-cta { display: flex; }
+  .phone-ipad { display: none; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .phone-ipad img { display: block; height: 40px; width: auto; }
+  .phone .phone-ipad { display: flex; }
 
   /* Wi-Fi scene: iPad canvas, Wi-Fi, Mac window in a call */
   .stage { position: relative; display: flex; flex-direction: column; align-items: center; }
@@ -222,7 +226,7 @@
   .get-card .qr { display: block; width: 108px; height: 108px; padding: 6px; border-radius: 12px; background: #fff; border: 1px solid var(--line); }
   .get-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
   .get-copy .k { font-size: 0.8rem; font-weight: 700; color: var(--indigo); }
-  .get-copy h2 { font-size: 1.25rem; letter-spacing: -0.015em; line-height: 1.15; }
+  .get-copy .get-title { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; color: var(--ink); letter-spacing: -0.015em; line-height: 1.15; }
   .get-copy p { margin: 0; font-size: 0.9rem; color: var(--ink-soft); }
   .get-copy .badge-link { display: block; padding: 11px 0 0; }
   .get-copy .badge-link img { display: block; height: 44px; width: auto; }
@@ -387,6 +391,7 @@
     .demo-frame video, .cap-wide { display: none; }
     .demo-frame img.demo-still { display: block; }
     .cap-narrow { display: inline; }
+    .scene { width: calc(100% - 16px); align-self: flex-start; }
   }
 
   /* Footer */
@@ -542,9 +547,11 @@
 <script>
   (function () {
     var ua = navigator.userAgent || "";
-    var phone = /iPhone|Android|Mobile/i.test(ua);
     var iPad = /iPad/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-    if (phone || iPad) document.documentElement.classList.add("handheld");
+    var phone = !iPad && /iPhone|Android|Mobile/i.test(ua);
+    var root = document.documentElement.classList;
+    if (iPad) root.add("handheld", "ipad");
+    if (phone) root.add("handheld", "phone");
   })();
 </script>
 </head>
@@ -570,7 +577,7 @@
 <header class="hero">
   <div class="wrap hero-grid">
     <div class="hero-copy">
-      <a class="hero-pill reveal d1" href="#wifi"><span class="tag">New</span>Draw without the cable <span class="arrow" aria-hidden="true">→</span></a>
+      <a class="hero-pill reveal d1" href="#wifi"><span class="tag">New</span><span class="vh">: </span>Draw without the cable <span class="arrow" aria-hidden="true">→</span></a>
       <h1 class="title reveal d2">
         Draw on your <span class="accent longshadow">iPad</span>.<br />
         Share it in any call.
@@ -581,7 +588,7 @@
       </p>
       <div class="ipad-cta reveal d4">
         <a href="{{appStoreUrl}}"><img src="assets/app-store-badge.svg" width="156" height="52" alt="Download SharePad for iPad on the App Store" /></a>
-        <span class="req-line"><span><b>SharePad for iPad is free</b> · iPadOS 17 or later</span></span>
+        <span class="req-line"><span><b>SharePad for iPad is free</b>, iPadOS 17 or later</span></span>
       </div>
       <div class="hero-cta reveal d4">
         <div class="mac-note">
@@ -589,6 +596,10 @@
           <div class="copy-row">
             <span class="copy-url">sharepad.co</span>
             <button type="button" class="btn btn-ghost copy-link" aria-live="polite">Copy link</button>
+          </div>
+          <div class="phone-ipad">
+            <a href="{{appStoreUrl}}"><img src="assets/app-store-badge.svg" width="120" height="40" alt="Download SharePad for iPad on the App Store" /></a>
+            <span>For your iPad: SharePad for iPad is free.</span>
           </div>
         </div>
         <a class="btn btn-primary btn-download" href="https://github.com/jonyardley/SharePad/releases/latest/download/SharePad.dmg">
@@ -600,7 +611,7 @@
         </a>
         <span class="req-line">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
-          <span><span class="then-plain">Then</span><span class="then-trial">Free for 7 days, then</span> <b>{{price}}</b> once · no subscription · macOS 14 or later</span>
+          <span><span class="then-plain">Then</span><span class="then-trial">Free for 7 days, then</span> <b>{{price}}</b> once, no subscription, macOS 14 or later</span>
         </span>
       </div>
     </div>
@@ -614,7 +625,7 @@
         <svg class="wifi" aria-hidden="true" viewBox="0 0 60 40" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path class="arc" d="M6 16 a34 34 0 0 1 48 0"/><path class="arc a2" d="M15 25 a21 21 0 0 1 30 0"/><circle cx="30" cy="34" r="3" fill="currentColor" stroke="none"/></svg>
         <div class="mac" aria-hidden="true">
           <div class="win">
-            <svg viewBox="0 0 300 190" fill="none" preserveAspectRatio="none"><path d="M30 140 C 70 50, 120 60, 140 120 S 220 170, 260 70" stroke="#2C3690" stroke-width="7" stroke-linecap="round"/><path d="M60 60 q 40 -26 80 0" stroke="#E2554A" stroke-width="6" stroke-linecap="round"/></svg>
+            <svg viewBox="0 0 300 190" fill="none"><path d="M30 140 C 70 50, 120 60, 140 120 S 220 170, 260 70" stroke="#2C3690" stroke-width="7" stroke-linecap="round"/><path d="M60 60 q 40 -26 80 0" stroke="#E2554A" stroke-width="6" stroke-linecap="round"/></svg>
             <span class="call"><i></i>In your call</span>
           </div>
         </div>
@@ -623,7 +634,7 @@
         <img class="qr" src="assets/app-store-qr.svg" width="108" height="108" alt="QR code for SharePad for iPad on the App Store" />
         <div class="get-copy">
           <span class="k">New, and free</span>
-          <h2>SharePad for iPad</h2>
+          <p class="get-title">SharePad for iPad</p>
           <p>Point your iPad’s camera at the code to get it.</p>
           <a class="badge-link" href="{{appStoreUrl}}"><img src="assets/app-store-badge.svg" width="132" height="44" alt="Download SharePad for iPad on the App Store" /></a>
         </div>
@@ -814,7 +825,7 @@
           Buy for {{price}}
         </a>
       </div>
-      <p class="sub"><span class="then-plain">Then</span><span class="then-trial">Free for 7 days, then</span> {{price}} once · no subscription · macOS 14 or later</p>
+      <p class="sub"><span class="then-plain">Then</span><span class="then-trial">Free for 7 days, then</span> {{price}} once, no subscription, macOS 14 or later</p>
     </div>
   </div>
 </section>

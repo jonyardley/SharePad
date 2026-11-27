@@ -17,7 +17,7 @@ slogans. Examples straight from the live site:
   app, or go without the cable and draw in SharePad for iPad over Wi-Fi."
 - "Ready the moment you plug in, or without the cable." "Your drawing never leaves
   your desk." "How you get it." "Questions, answered." "Make every call more visual."
-- "Then £2.99 once · no subscription · macOS 14 or later"
+- "Then £2.99 once, no subscription, macOS 14 or later"
 
 > **Constraint:** the 7-day trial is entirely client-side, with no account or
 > email capture (that's the privacy promise: the app never sends your data). So
@@ -34,15 +34,17 @@ Reproduced here as the reference. Edit the HTML for any change; keep this in ste
   - Turn the iPad into a live whiteboard. Plug it into your Mac and use any drawing
     app, or go without the cable and draw in SharePad for iPad over Wi-Fi.
   - CTA pair: **Try free for 7 days** and **Buy for £2.99**.
-  - Then £2.99 once · no subscription · macOS 14 or later (on a phone or iPad:
+  - Then £2.99 once, no subscription, macOS 14 or later (on a phone or iPad:
     "Free for 7 days, then…")
   - Beside it, the Wi-Fi scene (an iPad drawing in the SharePad canvas, a Wi-Fi
     mark, a Mac window "In your call") over a card: a QR code, "New, and free",
     **SharePad for iPad**, "Point your iPad's camera at the code to get it." and
     Apple's App Store badge.
-  - On a phone or iPad the QR card is hidden. The App Store badge comes first, with
-    "SharePad for iPad is free · iPadOS 17 or later", and a note says SharePad runs
-    on your Mac in place of the download button.
+  - On a phone or iPad the QR card is hidden, and a note says SharePad runs on your
+    Mac in place of the download button. On an iPad the App Store badge comes
+    first, with "SharePad for iPad is free, iPadOS 17 or later". On a phone the
+    note stays the main message, with a smaller badge inside it: "For your iPad:
+    SharePad for iPad is free."
 - **See it in action.** On the left, the SharePad window. On the right, that same
   window shared into Google Meet at full size.
 - **Ready the moment you plug in, or without the cable.** SharePad lives in your
