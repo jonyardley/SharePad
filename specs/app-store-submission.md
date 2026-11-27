@@ -37,7 +37,7 @@ App: `com.jonyardley.sharepad.ipad`, version 1.0.0.
 4. **Age rating.** Answer **None** or **No** to every question (no web access,
    no user-generated content shared with others, no messaging). Expect 4+.
 5. **Version 1.0.0.** Promotional text, description and keywords from §3.
-   Support URL `https://sharepad.co/#support`, marketing URL
+   Support URL `https://sharepad.co/help.html`, marketing URL
    `https://sharepad.co`. Copyright `2026 Jon Yardley`.
 6. **Screenshots** (§6) in the 13-inch iPad slot.
 7. **Build.** Pick the TestFlight build from §1. No export compliance question:

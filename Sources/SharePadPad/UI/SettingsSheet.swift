@@ -4,6 +4,9 @@ struct SettingsSheet: View {
     let model: PadModel
     @Environment(\.dismiss) private var dismiss
 
+    private static let aboutFooter = "Works with SharePad for Mac, from sharepad.co. "
+        + "Your drawing goes only to your Mac, over your Wi-Fi. Nothing is collected."
+
     var body: some View {
         NavigationStack {
             Form {
@@ -33,15 +36,13 @@ struct SettingsSheet: View {
                     }
                 }
                 Section {
-                    Text(verbatim: "SharePad for Mac: sharepad.co")
+                    LinkRow(title: "Help", address: "https://sharepad.co/help.html")
                     LinkRow(title: "Privacy", address: "https://sharepad.co/privacy.html")
                     LabeledContent("Version", value: model.appVersion)
                 } header: {
                     Text("About")
                 } footer: {
-                    Text(
-                        "Your drawing goes only to your Mac, over your Wi-Fi. Nothing is collected."
-                    )
+                    Text(Self.aboutFooter)
                 }
             }
             .navigationTitle("Settings")

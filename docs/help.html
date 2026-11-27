@@ -1,0 +1,135 @@
+<!doctype html>
+<!-- GENERATED from site/help.html by scripts/build-site.mjs. Do not edit here; edit the template and run `just build-site`. -->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Help · SharePad for iPad</title>
+<meta name="description" content="How to pair SharePad for iPad with your Mac, and what to do when the picture doesn't reach it." />
+<link rel="canonical" href="https://sharepad.co/help.html" />
+
+<!-- The iPad app's Help row opens this page, so it carries no price or purchase link (App Store guideline 3.1.1(a), specs/wireless-product.md). -->
+
+<link rel="icon" type="image/png" href="/assets/icon-256.png" />
+<link rel="apple-touch-icon" href="/assets/icon-256.png" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" />
+
+<style>
+  :root {
+    --indigo-deep:  #2C3690;
+    --indigo:       #3E4CB3;
+    --periwinkle:   #5B6BE8;
+    --sky:          #89B0E8;
+    --ink:        #181C44;
+    --ink-soft:   #4A4F78;
+    --paper:      #F3F4FB;
+    --card:       #FFFFFF;
+    --line:       rgba(46, 56, 144, 0.12);
+    --radius-xl: 32px;
+    --maxw: 560px;
+    --font-display: "Bricolage Grotesque", ui-serif, Georgia, serif;
+    --font-body: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  :focus-visible { outline: 2px solid var(--periwinkle); outline-offset: 3px; border-radius: 4px; }
+  h1 { text-wrap: balance; }
+  p { text-wrap: pretty; }
+  body {
+    font-family: var(--font-body); color: var(--ink);
+    background:
+      radial-gradient(1200px 700px at 85% -10%, rgba(91,107,232,0.18), transparent 60%),
+      radial-gradient(900px 600px at -10% 10%, rgba(137,176,232,0.20), transparent 55%),
+      var(--paper);
+    line-height: 1.6; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    min-height: 100dvh; display: flex; flex-direction: column;
+  }
+  a { color: var(--indigo); text-decoration: none; font-weight: 600; }
+  a:hover { text-decoration: underline; }
+  .wrap { width: 100%; max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  nav {
+    border-bottom: 1px solid var(--line);
+    background: rgba(243,244,251,0.72);
+  }
+  nav .wrap { display: flex; align-items: center; height: 70px; max-width: 1080px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-weight: 700; font-size: 1.22rem; letter-spacing: -0.02em; color: var(--ink); }
+  .brand img { width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 4px 12px rgba(46,56,144,0.28); }
+  main { flex: 1; padding: 56px 0 72px; }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius-xl);
+    padding: clamp(28px, 6vw, 48px); box-shadow: 0 30px 60px rgba(20,26,80,0.08);
+  }
+  .card .icon { display: block; margin-left: auto; margin-right: auto; width: 88px; height: 88px; border-radius: 22px; box-shadow: 0 10px 28px rgba(46,56,144,0.28); margin-bottom: 22px; }
+  h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 6vw, 2.4rem); letter-spacing: -0.025em; line-height: 1.1; margin-bottom: 12px; }
+  .card > h1, .lede { text-align: center; }
+  .lede { color: var(--ink-soft); font-size: 1.05rem; margin-bottom: 26px; }
+  .nowrap { white-space: nowrap; }
+  .step { margin-top: 30px; padding-top: 26px; border-top: 1px solid var(--line); }
+  .step h2 { font-family: var(--font-display); font-weight: 700; font-size: 1.2rem; letter-spacing: -0.01em; margin-bottom: 6px; }
+  .step p { color: var(--ink-soft); }
+  .aside { margin-top: 22px; color: var(--ink-soft); font-size: 0.92rem; text-align: center; }
+  footer { padding: 32px 0; text-align: center; color: var(--ink-soft); font-size: 0.86rem; }
+</style>
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <span class="brand"><img src="/assets/icon-256.png" alt="" /> SharePad</span>
+  </div>
+</nav>
+
+<main>
+  <div class="wrap">
+    <article class="card">
+      <img class="icon" src="/assets/icon-256.png" alt="SharePad icon" />
+      <h1>SharePad for iPad help</h1>
+      <p class="lede">Draw on your iPad and the canvas shows on your Mac over <span class="nowrap">Wi-Fi</span>, ready to share in a call.</p>
+
+      <div class="step">
+        <h2>Pair with your Mac</h2>
+        <p>On your Mac, click the SharePad icon in the menu bar, then Pair an iPad. On your iPad, tap Scan Code and point the camera at the code. If the camera is off, tap Type the code instead.</p>
+      </div>
+
+      <div class="step">
+        <h2>Allow screen recording</h2>
+        <p>Each time SharePad connects to your Mac, your iPad asks to record the screen. Tap Allow. Your Mac shows only the canvas. The tools, menus and Settings stay on the iPad.</p>
+      </div>
+
+      <div class="step">
+        <h2>“Looking for your Mac”</h2>
+        <p>Check that SharePad is open on your Mac, that both are on the same Wi-Fi, and that Allow wireless iPads is on in the SharePad menu on your Mac.</p>
+      </div>
+
+      <div class="step">
+        <h2>“Local network is off”</h2>
+        <p>Tap Settings next to the message and turn on Local Network for SharePad. Your iPad needs it to find your Mac.</p>
+      </div>
+
+      <div class="step">
+        <h2>“Screen recording stopped”</h2>
+        <p>iPadOS stopped the recording, for example for a call or a recording you started from Control Centre. Tap Try Again.</p>
+      </div>
+
+      <div class="step">
+        <h2>“Screen recording not allowed”</h2>
+        <p>You tapped Don’t Allow on the recording prompt. Tap Try Again to be asked again.</p>
+      </div>
+
+      <div class="step">
+        <h2>Still stuck?</h2>
+        <p>Email <a href="mailto:hello@sharepad.co">hello@sharepad.co</a> and you’ll hear back from a person. Bugs and ideas are welcome as <a href="https://github.com/jonyardley/SharePad/issues">GitHub issues</a>.</p>
+      </div>
+    </article>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="/privacy.html">Privacy</a>
+  </div>
+</footer>
+</body>
+</html>
